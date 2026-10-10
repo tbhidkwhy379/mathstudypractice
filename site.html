@@ -1,6 +1,23 @@
 Put your HTML text here<!DOCTYPE html>
 <html lang="en">
 <head>
+   <script>
+  (function() {
+    // 👇 REPLACE THIS with the Base64 string you got in Step 1
+    const SECRET_B64 = "bWF0aGNsYXNzMjAyNA=="; 
+    
+    const params = new URLSearchParams(window.location.search);
+    
+    if (params.get('psw') === SECRET_B64) {
+      // ✅ Correct password! Let the site load.
+      // This line also cleans the URL bar so the password disappears after loading
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    } else {
+      // ❌ Wrong or missing password. Redirect to Google immediately.
+      window.location.replace("https://www.google.com/search?q=404+not+found");
+    }
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ClassroomSpot v19</title>
