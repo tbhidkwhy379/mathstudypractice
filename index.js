@@ -1,3 +1,30 @@
+
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { initializeApp } = require("firebase-admin/app");
+const { getDatabase } = require("firebase-admin/database");
+
+initializeApp({
+  databaseURL:
+    "https://ubg1-363a4-default-rtdb.asia-southeast1.firebasedatabase.app",
+});
+
+exports.clearChatEveryNight = onSchedule(
+  {
+    schedule: "0 0 * * *",
+    timeZone: "Australia/Melbourne",
+    region: "australia-southeast1",
+  },
+  async () => {
+    await getDatabase()
+      .ref("classroomspot-chat/messages")
+      .remove();
+
+    console.log("Chat messages cleared at Melbourne midnight.");
+  }
+);
+
+
+
 const form = document.querySelector('form');
 const input = document.querySelector('input');
 
