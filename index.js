@@ -8,9 +8,9 @@ initializeApp({
     "https://ubg1-363a4-default-rtdb.asia-southeast1.firebasedatabase.app",
 });
 
-exports.clearChatEveryNight = onSchedule(
+exports.clearAllChatMessagesHourly = onSchedule(
   {
-    schedule: "0 0 * * *",
+    schedule: "0 * * * *",
     timeZone: "Australia/Melbourne",
     region: "australia-southeast1",
   },
@@ -19,9 +19,10 @@ exports.clearChatEveryNight = onSchedule(
       .ref("classroomspot-chat/messages")
       .remove();
 
-    console.log("Chat messages cleared at Melbourne midnight.");
+    console.log("All chat messages deleted.");
   }
 );
+
 
 
 
