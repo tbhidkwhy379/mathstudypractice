@@ -43,11 +43,22 @@ jobs:
 
       - name: Copy browser runtime assets
         run: |
-          BUILD=/tmp/scramjet-pages-build/node_modules
+          BUILD=/tmp/scramjet-pages-build
           mkdir -p _site/scram _site/baremux _site/libcurl
-          cp -a "$BUILD/@mercuryworkshop/scramjet/dist/." _site/scram/
-          cp -a "$BUILD/@mercuryworkshop/bare-mux/dist/." _site/baremux/
-          cp -a "$BUILD/@mercuryworkshop/libcurl-transport/dist/." _site/libcurl/
+          cd "$BUILD"
+          node --input-type=module <<'NODE'
+          import { cp, mkdir } from "node:fs/promises";
+          import { scramjetPath } from "@mercuryworkshop/scramjet/path";
+          import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
+          import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
+          await mkdir("${process.env.GITHUB_WORKSPACE}/_site/scram", { recursive: true });
+          await mkdir("${process.env.GITHUB_WORKSPACE}/_site/baremux", { recursive: true });
+          await mkdir("${process.env.GITHUB_WORKSPACE}/_site/libcurl", { recursive: true });
+          await cp(scramjetPath, "${process.env.GITHUB_WORKSPACE}/_site/scram", { recursive: true });
+          await cp(baremuxPath, "${process.env.GITHUB_WORKSPACE}/_site/baremux", { recursive: true });
+          await cp(libcurlPath, "${process.env.GITHUB_WORKSPACE}/_site/libcurl", { recursive: true });
+          NODE
+          cd "$GITHUB_WORKSPACE"
           test -f _site/scram/scramjet.all.js
           test -f _site/scram/scramjet.wasm.wasm
           test -f _site/baremux/index.js
