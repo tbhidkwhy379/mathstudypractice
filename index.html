@@ -319,6 +319,35 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-browser .debug-console .dbg-error{color:#ff4444}
 #view-browser .debug-console .dbg-warn{color:#ffaa00}
 #view-browser .debug-console .dbg-info{color:#44aaff}
+
+/* ===== GLOBAL SPACING FIX ===== */
+:root { --space-1: 6px; --space-2: 10px; --space-3: 16px; --space-4: 24px; }
+button, input, select, textarea { font: inherit; }
+button { line-height: 1.25; }
+.page-view { min-width: 0; }
+#view-games .game-tabs { gap: 12px; padding: 24px clamp(16px, 3vw, 32px) 12px; }
+#view-games .gn-head { gap: 14px; padding: 24px clamp(16px, 3vw, 32px) 18px; }
+#gn-grid, #ugs-grid { gap: 16px; padding: 0 clamp(16px, 3vw, 32px) 28px; }
+#view-movies .mv-wrap { padding: clamp(76px, 9vh, 100px) clamp(16px, 3vw, 26px) 140px; }
+#view-movies .mv-bar { gap: 12px; }
+#view-movies .mv-grid { gap: 18px; }
+#view-chat header { padding: 16px 20px; }
+#view-chat main { padding: 20px 16px 64px; gap: 14px; }
+#view-chat footer { gap: 10px; padding: 12px 16px; }
+#view-browser { height: 100dvh; min-height: 420px; }
+#view-browser > iframe { display: block; flex: 1 1 auto; width: 100%; min-height: 0; border: 0; }
+#view-browser > div:first-child { gap: 12px; padding: 12px 16px !important; }
+#view-browser > div:first-child button { min-height: 36px; padding: 8px 14px !important; }
+@media (max-width: 600px) {
+  .dock { bottom: 14px; gap: 6px; padding: 7px; }
+  .dock a { width: 40px; height: 40px; }
+  #view-games .gn-head { align-items: stretch; }
+  #gn-search, #ugs-search { width: 100%; min-width: 0; margin-left: 0; }
+  #view-movies .mv-wrap { padding-top: 78px; }
+  #view-movies .mv-bar > * { min-width: 0; }
+  #view-movies .mv-bar input { min-width: 0; flex-basis: 100%; }
+}
+
 </style>
 </head>
 <body>
