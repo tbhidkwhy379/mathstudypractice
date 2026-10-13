@@ -1,0 +1,77 @@
+name: Build and deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prepare static site
+        run: |
+          mkdir -p _site
+          cp -a *.html *.js *.css *.svg *.webp *.json *.png *.ico CNAME _site/ 2>/dev/null || true
+          test -f _site/index.html
+          test -f _site/proxy.html
+
+      - name: Install Scramjet v1 runtime packages
+        working-directory: /tmp
+        run: |
+          mkdir -p scramjet-pages-build
+          cd scramjet-pages-build
+          npm init -y
+          npm install --no-audit --no-fund @mercuryworkshop/scramjet@1.1.0 @mercuryworkshop/bare-mux@^2.1.9 @mercuryworkshop/libcurl-transport@^1.5.2
+
+      - name: Copy browser runtime assets
+        run: |
+          BUILD=/tmp/scramjet-pages-build/node_modules
+          mkdir -p _site/scram _site/baremux _site/libcurl
+          cp -a "$BUILD/@mercuryworkshop/scramjet/dist/." _site/scram/
+          cp -a "$BUILD/@mercuryworkshop/bare-mux/dist/." _site/baremux/
+          cp -a "$BUILD/@mercuryworkshop/libcurl-transport/dist/." _site/libcurl/
+          test -f _site/scram/scramjet.all.js
+          test -f _site/scram/scramjet.wasm.wasm
+          test -f _site/baremux/index.js
+          test -f _site/baremux/worker.js
+          test -f _site/libcurl/index.mjs
+          cp scramjet-sw.js _site/scramjet-sw.js
+          cp scramjet.config.js _site/scramjet.config.js
+          touch _site/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
