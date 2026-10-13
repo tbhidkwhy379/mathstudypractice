@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ClassroomSpot</title>
 
-<script src="/uv/uv.bundle.js"></script>
-<script src="/uv/uv.config.js"></script>
+<script src="/scram/scramjet.all.js"></script>
 <script src="/baremux/index.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
@@ -486,73 +485,29 @@ function loop() {
 setTimeout(loop, 900);
 
 // ============================================================
-// UV PROXY SETUP — FIXED WITH DEBUG LOGGING
-// ============================================================
-
-// 1. Check if UV config loaded
-if (typeof __uv$config === 'undefined') {
-    log('__uv$config is UNDEFINED! Make sure /uv/uv.config.js is loaded correctly.', 'error');
-} else {
-    log('__uv$config loaded. Prefix: ' + __uv$config.prefix);
-}
-
-// 2. Register Service Worker
-let swReady = false;
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/uv/sw.js', { scope: '/' })
-        .then(reg => {
-            log('Service Worker registered. Scope: ' + reg.scope);
-            swReady = true;
-        })
-        .catch(err => {
-            log('Service Worker FAILED: ' + err.message, 'error');
-            log('Make sure /uv/sw.js exists and is served with correct MIME type (application/javascript)', 'warn');
-        });
-} else {
-    log('Service Workers NOT SUPPORTED in this browser/context!', 'error');
-    log('You MUST serve this over HTTPS or localhost. file:// will NOT work.', 'error');
-}
-
-// 3. Setup BareMux
-let connection;
-try {
-    connection = new BareMux.BareMuxConnection('/baremux/worker.js');
-    log('BareMux connection created.');
-} catch (err) {
-    log('BareMux connection FAILED: ' + err.message, 'error');
-    log('Make sure /baremux/index.js and /baremux/worker.js exist.', 'error');
-}
-
-// Build Wisp URL (same host)
-const wispUrl = (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/wisp/';
-log('Wisp URL: ' + wispUrl);
-
-// Try to set transport
+// SCRAMJET v1.1.0 SETUP — frontend is GitHub Pages; Wisp transport stays on Render.
+const WISP_URL = 'wss://proxy-scramjet-8xz5.onrender.com/wisp/';
+const { ScramjetController } = $scramjetLoadController();
+const scramjet = new ScramjetController({ files: { wasm: '/scram/scramjet.wasm.wasm', all: '/scram/scramjet.all.js', sync: '/scram/scramjet.sync.js' } });
+scramjet.init();
+const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
 let transportReady = false;
 async function setupTransport() {
-    if (!connection) return;
     try {
-        // Try Epoxy first (faster)
-        await connection.setTransport('/epoxy/index.mjs', [{ wisp: wispUrl }]);
-        log('Epoxy transport connected successfully!');
+        await connection.setTransport('/libcurl/index.mjs', [{ websocket: WISP_URL }]);
         transportReady = true;
-    } catch (epoxyErr) {
-        log('Epoxy failed: ' + epoxyErr.message, 'warn');
-        try {
-            // Fallback to libcurl
-            await connection.setTransport('/libcurl/index.mjs', [{ websocket: 'wss://wisp.rhw.one/' }]);
-            log('libcurl transport connected (fallback)!');
-            transportReady = true;
-        } catch (curlErr) {
-            log('libcurl fallback ALSO failed: ' + curlErr.message, 'error');
-            log('Make sure /epoxy/index.mjs or /libcurl/index.mjs exist on your server.', 'error');
-            log('Also verify your Wisp server is running at ' + wispUrl, 'error');
-        }
+        log('Scramjet v1 transport configured for Render Wisp.');
+    } catch (err) {
+        transportReady = false;
+        log('Wisp transport setup failed: ' + err.message, 'error');
     }
+}
+async function registerScramjetSW() {
+    if (!('serviceWorker' in navigator)) throw new Error('Service workers are unavailable.');
+    await navigator.serviceWorker.register('/scramjet-sw.js', { scope: '/' });
 }
 setupTransport();
 
-// ============================================================
 // BROWSER LOGIC
 // ============================================================
 const tabsEl = document.getElementById('tabs');
@@ -579,10 +534,10 @@ function hideLoader() { loader.classList.remove('active'); }
 
 function createTab(url = '') {
     const id = idCounter++;
-    const iframe = document.createElement('iframe');
+    const sjFrame = scramjet.createFrame();
+    const iframe = sjFrame.frame;
     iframe.className = 'viewframe';
     iframe.dataset.id = id;
-    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-modals allow-popups');
     iframe.setAttribute('loading', 'eager');
     iframe.setAttribute('importance', 'high');
     document.body.appendChild(iframe);
@@ -596,7 +551,7 @@ function createTab(url = '') {
         else activateTab(id);
     });
     tabsEl.insertBefore(tabBtn, newTabBtn);
-    tabs.push({ id, iframe, tabBtn, history: [], index: -1 });
+    tabs.push({ id, iframe, sjFrame, tabBtn, history: [], index: -1 });
     activateTab(id);
     if (url) navigate(url);
 }
@@ -638,20 +593,14 @@ async function navigate(input, push = true) {
     const tab = getTab();
     if (!tab) return;
 
-    // Check prerequisites
-    if (typeof __uv$config === 'undefined') {
-        log('Cannot navigate: __uv$config is missing!', 'error');
-        alert('UV config not loaded! Check that /uv/uv.config.js exists.');
+    try {
+        await registerScramjetSW();
+        if (!transportReady) await setupTransport();
+        if (!transportReady) throw new Error('Could not configure the Render Wisp transport.');
+    } catch (err) {
+        log('Scramjet startup failed: ' + err.message, 'error');
+        alert('Proxy startup failed. Open the debug console (Shift+D) for details.');
         return;
-    }
-    if (!transportReady) {
-        log('Cannot navigate: BareMux transport not ready yet.', 'warn');
-        // Try to setup transport again
-        await setupTransport();
-        if (!transportReady) {
-            alert('Proxy transport not connected. Check debug console (Shift+D) for details.');
-            return;
-        }
     }
 
     const url = normalize(input);
@@ -663,10 +612,8 @@ async function navigate(input, push = true) {
     showLoader();
     log('Navigating to: ' + url);
 
-    const proxyUrl = __uv$config.prefix + __uv$config.encodeUrl(url);
-    log('Proxy URL: ' + proxyUrl);
-
-    tab.iframe.src = proxyUrl;
+    log('Scramjet v1 navigating to: ' + url);
+    tab.sjFrame.go(url);
     urlInput.value = url;
     ntp.style.display = 'none';
 
@@ -701,7 +648,7 @@ function getTab() { return tabs.find(t => t.id === activeId); }
 
 back.onclick = () => { const t = getTab(); if (!t || t.index <= 0) return; t.index--; navigate(t.history[t.index], false); };
 forward.onclick = () => { const t = getTab(); if (!t || t.index >= t.history.length - 1) return; t.index++; navigate(t.history[t.index], false); };
-reload.onclick = () => { const t = getTab(); if (!t) return; t.iframe.src = t.iframe.src; };
+reload.onclick = () => { const t = getTab(); if (!t || t.index < 0) return; navigate(t.history[t.index], false); };
 popout.onclick = () => { const t = getTab(); if (!t) return; window.open(t.iframe.src, '_blank'); };
 form.onsubmit = e => { e.preventDefault(); if (urlInput.value.trim()) navigate(urlInput.value); };
 newTabBtn.onclick = () => createTab();
