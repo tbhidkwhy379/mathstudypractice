@@ -9,6 +9,10 @@ async function handleRequest(event) {
   return fetch(event.request);
 }
 
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener("fetch", (event) => {
   event.respondWith(handleRequest(event));
 });
