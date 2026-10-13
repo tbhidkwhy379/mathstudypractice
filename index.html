@@ -539,22 +539,11 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 </div>
 <div class="music-resize" id="musicResize" title="Drag to resize — double-click to reset"></div>
 </section>
-<!-- BROWSER: Scramjet proxy -->
-<section class="page-view" id="view-browser" style="height:100dvh;min-height:420px;display:none;flex-direction:column;background:#050507;">
-  <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#101014;border-bottom:1px solid #232329;flex-shrink:0;">
-    <span style="font-weight:700;color:#F2F2F5;flex:1;">Scramjet Browser</span>
-    <button type="button" id="scramjetReload"
-      style="color:#F2F2F5;background:#232329;border:1px solid #454550;border-radius:8px;padding:8px 12px;cursor:pointer;">
-      Reload
-    </button>
-  </div>
-  <iframe id="scramjetFrame"
-    src="https://proxy-scramjet-8xz5.onrender.com/"
-    title="Scramjet proxy browser"
-    referrerpolicy="no-referrer"
-    allow="fullscreen; autoplay; clipboard-read; clipboard-write"
-    style="display:block;flex:1;width:100%;min-height:0;border:0;background:#050507;">
-  </iframe>
+<!-- BROWSER: Scramjet v1 frontend (Render is Wisp transport only; do not iframe the backend) -->
+<section class="page-view" id="view-browser" style="height:100dvh;min-height:420px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#050507;color:#F2F2F5;text-align:center;">
+  <div style="font-size:clamp(24px,4vw,36px);font-weight:800;">Scramjet Browser</div>
+  <p style="max-width:520px;line-height:1.6;color:#B7B7C5;">The browser frontend is hosted on GitHub Pages. Render is used only for the Wisp WebSocket transport.</p>
+  <a href="/proxy.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 20px;border-radius:10px;background:#F2F2F5;color:#101014;text-decoration:none;font-weight:800;">Launch Scramjet Browser</a>
 </section>
 <!-- DOCK -->
 <div class="dock">
@@ -903,125 +892,7 @@ document.getElementById('musicClose').addEventListener('click',function(){mw.cla
 var a=document.querySelector('.dock a[data-page="music"]');if(a)a.classList.remove('active');});
 })();
 })();}catch(e){console.error("[init:music]",e&&e.message);}
-try{(function(){
-/* ===== BROWSER (Ultraviolet proxy, in-page) ===== */
-/* A public wisp relay is required. Swap it with CSP_SET_WISP("wss://your-wisp/") in the console. */
-var WISP_URL='wss://proxy-scramjet-8xz5.onrender.com/wisp/';
-try{WISP_URL=localStorage.getItem('csp-wisp')||WISP_URL;}catch(e){}
-const dbg=document.getElementById('debugConsole'),statusBar=document.getElementById('statusBar');
-function blog(msg,type){const line=document.createElement('div');
-line.className=type==='error'?'dbg-error':type==='warn'?'dbg-warn':'dbg-info';
-line.textContent='['+new Date().toLocaleTimeString()+'] '+msg;dbg.appendChild(line);dbg.scrollTop=dbg.scrollHeight;}
-function setStatus(msg,bad){statusBar.textContent=msg;statusBar.classList.add('show');statusBar.classList.toggle('bad',!!bad);}
-statusBar.addEventListener('click',function(){if(!uvReady){statusBar.classList.remove('show');setupProxy();}});
-document.addEventListener('keydown',e=>{if(e.shiftKey&&e.key==='D')dbg.classList.toggle('active');});
-/* NTP typing */
-const lines=["the best unblocked hub to exist","why study when you can use unknown or delta ai?","doing ctrl + d while on this page is a good idea","done with your test yet? probably not lol","'classroomspot' for short","still in beta","what day is it again?","FRIED CHICKEN FOREVER","hecho con sangre mexicano","i make no money off of this site, i do it for the love of the game dude","one click won't hurt","might as well hop on games","might as well stay a little longer","we both know you're not leaving","just act natural","nothing to see here","if they ask, it's for research","this stays between you and me","you opened this for a reason","be honest... you're not working","you said you'd focus today","it started with one click","you're pushing your luck","alt tab ready at all times","low volume, high risk","just a quick visit","famous last words","no evidence left behind","we move in silence","stay low","commit to it now","don't look behind you","this is risky business","just don't panic","no espique inglish moderfoquer","hobby site - tinyurl.com/testingnstuff"];
-const box=document.getElementById('q-box');let pool=[...lines];
-function write(s,p,done){if(p<=s.length){box.textContent=s.slice(0,p);setTimeout(()=>write(s,p+1,done),55);}else setTimeout(done,1800);}
-function erase(s,p,done){if(p>=0){box.textContent=s.slice(0,p);setTimeout(()=>erase(s,p-1,done),35);}else setTimeout(done,400);}
-function loopLine(){if(!pool.length)pool=[...lines];const pick=pool.splice(Math.floor(Math.random()*pool.length),1)[0];write(pick,0,()=>erase(pick,pick.length,loopLine));}
-setTimeout(loopLine,900);
-/* ---- proxy ---- */
-var uvReady=false,uvError=null,prefix='/service/',uvReg=null,uvConn=null,PREFIX_WARNED=false;
-function fail(msg,hint){uvError=msg;setStatus('proxy failed: '+msg+(hint?' — '+hint:''),true);blog(msg,'error');if(hint)blog(hint,'warn');}
-/* Ultraviolet's service worker reads its prefix from uv.config.js (importScripts) and only
-   intercepts URLs that start with location.origin + that prefix. So the registration's SCOPE
-   must cover the prefix. Static hosts (GitHub Pages) can't send the "Service-Worker-Allowed"
-   header, which limits scope to the worker's own folder — try the paths that still work. */
-async function registerServiceWorker(){
-var cfg=window.__uv$config||{};
-prefix=cfg.prefix||'/service/';
-if(prefix.charAt(prefix.length-1)!=='/')prefix+='/';
-var wanted=[];function add(p){if(p&&wanted.indexOf(p)===-1)wanted.push(p);}
-add(cfg.sw);add('/uv.sw.js');add('/uv/uv.sw.js');add('/uv/sw.js');add(prefix+'uv.sw.js');add(prefix+'sw.js');
-blog('uv prefix = '+prefix+' (from uv.config.js)');
-for(var i=0;i<wanted.length;i++){
-var path=wanted[i],reg=null;
-try{reg=await navigator.serviceWorker.register(path,{scope:prefix});}
-catch(e1){
-try{reg=await navigator.serviceWorker.register(path);}catch(e2){blog('sw '+path+' → '+((e2&&e2.message)||e2),'warn');continue;}}
-if(!reg)continue;
-var scope=new URL(reg.scope).pathname;
-if(prefix.indexOf(scope)===0){blog('service worker '+path+' registered, scope '+scope+' (covers '+prefix+')');return reg;}
-blog('sw '+path+' registered but its scope '+scope+' does not cover '+prefix,'warn');
-try{await reg.unregister();}catch(_){}
-}
-return null;}
-async function setupProxy(){
-setStatus('starting proxy…');
-if(typeof __uv$config==='undefined'){
-fail('uv.config.js never defined __uv$config.',
-'upload /uv/uv.bundle.js + /uv/uv.config.js to your repo root and load uv.bundle.js FIRST (it defines Ultraviolet.codec.xor, which the config needs).');return;}
-if(!('serviceWorker' in navigator)){fail('service workers unsupported — the browser view must be served over HTTPS (or localhost).');return;}
-try{uvReg=await registerServiceWorker();}catch(e){fail('service worker registration error: '+(e&&e.message||e));return;}
-if(!uvReg){
-fail('no service worker can control "'+prefix+'".',
-'Fix one of these: ① move uv.sw.js to your repo ROOT so it is served from /uv.sw.js (then its scope is "/" and covers any prefix) — easiest on GitHub Pages; ② or edit uv.config.js so prefix and sw live in the same folder, e.g. prefix:"/uv/service/", sw:"/uv/uv.sw.js". The prefix lives in uv.config.js, so the page alone cannot override it.');return;}
-try{await navigator.serviceWorker.ready;}catch(e){}
-blog('service worker active.');
-if(typeof BareMux==='undefined'){fail('/baremux/index.js is missing — upload the baremux folder to your repo root.');return;}
-try{
-uvConn=new BareMux.BareMuxConnection('/baremux/worker.js');
-var existing=null;try{existing=await uvConn.getTransport();}catch(_){}
-if(existing){blog('transport already set: '+JSON.stringify(existing));}
-else{
-try{await uvConn.setTransport('/epoxy/index.mjs',[{wisp:WISP_URL}]);blog('epoxy transport → '+WISP_URL);}
-catch(e){blog('epoxy failed ('+(e&&e.message||e)+'), trying libcurl…','warn');
-await uvConn.setTransport('/libcurl/index.mjs',[{websocket:WISP_URL}]);blog('libcurl transport → '+WISP_URL);}
-}
-}catch(e){fail('could not set the bare-mux transport: '+(e&&e.message||e),'the wisp relay server is probably down or blocking your origin. Try another one with CSP_SET_WISP("wss://…/").');return;}
-uvReady=true;uvError=null;setStatus('proxy ready ✓');setTimeout(()=>statusBar.classList.remove('show'),2500);
-blog('proxy ready — Shift+D closes this console.');
-/* if the user typed a URL before the worker was live, re-run that navigation now */
-var t=getTab();if(t&&t.index>=0){bnavigate(t.history[t.index],false);}}
-window.CSP_SET_WISP=function(u){if(!u)return WISP_URL;WISP_URL=u;try{localStorage.setItem('csp-wisp',u);}catch(e){}
-uvReady=false;blog('wisp changed → '+u);setupProxy();return u;};
-window.CSP_PROXY_STATUS=function(){return {ready:uvReady,error:uvError,prefix:prefix,wisp:WISP_URL};};
-/* tab logic */
-const tabsEl=document.getElementById('tabs'),newTabBtn=document.getElementById('newtab'),urlInput=document.getElementById('burl'),
-ntp=document.getElementById('ntp'),loader=document.getElementById('loader'),framesEl=document.getElementById('frames'),searchEngineSelect=document.getElementById('searchEngine');
-let tabs=[],activeId=null,idCounter=0,browserInit=false;
-const searchEngines={google:'https://www.google.com/search?q=',duckduckgo:'https://duckduckgo.com/?q=',brave:'https://search.brave.com/search?q=',bing:'https://www.bing.com/search?q=',yahoo:'https://search.yahoo.com/search?p=',ecosia:'https://www.ecosia.org/search?q=',startpage:'https://www.startpage.com/sp/search?query='};
-const showLoader=()=>loader.classList.add('active'),hideLoader=()=>loader.classList.remove('active');
-const getTab=()=>tabs.find(t=>t.id===activeId);
-function createTab(url){const id=idCounter++;
-const iframe=document.createElement('iframe');iframe.className='viewframe';iframe.dataset.id=id;framesEl.appendChild(iframe);
-const tabBtn=document.createElement('div');tabBtn.className='tab';tabBtn.dataset.id=id;
-tabBtn.innerHTML='<span>New Tab</span><i class="fas fa-xmark"></i>';
-tabBtn.addEventListener('click',e=>{e.target.tagName==='I'?closeTab(id):activateTab(id);});
-tabsEl.insertBefore(tabBtn,newTabBtn);
-tabs.push({id,iframe,tabBtn,history:[],index:-1});activateTab(id);if(url)bnavigate(url);}
-function activateTab(id){activeId=id;
-tabs.forEach(t=>{t.iframe.classList.toggle('active',t.id===id);t.tabBtn.classList.toggle('active',t.id===id);});
-const tab=getTab();if(!tab)return;
-if(tab.index>=0){urlInput.value=tab.history[tab.index];ntp.style.display='none';}
-else{urlInput.value='';ntp.style.display='flex';}}
-function closeTab(id){if(tabs.length===1)return;const i=tabs.findIndex(t=>t.id===id);
-tabs[i].iframe.remove();tabs[i].tabBtn.remove();tabs.splice(i,1);activateTab(tabs[Math.max(0,i-1)].id);}
-function normalize(input){if(!input.includes('.')||input.includes(' '))return searchEngines[searchEngineSelect.value]+encodeURIComponent(input);
-if(!/^https?:\/\//i.test(input))return 'https://'+input;return input;}
-function bnavigate(input,push){const tab=getTab();if(!tab)return;
-if(!uvReady){setStatus(uvError?('proxy failed: '+uvError+' — click to retry'):'proxy is still starting… click here to retry',!!uvError);return;}
-push=push!==false;const url=normalize(input);
-if(push){tab.history=tab.history.slice(0,tab.index+1);tab.history.push(url);tab.index++;}
-showLoader();blog('nav → '+url);
-tab.iframe.src=prefix+__uv$config.encodeUrl(url);
-urlInput.value=url;ntp.style.display='none';
-tab.iframe.onload=()=>{hideLoader();let t='';try{t=tab.iframe.contentDocument&&tab.iframe.contentDocument.title;}catch(e){}
-try{tab.tabBtn.querySelector('span').textContent=t||new URL(url).hostname;}catch(e){}};
-setTimeout(()=>{if(loader.classList.contains('active')){hideLoader();blog('load timeout: '+url,'warn');}},10000);}
-window.initBrowserView=function(){if(browserInit)return; if(!document.getElementById('bback')||!document.getElementById('statusBar')||!document.getElementById('debugConsole')||!document.getElementById('tabs'))return; browserInit=true;
-document.getElementById('bback').onclick=()=>{const t=getTab();if(t&&t.index>0){t.index--;bnavigate(t.history[t.index],false);}};
-document.getElementById('bforward').onclick=()=>{const t=getTab();if(t&&t.index<t.history.length-1){t.index++;bnavigate(t.history[t.index],false);}};
-document.getElementById('breload').onclick=()=>{const t=getTab();if(t)t.iframe.src=t.iframe.src;};
-document.getElementById('bpopout').onclick=()=>{const t=getTab();if(t&&t.iframe.src)window.open(t.iframe.src,'_blank');};
-document.getElementById('bform').onsubmit=e=>{e.preventDefault();if(urlInput.value.trim())bnavigate(urlInput.value);};
-newTabBtn.onclick=()=>createTab();
-document.getElementById('ntpForm').onsubmit=e=>{e.preventDefault();const q=document.getElementById('ntpInput').value.trim();
-if(q){bnavigate(q);document.getElementById('ntpInput').value='';}};
-createTab();setupProxy();blog('browser initialized. Shift+D toggles the debug console, click the status pill to retry the proxy.');};
-})();}catch(e){console.error("[init:browser]",e&&e.message);}
+window.initBrowserView=function(){};
 /* ===== MOVIES & TV (TMDB metadata + rotating embed providers) ===== */
 try{window.initMoviesView=(function(){var done=false;
 /* Both keys below are widely-published public demo keys meant for educational projects.
@@ -1221,16 +1092,6 @@ var p=a.getAttribute("data-page");
 if(p==="music"){var mw=document.getElementById("view-music");
 mw.classList.toggle("open");a.classList.toggle("active",mw.classList.contains("open"));return;}
 showPage(p);});});
-</script>
-
-<script>
-(function () {
-  var frame = document.getElementById('scramjetFrame');
-  var reload = document.getElementById('scramjetReload');
-  if (reload && frame) reload.addEventListener('click', function () {
-    frame.src = 'https://proxy-scramjet-8xz5.onrender.com/';
-  });
-})();
 </script>
 
 </body>
