@@ -164,6 +164,10 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-chat #text:focus{border-color:var(--acc2)}
 #view-chat #send{background:var(--acc2);color:#fff;border:none;border-radius:20px;padding:0 18px;height:40px;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0}
 #view-chat #status{font-size:11px;color:var(--muted2);padding:0 12px 6px;text-align:center}
+#view-chat #chat-message-ball{position:fixed;z-index:30;left:50%;bottom:82px;transform:translateX(-50%);width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.85);background:var(--acc2);color:#fff;box-shadow:0 4px 18px rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;cursor:pointer;animation:chatBallFloat 1.6s ease-in-out infinite;font-size:15px}
+#view-chat #chat-message-ball.visible{display:flex}
+@keyframes chatBallFloat{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@media(prefers-reduced-motion:reduce){#view-chat #chat-message-ball{animation:none}}
 #view-chat #nameModal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:20;padding:20px}
 #view-chat #nameModal.hidden{display:none !important}
 #view-chat #nameModal .card{background:var(--panel2);border-radius:14px;padding:22px;max-width:320px;width:100%;border:1px solid var(--border2)}
@@ -460,6 +464,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <textarea id="text" placeholder="Message #classroom" rows="1"></textarea>
 <button id="send">Send</button>
 </footer>
+<button id="chat-message-ball" type="button" aria-label="Jump to latest chat message" title="Jump to latest message">↓</button>
 </section>
 <!-- MUSIC (floating window) -->
 <section id="view-music">
@@ -620,6 +625,11 @@ const mainEl=document.getElementById('main'),emptyEl=document.getElementById('em
 sendBtn=document.getElementById('send'),statusEl=document.getElementById('status'),whoamiEl=document.getElementById('whoami'),
 nameModal=document.getElementById('nameModal'),nameInput=document.getElementById('nameInput'),nameJoin=document.getElementById('nameJoin');
 const MAX=300;let myName=null,myId=null,liveRef=null,liveReady=false,pendingText=null;
+const messageBall=document.getElementById('chat-message-ball');
+function showMessageBall(){if(messageBall)messageBall.classList.add('visible');}
+function hideMessageBall(){if(messageBall)messageBall.classList.remove('visible');}
+if(messageBall)messageBall.addEventListener('click',()=>{hideMessageBall();mainEl.scrollTop=mainEl.scrollHeight;});
+mainEl.addEventListener('scroll',()=>{if(mainEl.scrollHeight-mainEl.scrollTop-mainEl.clientHeight<50)hideMessageBall();});
 const loadLocal=()=>{try{return JSON.parse(localStorage.getItem('cs_chat_local'))||[];}catch(e){return[];}};
 const saveLocal=l=>{try{localStorage.setItem('cs_chat_local',JSON.stringify(l));}catch(e){}};
 let localMsgs=loadLocal();
@@ -627,8 +637,8 @@ try{myName=localStorage.getItem('cs_chat_name');}catch(e){}
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=ts=>{try{return new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}catch(e){return '';}};
 const setStatus=s=>{statusEl.textContent=s;};
-function render(list){mainEl.innerHTML='';if(!list||!list.length){mainEl.appendChild(emptyEl);return;}
-const atBottom=mainEl.scrollHeight-mainEl.scrollTop-mainEl.clientHeight<80;
+function render(list){const wasAtBottom=mainEl.scrollHeight-mainEl.scrollTop-mainEl.clientHeight<80;mainEl.innerHTML='';if(!list||!list.length){mainEl.appendChild(emptyEl);return;}
+const atBottom=wasAtBottom;
 list.forEach(m=>{const w=document.createElement('div');w.className='msg '+(m.uid===myId?'me':'other');
 w.innerHTML='<div class="name">'+esc(m.uid===myId?'You':(m.name||'Guest'))+'</div><div class="bubble">'+esc(m.text||'')+'</div><div class="time">'+fmt(m.ts)+'</div>';
 mainEl.appendChild(w);});
@@ -653,6 +663,7 @@ async function init(){
       list.sort((a,b)=>(a.ts||0)-(b.ts||0));
       liveReady=true;
       setStatus('Connected — messages sync live.');
+      if(list.length)showMessageBall();
       render(mergeLocal(list));
     },err=>{
       liveReady=false;
