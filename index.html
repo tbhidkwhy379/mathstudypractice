@@ -70,7 +70,6 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-home.active,#view-games.active,#view-movies.active{display:block}
 #view-chat.active{display:flex;flex-direction:column;height:100vh;padding-bottom:100px;box-sizing:border-box}
 #view-music.open{display:grid}
-#view-browser.active{display:flex;flex-direction:column}
 /* games */
 #view-games{min-height:100vh;padding-bottom:120px;box-sizing:border-box}
 .game-tabs{display:flex;gap:10px;padding:20px 20px 4px;flex-wrap:wrap}
@@ -274,56 +273,6 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 @keyframes heartPop{50%{transform:scale(1.3)}}
 #view-music .loader{border:4px solid rgba(255,255,255,.1);border-radius:50%;border-top:4px solid var(--brand-green);width:30px;height:30px;animation:spin 1s linear infinite;margin:20px auto;display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* browser */
-#view-browser{height:100vh;box-sizing:border-box;position:relative}
-#view-browser .browser-ui{height:96px;background:rgba(0,0,0,.82);backdrop-filter:blur(20px);display:flex;flex-direction:column;border-bottom:1px solid rgba(255,255,255,.25);z-index:10;position:relative;flex-shrink:0}
-#view-browser .tabs{height:38px;display:flex;align-items:center;padding:0 8px;gap:6px;overflow-x:auto}
-#view-browser .tab{height:28px;min-width:160px;max-width:220px;padding:0 12px;border-radius:8px 8px 0 0;background:rgba(30,30,30,.9);color:#aaa;display:flex;align-items:center;gap:8px;cursor:pointer;border:1px solid rgba(255,255,255,.1);font-family:'Orbitron',sans-serif;font-size:11px}
-#view-browser .tab.active{background:rgba(50,50,50,.95);color:#fff;border-color:rgba(255,255,255,.5)}
-#view-browser .tab span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#view-browser .tab i{opacity:.6;font-style:normal}
-#view-browser .tab i:hover{opacity:1;color:#ff4444}
-#view-browser .newtab{width:32px;height:32px;border-radius:6px;border:none;background:transparent;color:#fff;cursor:pointer}
-#view-browser .newtab:hover{background:rgba(255,255,255,.15)}
-#view-browser .navbar{height:58px;display:flex;align-items:center;gap:10px;padding:0 12px}
-#view-browser .navbar button{width:34px;height:34px;border-radius:50%;border:none;background:transparent;color:#fff;cursor:pointer}
-#view-browser .navbar button:hover{background:rgba(255,255,255,.15)}
-#view-browser .urlbar{flex:1;height:36px;background:rgba(10,10,10,.85);border-radius:18px;padding:0 16px;display:flex;align-items:center;border:1px solid rgba(255,255,255,.25)}
-#view-browser .urlbar:focus-within{border-color:rgba(255,255,255,.55)}
-#view-browser .urlbar input{width:100%;height:100%;background:transparent;border:none;outline:none;color:#fff;font-size:14px;font-family:'Rajdhani',sans-serif}
-#view-browser .urlbar input::placeholder{color:rgba(255,255,255,.45)}
-#view-browser .search-engine-select{background:transparent;border:none;color:#fff;font-family:'Rajdhani',sans-serif;font-size:13px;cursor:pointer;outline:none;padding-right:6px}
-#view-browser .search-engine-select option{background:#111;color:#fff}
-#view-browser #frames{position:relative;flex:1;min-height:0}
-#view-browser .viewframe{position:absolute;inset:0;width:100%;height:100%;border:none;display:none;background:#fff}
-#view-browser .viewframe.active{display:block}
-#view-browser .ntp{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:5}
-#view-browser .ntp-container{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 20px}
-#view-browser .ntp-text{font-family:'Montserrat',sans-serif;font-weight:700;font-size:clamp(2rem,7vw,4.2rem);display:inline-flex;flex-wrap:wrap;justify-content:center;gap:2px}
-#view-browser .ntp-text span{color:#fff;text-shadow:0 0 5px rgba(255,255,255,.8);animation:bglow 1.8s ease-in-out infinite alternate}
-#view-browser .ntp-text span:nth-child(even){animation-delay:.9s}
-#view-browser .ntp-subtitle{margin-top:10px;font-family:'Montserrat',sans-serif;font-weight:500;font-size:clamp(.9rem,2vw,1.2rem);color:#fff;min-height:1.5em;text-shadow:0 0 4px rgba(255,255,255,.7)}
-#view-browser .ntp-search-wrap{margin-top:28px;width:min(480px,80vw)}
-#view-browser .ntp-search-wrap form{display:flex;align-items:center;width:100%;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:4px}
-#view-browser .ntp-search-input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:'Rajdhani',sans-serif;font-size:1.1rem;letter-spacing:.08em;padding:4px 8px 4px 2px}
-#view-browser .ntp-search-input::placeholder{color:rgba(255,255,255,.35)}
-#view-browser .ntp-search-btn{background:transparent;border:none;color:rgba(255,255,255,.45);cursor:pointer;font-size:.9rem;padding:2px 4px}
-#view-browser .ntp-search-btn:hover{color:rgba(255,255,255,.9)}
-@keyframes bglow{from{text-shadow:0 0 4px rgba(255,255,255,.5)}to{text-shadow:0 0 12px rgba(255,255,255,1)}}
-#view-browser .loading-overlay{position:absolute;inset:0;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(10px)}
-#view-browser .loading-overlay.active{display:flex}
-#view-browser .loading-overlay img{width:160px;height:160px;border-radius:20px}
-#view-browser .loading-text{font-family:'Orbitron',sans-serif;font-size:1.4rem;color:#fff;margin-top:20px;animation:bblink 1s ease-in-out infinite}
-@keyframes bblink{0%,100%{opacity:1}50%{opacity:.5}}
-#view-browser .status-bar{position:absolute;left:10px;bottom:10px;z-index:2000;max-width:70%;background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 12px;font:12px monospace;color:#8f8;display:none;white-space:pre-wrap;cursor:pointer}
-#view-browser .status-bar.show{display:block}
-#view-browser .status-bar.bad{color:#ff6b6b}
-#view-browser .debug-console{position:absolute;bottom:10px;right:10px;width:400px;max-height:200px;background:rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:10px;font:11px monospace;color:#0f0;overflow-y:auto;z-index:9999;display:none}
-#view-browser .debug-console.active{display:block}
-#view-browser .debug-console .dbg-error{color:#ff4444}
-#view-browser .debug-console .dbg-warn{color:#ffaa00}
-#view-browser .debug-console .dbg-info{color:#44aaff}
-
 /* ===== GLOBAL SPACING FIX ===== */
 :root { --space-1: 6px; --space-2: 10px; --space-3: 16px; --space-4: 24px; }
 button, input, select, textarea { font: inherit; }
@@ -338,10 +287,6 @@ button { line-height: 1.25; }
 #view-chat header { padding: 16px 20px; }
 #view-chat main { padding: 20px 16px 64px; gap: 14px; }
 #view-chat footer { gap: 10px; padding: 12px 16px; }
-#view-browser { height: 100dvh; min-height: 420px; }
-#view-browser > iframe { display: block; flex: 1 1 auto; width: 100%; min-height: 0; border: 0; }
-#view-browser > div:first-child { gap: 12px; padding: 12px 16px !important; }
-#view-browser > div:first-child button { min-height: 36px; padding: 8px 14px !important; }
 @media (max-width: 600px) {
   .dock { bottom: 14px; gap: 6px; padding: 7px; }
   .dock a { width: 40px; height: 40px; }
@@ -544,16 +489,6 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 </div>
 <div class="music-resize" id="musicResize" title="Drag to resize — double-click to reset"></div>
 </section>
-<!-- BROWSER: Embed the hosted ubtik frontend -->
-<section class="page-view" id="view-browser" style="height:100dvh;min-height:420px;width:100%;padding:0;margin:0;overflow:hidden;background:#050507;">
-  <iframe
-    src="protik.v6.navy"
-    title="TikTok"
-    style="display:block;width:100%;height:100%;min-height:600px;border:0"
-    allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-read; clipboard-write"
-    allowfullscreen
-  ></iframe>
-</section>
 <!-- DOCK -->
 <div class="dock">
 <a data-page="home" class="active" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M12,3,3,10.5V21a1,1,0,0,0,1,1H9a1,1,0,0,0,1-1V15h4v6a1,1,0,0,0,1,1h5a1,1,0,0,0,1-1V10.5Z"/></svg></a>
@@ -561,7 +496,6 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <a data-page="movies" aria-label="Movies & TV"><svg viewBox="0 0 24 24"><path d="M20,4H4A2,2,0,0,0,2,6V18a2,2,0,0,0,2,2H20a2,2,0,0,0,2-2V6A2,2,0,0,0,20,4Zm0,14H4V6H20Z"/><path d="M10,9l5,3-5,3Z"/></svg></a>
 <a data-page="chat" aria-label="Chat"><svg viewBox="0 0 24 24"><path d="M4,4H20a1,1,0,0,1,1,1V17a1,1,0,0,1-1,1H8l-4,4V5A1,1,0,0,1,4,4Z"/></svg></a>
 <a data-page="music" aria-label="Music"><svg viewBox="0 0 24 24"><path d="M12,3V13.55A4,4,0,1,0,14,17V7H18V3Z"/></svg></a>
-<a data-page="browser" aria-label="Browser"><svg viewBox="0 0 24 24"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm7,9h-3a15.6,15.6,0,0,0-1.2-5.5A8,8,0,0,1,19,11ZM12,4a14,14,0,0,1,1.9,7H10.1A14,14,0,0,1,12,4ZM5,11a8,8,0,0,1,3.2-5.5A15.6,15.6,0,0,0,7,11Zm0,2H7a15.6,15.6,0,0,0,1.2,5.5A8,8,0,0,1,5,13Zm7,7a14,14,0,0,1-1.9-7h3.8A14,14,0,0,1,12,20Zm4.8-1.5A15.6,15.6,0,0,0,17,13h2A8,8,0,0,1,16.8,18.5Z"/></svg></a>
 </div>
 <script>
 try{(function(){
