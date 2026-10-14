@@ -65,6 +65,9 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 .dock a{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text);text-decoration:none;cursor:pointer;transition:background .15s,color .15s}
 .dock a:hover{background:var(--accent);color:#0B0B0F}
 .dock a.active{background:var(--accent);color:#0B0B0F}
+.dock a[data-page="chat"]{position:relative}
+.dock .chat-unread-dot{display:none;position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:#ff4545;border:2px solid var(--panel);box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+.dock .chat-unread-dot.visible{display:block}
 .dock svg{width:22px;height:22px;fill:currentColor}
 .page-view{display:none}
 #view-home.active,#view-games.active,#view-movies.active{display:block}
@@ -494,7 +497,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <a data-page="home" class="active" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M12,3,3,10.5V21a1,1,0,0,0,1,1H9a1,1,0,0,0,1-1V15h4v6a1,1,0,0,0,1,1h5a1,1,0,0,0,1-1V10.5Z"/></svg></a>
 <a data-page="games" aria-label="Games"><svg viewBox="0 0 24 24"><path d="M17,6H7A5,5,0,0,0,2,11v2a5,5,0,0,0,5,5,3.87,3.87,0,0,0,2.65-1.05L11.71,15h.58l2.06,1.95A3.87,3.87,0,0,0,17,18a5,5,0,0,0,5-5V11A5,5,0,0,0,17,6ZM10,12H8.5v1.5a1,1,0,0,1-2,0V12H5a1,1,0,0,1,0-2H6.5V8.5a1,1,0,0,1,2,0V10H10a1,1,0,0,1,0,2Zm4.75-2.25a1.25,1.25,0,1,1-1.25,1.25A1.25,1.25,0,0,1,14.75,9.75Zm2.5,3.5a1.25,1.25,0,1,1,1.25-1.25A1.25,1.25,0,0,1,17.25,13.25Z"/></svg></a>
 <a data-page="movies" aria-label="Movies & TV"><svg viewBox="0 0 24 24"><path d="M20,4H4A2,2,0,0,0,2,6V18a2,2,0,0,0,2,2H20a2,2,0,0,0,2-2V6A2,2,0,0,0,20,4Zm0,14H4V6H20Z"/><path d="M10,9l5,3-5,3Z"/></svg></a>
-<a data-page="chat" aria-label="Chat"><svg viewBox="0 0 24 24"><path d="M4,4H20a1,1,0,0,1,1,1V17a1,1,0,0,1-1,1H8l-4,4V5A1,1,0,0,1,4,4Z"/></svg></a>
+<a data-page="chat" aria-label="Chat"><svg viewBox="0 0 24 24"><path d="M4,4H20a1,1,0,0,1,1,1V17a1,1,0,0,1-1,1H8l-4,4V5A1,1,0,0,1,4,4Z"/></svg><span class="chat-unread-dot" aria-label="Unread messages"></span></a>
 <a data-page="music" aria-label="Music"><svg viewBox="0 0 24 24"><path d="M12,3V13.55A4,4,0,1,0,14,17V7H18V3Z"/></svg></a>
 </div>
 <script>
@@ -564,6 +567,10 @@ sendBtn=document.getElementById('send'),statusEl=document.getElementById('status
 nameModal=document.getElementById('nameModal'),nameInput=document.getElementById('nameInput'),nameJoin=document.getElementById('nameJoin');
 const MAX=300;let myName=null,myId=null,liveRef=null,liveReady=false,pendingText=null;
 const messageBall=document.getElementById('chat-message-ball');
+ const chatUnreadDot=document.querySelector('.dock .chat-unread-dot');
+ let seenInitialChatSnapshot=false,knownMessageIds=new Set();
+ function showChatUnread(){if(chatUnreadDot)chatUnreadDot.classList.add('visible');}
+ function clearChatUnread(){if(chatUnreadDot)chatUnreadDot.classList.remove('visible');}
 function showMessageBall(){if(messageBall)messageBall.classList.add('visible');}
 function hideMessageBall(){if(messageBall)messageBall.classList.remove('visible');}
 if(messageBall)messageBall.addEventListener('click',()=>{hideMessageBall();mainEl.scrollTop=mainEl.scrollHeight;});
@@ -599,6 +606,13 @@ async function init(){
       const v=snap.val()||{};
       const list=Object.keys(v).map(k=>Object.assign({id:k},v[k]));
       list.sort((a,b)=>(a.ts||0)-(b.ts||0));
+      if(seenInitialChatSnapshot){
+        if(list.some(m=>!knownMessageIds.has(m.id))&&!document.getElementById('view-chat').classList.contains('active'))showChatUnread();
+        list.forEach(m=>knownMessageIds.add(m.id));
+      }else{
+        knownMessageIds=new Set(list.map(m=>m.id));
+        seenInitialChatSnapshot=true;
+      }
       liveReady=true;
       setStatus('Connected — messages sync live.');
       if(list.length)showMessageBall();
@@ -1023,6 +1037,7 @@ if(/pag/i.test(c))el.style.display="none";});};
 setTimeout(stripPages,400);setTimeout(stripPages,1500);
 try{new MutationObserver(stripPages).observe(document.getElementById("games"),{childList:true,subtree:true});}catch(e){}}
 function showPage(name){if(!pageViews[name])return;
+if(name==="chat")clearChatUnread();
 Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active");});
 pageViews[name].classList.add("active");
 document.querySelectorAll(".dock a[data-page]").forEach(function(a){
