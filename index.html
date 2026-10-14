@@ -660,7 +660,7 @@ function showWhoami(){whoamiEl.innerHTML='Signed in as <strong>'+esc(myName)+'</
 document.getElementById('switchName').addEventListener('click',()=>{nameInput.value=myName;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);});}
 function joinWithName(n){n=(n||'').trim().slice(0,30);if(!n)return;myName=n;try{localStorage.setItem('cs_chat_name',myName);}catch(e){}
 nameModal.classList.add('hidden');showWhoami();
-if(pendingText){const t=pendingText;pendingText=null;sendMessage(t);}}
+if(pendingText!==null){const t=pendingText;pendingText=null;sendMessage(t);}}
 nameJoin.addEventListener('click',()=>joinWithName(nameInput.value));
 nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')joinWithName(nameInput.value);});
 if(myName){showWhoami();}else if(document.getElementById('view-chat').classList.contains('active')){nameModal.classList.remove('hidden');nameInput.focus();}
