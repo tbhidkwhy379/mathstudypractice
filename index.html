@@ -654,8 +654,8 @@ const publish=imageUrl=>{if(imageUrl)entry.imageUrl=imageUrl;liveRef.push(entry,
 if(file){if(!storageRef){sendBtn.disabled=false;attachImageBtn.disabled=false;setStatus('Image upload is unavailable — Firebase Storage did not connect.');return;}setStatus('Uploading image…');const safeName=(file.name||'image').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80);storageRef.child('classroomspot-chat/images/'+myId+'/'+Date.now()+'-'+safeName).put(file).then(snap=>snap.ref.getDownloadURL()).then(publish).catch(err=>{sendBtn.disabled=false;attachImageBtn.disabled=false;setStatus('Image upload failed: '+(err&&err.message||'check Firebase Storage rules'));});}else publish(null);}
 const grow=()=>{textEl.style.height='auto';textEl.style.height=Math.min(textEl.scrollHeight,100)+'px';};
 textEl.addEventListener('input',grow);
-textEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=textEl.value;sendMessage(v);if(myName&&((v||'').trim()||pendingImage)){textEl.value='';grow();}}});
-sendBtn.addEventListener('click',()=>{const v=textEl.value;sendMessage(v);if(myName&&((v||'').trim()||pendingImage)){textEl.value='';grow();}});
+textEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=textEl.value;if((v||'').trim()||pendingImage){sendMessage(v);textEl.value='';grow();}}});
+sendBtn.addEventListener('click',()=>{const v=textEl.value;if((v||'').trim()||pendingImage){sendMessage(v);textEl.value='';grow();}});
 function showWhoami(){whoamiEl.innerHTML='Signed in as <strong>'+esc(myName)+'</strong><br><button id="switchName">Change name</button>';
 document.getElementById('switchName').addEventListener('click',()=>{nameInput.value=myName;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);});}
 function joinWithName(n){n=(n||'').trim().slice(0,30);if(!n)return;myName=n;try{localStorage.setItem('cs_chat_name',myName);}catch(e){}
