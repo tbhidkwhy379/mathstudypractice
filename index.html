@@ -575,7 +575,7 @@ var FIREBASE_CONFIG = {
 const mainEl=document.getElementById('main'),emptyEl=document.getElementById('empty'),textEl=document.getElementById('text'),
 sendBtn=document.getElementById('send'),statusEl=document.getElementById('status'),whoamiEl=document.getElementById('whoami'),
 nameModal=document.getElementById('nameModal'),nameInput=document.getElementById('nameInput'),nameJoin=document.getElementById('nameJoin'),imageFileEl=document.getElementById('imageFile'),attachImageBtn=document.getElementById('attachImage'),imagePreview=document.getElementById('imagePreview'),imagePreviewThumb=document.getElementById('imagePreviewThumb'),imagePreviewName=document.getElementById('imagePreviewName'),removeImageBtn=document.getElementById('removeImage');
-const MAX=300,MAX_IMAGE_BYTES=5*1024*1024;let myName=null,myId=null,liveRef=null,liveReady=false,storageRef=null,pendingText=null,pendingImage=null,pendingImageUrl=null;
+const MAX=300,MAX_IMAGE_BYTES=5*1024*1024;let myName=null,myId=null,liveRef=null,liveReady=false,pendingText=null,pendingImage=null,pendingImageUrl=null;
 const messageBall=document.getElementById('chat-message-ball');
  const chatUnreadDot=document.querySelector('.dock .chat-unread-dot');
  let seenInitialChatSnapshot=false,knownMessageIds=new Set();
@@ -608,12 +608,10 @@ async function init(){
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
-    await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     await firebase.auth().signInAnonymously();
     myId=firebase.auth().currentUser.uid;
     liveRef=firebase.database().ref('classroomspot-chat/messages');
-    storageRef=firebase.storage().ref();
     liveRef.limitToLast(MAX).on('value',snap=>{
       const v=snap.val()||{};
       const list=Object.keys(v).map(k=>Object.assign({id:k},v[k]));
@@ -650,8 +648,8 @@ if(!myName){pendingText=text;nameModal.classList.remove('hidden');setTimeout(()=
 if(!liveReady||!liveRef||!myId){setStatus('Chat is still connecting — try sending again in a moment.');return;}
 const file=pendingImage;const entry={uid:myId,name:myName,text:text.slice(0,1000),ts:Date.now()};
 sendBtn.disabled=true;attachImageBtn.disabled=true;
-const publish=imageUrl=>{if(imageUrl)entry.imageUrl=imageUrl;liveRef.push(entry,err=>{sendBtn.disabled=false;attachImageBtn.disabled=false;if(err){setStatus('Message not sent: '+(err.message||'check Firebase rules'));return;}if(file&&pendingImage===file)clearPendingImage();setStatus('Connected — messages sync live.');});};
-if(file){if(!storageRef){sendBtn.disabled=false;attachImageBtn.disabled=false;setStatus('Image upload is unavailable — Firebase Storage did not connect.');return;}setStatus('Uploading image…');const safeName=(file.name||'image').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80);storageRef.child('classroomspot-chat/images/'+myId+'/'+Date.now()+'-'+safeName).put(file).then(snap=>snap.ref.getDownloadURL()).then(publish).catch(err=>{sendBtn.disabled=false;attachImageBtn.disabled=false;setStatus('Image upload failed: '+(err&&err.message||'check Firebase Storage rules'));});}else publish(null);}
+const publish=imageData=>{if(imageData)entry.imageUrl=imageData;liveRef.push(entry,err=>{sendBtn.disabled=false;attachImageBtn.disabled=false;if(err){setStatus('Message not sent: '+(err.message||'check Firebase Realtime Database rules'));return;}if(file&&pendingImage===file)clearPendingImage();setStatus('Connected — messages sync live.');});};
+if(file){setStatus('Converting image for shared chat…');const reader=new FileReader();reader.onload=()=>publish(String(reader.result||''));reader.onerror=()=>{sendBtn.disabled=false;attachImageBtn.disabled=false;setStatus('Could not read that image. Try another file.');};reader.readAsDataURL(file);}else publish(null);}
 const grow=()=>{textEl.style.height='auto';textEl.style.height=Math.min(textEl.scrollHeight,100)+'px';};
 textEl.addEventListener('input',grow);
 textEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=textEl.value;if((v||'').trim()||pendingImage){sendMessage(v);textEl.value='';grow();}}});
