@@ -1052,7 +1052,7 @@ if(/pag/i.test(c))el.style.display="none";});};
 setTimeout(stripPages,400);setTimeout(stripPages,1500);
 try{new MutationObserver(stripPages).observe(document.getElementById("games"),{childList:true,subtree:true});}catch(e){}}
 function showPage(name){if(!pageViews[name])return;
-if(name==="chat")clearChatUnread();
+if(name==="chat"){var unreadDot=document.querySelector(".dock .chat-unread-dot");if(unreadDot)unreadDot.classList.remove("visible");}
 Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active");});
 pageViews[name].classList.add("active");
 document.querySelectorAll(".dock a[data-page]").forEach(function(a){
