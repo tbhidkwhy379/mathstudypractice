@@ -164,6 +164,13 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-chat footer{position:sticky;bottom:0;background:rgba(31,34,38,.85);backdrop-filter:blur(10px);border-top:1px solid var(--border2);padding:10px 12px;display:flex;gap:8px;align-items:flex-end}
 #view-chat #text{flex:1;resize:none;max-height:100px;min-height:40px;padding:10px 14px;border-radius:20px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:14.5px;font-family:inherit;outline:none}
 #view-chat #text:focus{border-color:var(--acc2)}
+#view-chat .chat-attach{background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:50%;width:40px;height:40px;flex-shrink:0;cursor:pointer}
+#view-chat .chat-attach:hover{border-color:var(--acc2)}
+#view-chat #imagePreview{display:none;align-items:center;gap:8px;padding:7px 12px;background:rgba(31,34,38,.9);border-top:1px solid var(--border2);font-size:12px;color:var(--muted2)}
+#view-chat #imagePreview.visible{display:flex}
+#view-chat #imagePreview img{width:42px;height:42px;object-fit:cover;border-radius:7px}
+#view-chat #imagePreview button{margin-left:auto;background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:7px;padding:4px 8px;cursor:pointer}
+#view-chat .msg .chat-image{display:block;max-width:min(320px,65vw);max-height:320px;object-fit:contain;border-radius:10px;margin-top:5px;cursor:pointer}
 #view-chat #send{background:var(--acc2);color:#fff;border:none;border-radius:20px;padding:0 18px;height:40px;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0}
 #view-chat #status{font-size:11px;color:var(--muted2);padding:0 12px 6px;text-align:center}
 #view-chat #chat-message-ball{position:fixed;z-index:30;left:50%;bottom:82px;transform:translateX(-50%);width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.85);background:var(--acc2);color:#fff;box-shadow:0 4px 18px rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;cursor:pointer;animation:chatBallFloat 1.6s ease-in-out infinite;font-size:15px}
@@ -408,8 +415,11 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 </header>
 <main id="main"><div id="empty">No messages yet. Say hello!</div></main>
 <div id="status"></div>
+<div id="imagePreview"><img id="imagePreviewThumb" alt="Image preview"><span id="imagePreviewName"></span><button id="removeImage" type="button">Remove</button></div>
 <footer>
-<textarea id="text" placeholder="Message #classroom" rows="1"></textarea>
+<input id="imageFile" type="file" accept="image/*" hidden>
+<button id="attachImage" class="chat-attach" type="button" title="Upload image" aria-label="Upload image"><i class="fas fa-paperclip"></i></button>
+<textarea id="text" placeholder="Message #classroom (paste an image with Ctrl+V)" rows="1"></textarea>
 <button id="send">Send</button>
 </footer>
 <button id="chat-message-ball" type="button" aria-label="Jump to latest chat message" title="Jump to latest message">↓</button>
@@ -564,8 +574,8 @@ var FIREBASE_CONFIG = {
 };
 const mainEl=document.getElementById('main'),emptyEl=document.getElementById('empty'),textEl=document.getElementById('text'),
 sendBtn=document.getElementById('send'),statusEl=document.getElementById('status'),whoamiEl=document.getElementById('whoami'),
-nameModal=document.getElementById('nameModal'),nameInput=document.getElementById('nameInput'),nameJoin=document.getElementById('nameJoin');
-const MAX=300;let myName=null,myId=null,liveRef=null,liveReady=false,pendingText=null;
+nameModal=document.getElementById('nameModal'),nameInput=document.getElementById('nameInput'),nameJoin=document.getElementById('nameJoin'),imageFileEl=document.getElementById('imageFile'),attachImageBtn=document.getElementById('attachImage'),imagePreview=document.getElementById('imagePreview'),imagePreviewThumb=document.getElementById('imagePreviewThumb'),imagePreviewName=document.getElementById('imagePreviewName'),removeImageBtn=document.getElementById('removeImage');
+const MAX=300,MAX_IMAGE_BYTES=5*1024*1024;let myName=null,myId=null,liveRef=null,liveReady=false,storageRef=null,pendingText=null,pendingImage=null,pendingImageUrl=null;
 const messageBall=document.getElementById('chat-message-ball');
  const chatUnreadDot=document.querySelector('.dock .chat-unread-dot');
  let seenInitialChatSnapshot=false,knownMessageIds=new Set();
@@ -585,7 +595,7 @@ const setStatus=s=>{statusEl.textContent=s;};
 function render(list){const wasAtBottom=mainEl.scrollHeight-mainEl.scrollTop-mainEl.clientHeight<80;mainEl.innerHTML='';if(!list||!list.length){mainEl.appendChild(emptyEl);return;}
 const atBottom=wasAtBottom;
 list.forEach(m=>{const w=document.createElement('div');w.className='msg '+(m.uid===myId?'me':'other');
-w.innerHTML='<div class="name">'+esc(m.uid===myId?'You':(m.name||'Guest'))+'</div><div class="bubble">'+esc(m.text||'')+'</div><div class="time">'+fmt(m.ts)+'</div>';
+w.innerHTML='<div class="name">'+esc(m.uid===myId?'You':(m.name||'Guest'))+'</div><div class="bubble">'+(m.text?esc(m.text):'')+(m.imageUrl?'<a href="'+esc(m.imageUrl)+'" target="_blank" rel="noopener noreferrer"><img class="chat-image" src="'+esc(m.imageUrl)+'" alt="Image sent in chat" loading="lazy"></a>':'')+'</div><div class="time">'+fmt(m.ts)+'</div>';
 mainEl.appendChild(w);});
 if(atBottom)mainEl.scrollTop=mainEl.scrollHeight;}
 function mergeLocal(list){const ids={};(list||[]).forEach(m=>ids[m.id]=true);
@@ -598,10 +608,12 @@ async function init(){
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
+    await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     await firebase.auth().signInAnonymously();
     myId=firebase.auth().currentUser.uid;
     liveRef=firebase.database().ref('classroomspot-chat/messages');
+    storageRef=firebase.storage().ref();
     liveRef.limitToLast(MAX).on('value',snap=>{
       const v=snap.val()||{};
       const list=Object.keys(v).map(k=>Object.assign({id:k},v[k]));
@@ -627,20 +639,23 @@ async function init(){
     console.error('[chat firebase]',e);
   }
 }
-function sendMessage(text){text=(text||'').trim();if(!text)return;
+function setPendingImage(file){if(!file)return;if(!file.type||file.type.indexOf('image/')!==0){setStatus('Please choose an image file.');return;}if(file.size>MAX_IMAGE_BYTES){setStatus('Images must be 5 MB or smaller.');return;}if(pendingImageUrl)URL.revokeObjectURL(pendingImageUrl);pendingImage=file;pendingImageUrl=URL.createObjectURL(file);imagePreviewThumb.src=pendingImageUrl;imagePreviewName.textContent=file.name||'Pasted image';imagePreview.classList.add('visible');setStatus('Image ready to send.');}
+function clearPendingImage(){pendingImage=null;if(pendingImageUrl)URL.revokeObjectURL(pendingImageUrl);pendingImageUrl=null;imagePreviewThumb.removeAttribute('src');imagePreview.classList.remove('visible');if(imageFileEl)imageFileEl.value='';}
+attachImageBtn.addEventListener('click',()=>imageFileEl.click());
+imageFileEl.addEventListener('change',()=>{if(imageFileEl.files&&imageFileEl.files[0])setPendingImage(imageFileEl.files[0]);});
+removeImageBtn.addEventListener('click',clearPendingImage);
+textEl.addEventListener('paste',e=>{const items=e.clipboardData&&e.clipboardData.items;if(!items)return;for(let i=0;i<items.length;i++){const it=items[i];if(it.type&&it.type.indexOf('image/')===0){const f=it.getAsFile();if(f){e.preventDefault();setPendingImage(f);textEl.focus();}return;}}});
+function sendMessage(text){text=(text||'').trim();if(!text&&!pendingImage)return;
 if(!myName){pendingText=text;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);return;}
 if(!liveReady||!liveRef||!myId){setStatus('Chat is still connecting — try sending again in a moment.');return;}
-const entry={uid:myId,name:myName,text:text.slice(0,1000),ts:Date.now()};
-sendBtn.disabled=true;
-liveRef.push(entry,err=>{
-  sendBtn.disabled=false;
-  if(err){setStatus('Message not sent: '+(err.message||'check Firebase rules'));return;}
-  setStatus('Connected — messages sync live.');
-});}
+const file=pendingImage;const entry={uid:myId,name:myName,text:text.slice(0,1000),ts:Date.now()};
+sendBtn.disabled=true;attachImageBtn.disabled=true;
+const publish=imageUrl=>{if(imageUrl)entry.imageUrl=imageUrl;liveRef.push(entry,err=>{sendBtn.disabled=false;attachImageBtn.disabled=false;if(err){setStatus('Message not sent: '+(err.message||'check Firebase rules'));return;}if(file&&pendingImage===file)clearPendingImage();setStatus('Connected — messages sync live.');});};
+if(file){if(!storageRef){sendBtn.disabled=false;attachImageBtn.disabled=false;setStatus('Image upload is unavailable — Firebase Storage did not connect.');return;}setStatus('Uploading image…');const safeName=(file.name||'image').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80);storageRef.child('classroomspot-chat/images/'+myId+'/'+Date.now()+'-'+safeName).put(file).then(snap=>snap.ref.getDownloadURL()).then(publish).catch(err=>{sendBtn.disabled=false;attachImageBtn.disabled=false;setStatus('Image upload failed: '+(err&&err.message||'check Firebase Storage rules'));});}else publish(null);}
 const grow=()=>{textEl.style.height='auto';textEl.style.height=Math.min(textEl.scrollHeight,100)+'px';};
 textEl.addEventListener('input',grow);
-textEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=textEl.value;textEl.value='';grow();sendMessage(v);}});
-sendBtn.addEventListener('click',()=>{const v=textEl.value;textEl.value='';grow();sendMessage(v);});
+textEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=textEl.value;sendMessage(v);if(myName&&((v||'').trim()||pendingImage)){textEl.value='';grow();}}});
+sendBtn.addEventListener('click',()=>{const v=textEl.value;sendMessage(v);if(myName&&((v||'').trim()||pendingImage)){textEl.value='';grow();}});
 function showWhoami(){whoamiEl.innerHTML='Signed in as <strong>'+esc(myName)+'</strong><br><button id="switchName">Change name</button>';
 document.getElementById('switchName').addEventListener('click',()=>{nameInput.value=myName;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);});}
 function joinWithName(n){n=(n||'').trim().slice(0,30);if(!n)return;myName=n;try{localStorage.setItem('cs_chat_name',myName);}catch(e){}
