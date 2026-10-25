@@ -184,6 +184,29 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-chat #nameModal p{margin:0 0 14px;font-size:13px;color:var(--muted2)}
 #view-chat #nameModal input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:14.5px;outline:none;margin-bottom:12px}
 #view-chat #nameModal button{width:100%;background:var(--acc2);color:#fff;border:none;border-radius:10px;padding:11px;font-size:14.5px;font-weight:600;cursor:pointer}
+/* Social chat UI */
+#view-chat #chatSocial{padding:10px 12px 0;background:rgba(22,24,28,.72);border-bottom:1px solid var(--border2)}
+#view-chat .chat-tabs{display:flex;gap:7px;flex-wrap:wrap}
+#view-chat .chat-tabs button,#view-chat .people-search button,#view-chat .people-list button{background:var(--panel2);border:1px solid var(--border2);color:var(--text2);border-radius:9px;padding:8px 12px;cursor:pointer;font:inherit;font-size:12px}
+#view-chat .chat-tabs button.active{background:var(--acc2);border-color:var(--acc2);color:white}
+#view-chat #peoplePanel,#view-chat #dmPanel{padding:12px 0;max-height:32vh;overflow:auto}
+#view-chat #peoplePanel[hidden],#view-chat #dmPanel[hidden]{display:none}
+#view-chat .people-search{display:flex;gap:7px}
+#view-chat .people-search input{flex:1;min-width:0;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;padding:9px 11px;color:var(--text2);font:inherit;font-size:13px}
+#view-chat .social-hint{font-size:11px;color:var(--muted2);margin:7px 0 12px}
+#view-chat #peoplePanel h3{font-size:12px;color:var(--muted2);margin:12px 0 6px}
+#view-chat .people-list{display:flex;flex-direction:column;gap:6px}
+#view-chat .person-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.035);border:1px solid var(--border2);border-radius:9px;padding:8px 10px;font-size:12px;min-width:0}
+#view-chat .person-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+#view-chat .person-id{color:var(--muted2);font-size:10px;overflow-wrap:anywhere}
+#view-chat .person-row button{flex-shrink:0}
+#view-chat #dmHeader{font-size:12px;color:var(--muted2);padding:8px 2px}
+#view-chat .msg .name button{background:none;border:0;color:inherit;font:inherit;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:transparent}
+#view-chat .msg .name button:hover{text-decoration-color:currentColor}
+#view-chat .msg .name .mini-id{font-size:9px;opacity:.65;margin-left:4px}
+#view-chat .user-id-label{display:inline-block;max-width:220px;overflow-wrap:anywhere;font-size:10px;color:var(--muted2);margin-top:3px}
+#view-chat .user-id-label code{font-size:10px;color:var(--text2)}
+@media(max-width:520px){#view-chat .chat-tabs button{padding:7px 9px;font-size:11px}}
 /* music — floating draggable + resizable window */
 #view-music{--bg-black:#1c1c1e;--bg-base:#232326;--bg-elevated:#2b2b2e;--bg-highlight:#35353a;--brand-green:#1db954;--brand-green-light:#1ed760;--text-base:#fff;--text-subdued:#a7a7a7;--essential-negative:#e91429;--panel-gap:8px;--border-radius:8px;position:fixed;right:16px;bottom:86px;width:min(900px,94vw);height:min(620px,74vh);z-index:6000;display:none;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(18,18,22,.94);backdrop-filter:blur(14px);box-shadow:0 24px 60px rgba(0,0,0,.65);color:var(--text-base);font-family:'Circular Std',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;grid-template-rows:38px 1fr 90px}
 #view-music *{box-sizing:border-box;margin:0;padding:0;user-select:none}
@@ -413,6 +436,11 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 </div>
 <div id="whoami"></div>
 </header>
+<div id="chatSocial">
+ <div class="chat-tabs"><button id="globalTab" class="active" type="button">🌐 Global chat</button><button id="friendsTab" type="button">👥 Friends <span id="requestCount"></span></button><button id="dmsTab" type="button">✉ DMs</button></div>
+ <div id="peoplePanel" hidden><div class="people-search"><input id="findUserId" placeholder="Enter someone's User ID" autocomplete="off"><button id="findUserBtn" type="button">Find / Add</button></div><p class="social-hint">Share your User ID so friends can add you.</p><h3>Friend requests <span id="requestsEmpty"></span></h3><div id="friendRequests" class="people-list"></div><h3>Your friends</h3><div id="friendsList" class="people-list"></div></div>
+ <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div>
+</div>
 <main id="main"><div id="empty">No messages yet. Say hello!</div></main>
 <div id="status"></div>
 <div id="imagePreview"><img id="imagePreviewThumb" alt="Image preview"><span id="imagePreviewName"></span><button id="removeImage" type="button">Remove</button></div>
@@ -576,6 +604,10 @@ const mainEl=document.getElementById('main'),emptyEl=document.getElementById('em
 sendBtn=document.getElementById('send'),statusEl=document.getElementById('status'),whoamiEl=document.getElementById('whoami'),
 nameModal=document.getElementById('nameModal'),nameInput=document.getElementById('nameInput'),nameJoin=document.getElementById('nameJoin'),imageFileEl=document.getElementById('imageFile'),attachImageBtn=document.getElementById('attachImage'),imagePreview=document.getElementById('imagePreview'),imagePreviewThumb=document.getElementById('imagePreviewThumb'),imagePreviewName=document.getElementById('imagePreviewName'),removeImageBtn=document.getElementById('removeImage');
 const MAX=300,MAX_IMAGE_BYTES=5*1024*1024;let myName=null,myId=null,liveRef=null,liveReady=false,pendingText=null,pendingImage=null,pendingImageUrl=null;
+let viewMode='global',globalMessages=[],friendsMap={},requestsMap={},dmPartner=null,dmRef=null,dmListener=null,usersRef=null,friendsRef=null,requestsRef=null,outgoingRequests={};
+const socialRoot='classroomspot-chat';
+const globalTab=document.getElementById('globalTab'),friendsTab=document.getElementById('friendsTab'),dmsTab=document.getElementById('dmsTab'),peoplePanel=document.getElementById('peoplePanel'),dmPanel=document.getElementById('dmPanel'),findUserId=document.getElementById('findUserId'),findUserBtn=document.getElementById('findUserBtn'),friendRequestsEl=document.getElementById('friendRequests'),friendsListEl=document.getElementById('friendsList'),dmListEl=document.getElementById('dmList'),dmHeaderEl=document.getElementById('dmHeader'),requestCountEl=document.getElementById('requestCount');
+try{outgoingRequests=JSON.parse(localStorage.getItem('cs_outgoing_requests')||'{}')||{};}catch(e){outgoingRequests={};}
 const messageBall=document.getElementById('chat-message-ball');
  const chatUnreadDot=document.querySelector('.dock .chat-unread-dot');
  let seenInitialChatSnapshot=false,knownMessageIds=new Set();
@@ -592,11 +624,10 @@ try{myName=localStorage.getItem('cs_chat_name');}catch(e){}
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=ts=>{try{return new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}catch(e){return '';}};
 const setStatus=s=>{statusEl.textContent=s;};
-function render(list){const wasAtBottom=mainEl.scrollHeight-mainEl.scrollTop-mainEl.clientHeight<80;mainEl.innerHTML='';if(!list||!list.length){mainEl.appendChild(emptyEl);return;}
+function render(list){const wasAtBottom=mainEl.scrollHeight-mainEl.scrollTop-mainEl.clientHeight<80;mainEl.innerHTML='';if(!list||!list.length){const e=document.createElement('div');e.id='empty';e.textContent=viewMode==='global'?'No global messages yet. Say hello!':(dmPartner?'No messages with this friend yet. Say hello!':'Choose a friend from the DMs tab.');mainEl.appendChild(e);return;}
 const atBottom=wasAtBottom;
-list.forEach(m=>{const w=document.createElement('div');w.className='msg '+(m.uid===myId?'me':'other');
-w.innerHTML='<div class="name">'+esc(m.uid===myId?'You':(m.name||'Guest'))+'</div><div class="bubble">'+(m.text?esc(m.text):'')+(m.imageUrl?'<a href="'+esc(m.imageUrl)+'" target="_blank" rel="noopener noreferrer"><img class="chat-image" src="'+esc(m.imageUrl)+'" alt="Image sent in chat" loading="lazy"></a>':'')+'</div><div class="time">'+fmt(m.ts)+'</div>';
-mainEl.appendChild(w);});
+list.forEach(m=>{const w=document.createElement('div');w.className='msg '+(m.uid===myId?'me':'other');const name=m.uid===myId?'You':(m.name||'Guest');const label=(m.uid&&m.uid!==myId&&!friendsMap[m.uid])?'<button type="button" data-add-friend="'+esc(m.uid)+'">'+esc(name)+'</button><span class="mini-id">ID: '+esc(m.uid)+'</span>':esc(name)+(m.uid&&m.uid!==myId?'<span class="mini-id">ID: '+esc(m.uid)+'</span>':'');
+w.innerHTML='<div class="name">'+label+'</div><div class="bubble">'+(m.text?esc(m.text):'')+(m.imageUrl?'<a href="'+esc(m.imageUrl)+'" target="_blank" rel="noopener noreferrer"><img class="chat-image" src="'+esc(m.imageUrl)+'" alt="Image sent in chat" loading="lazy"></a>':'')+'</div><div class="time">'+fmt(m.ts)+'</div>';mainEl.appendChild(w);});
 if(atBottom)mainEl.scrollTop=mainEl.scrollHeight;}
 function mergeLocal(list){const ids={};(list||[]).forEach(m=>ids[m.id]=true);
 return [...(list||[]),...localMsgs.filter(m=>!ids[m.id])].sort((a,b)=>(a.ts||0)-(b.ts||0)).slice(-MAX);}
@@ -609,10 +640,15 @@ async function init(){
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    await firebase.auth().signInAnonymously();
+    if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
     myId=firebase.auth().currentUser.uid;
-    liveRef=firebase.database().ref('classroomspot-chat/messages');
-    liveRef.limitToLast(MAX).on('value',snap=>{
+    if(myName)showWhoami();
+    liveRef=firebase.database().ref(socialRoot+'/messages');
+    usersRef=firebase.database().ref(socialRoot+'/users');
+    await usersRef.child(myId).update({uid:myId,name:myName||'Guest',updatedAt:Date.now()});
+    installSocialListeners();
+    Object.keys(outgoingRequests).forEach(uid=>{firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).on('value',snap=>{const q=snap.val();if(q&&q.accepted===true)syncAcceptedOutgoing();});});
+    liveRef.limitToLast(MAX).on('value',snap=>{}
       const v=snap.val()||{};
       const list=Object.keys(v).map(k=>Object.assign({id:k},v[k]));
       list.sort((a,b)=>(a.ts||0)-(b.ts||0));
@@ -626,8 +662,9 @@ async function init(){
       liveReady=true;
       setStatus('Connected — messages sync live.');
       if(list.length)showMessageBall();
-      render(mergeLocal(list));
-    },err=>{
+      globalMessages=mergeLocal(list);
+      if(viewMode==='global')render(globalMessages);
+    },err=>{}
       liveReady=false;
       setStatus('Chat sync error: '+(err&&err.message||'check Firebase rules'));
     });
@@ -646,21 +683,39 @@ textEl.addEventListener('paste',e=>{const items=e.clipboardData&&e.clipboardData
 function sendMessage(text){text=(text||'').trim();if(!text&&!pendingImage)return;
 if(!myName){pendingText=text;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);return;}
 if(!liveReady||!liveRef||!myId){setStatus('Chat is still connecting — try sending again in a moment.');return;}
+const targetRef=viewMode==='dms'?(dmPartner&&dmRef?dmRef:null):liveRef;if(!targetRef){setStatus('Choose a friend first.');return;}
 const file=pendingImage;const entry={uid:myId,name:myName,text:text.slice(0,1000),ts:Date.now()};
 sendBtn.disabled=true;attachImageBtn.disabled=true;
-const publish=imageData=>{if(imageData)entry.imageUrl=imageData;liveRef.push(entry,err=>{sendBtn.disabled=false;attachImageBtn.disabled=false;if(err){setStatus('Message not sent: '+(err.message||'check Firebase Realtime Database rules'));return;}if(file&&pendingImage===file)clearPendingImage();setStatus('Connected — messages sync live.');});};
-if(file){setStatus('Converting image for shared chat…');const reader=new FileReader();reader.onload=()=>publish(String(reader.result||''));reader.onerror=()=>{sendBtn.disabled=false;attachImageBtn.disabled=false;setStatus('Could not read that image. Try another file.');};reader.readAsDataURL(file);}else publish(null);}
+const publish=imageData=>{if(imageData)entry.imageUrl=imageData;targetRef.push(entry,err=>{sendBtn.disabled=false;attachImageBtn.disabled=false;if(err){setStatus('Message not sent: '+(err.message||'check Firebase Realtime Database rules'));return;}if(file&&pendingImage===file)clearPendingImage();setStatus(viewMode==='global'?'Sent to global chat.':'DM sent.');});};
+if(file){setStatus('Converting image for chat…');const reader=new FileReader();reader.onload=()=>publish(String(reader.result||''));reader.onerror=()=>{sendBtn.disabled=false;attachImageBtn.disabled=false;setStatus('Could not read that image. Try another file.');};reader.readAsDataURL(file);}else publish(null);}
 const grow=()=>{textEl.style.height='auto';textEl.style.height=Math.min(textEl.scrollHeight,100)+'px';};
 textEl.addEventListener('input',grow);
 textEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=textEl.value;if((v||'').trim()||pendingImage){sendMessage(v);textEl.value='';grow();}}});
 sendBtn.addEventListener('click',()=>{const v=textEl.value;if((v||'').trim()||pendingImage){sendMessage(v);textEl.value='';grow();}});
-function showWhoami(){whoamiEl.innerHTML='Signed in as <strong>'+esc(myName)+'</strong><br><button id="switchName">Change name</button>';
+function showWhoami(){whoamiEl.innerHTML='Signed in as <strong>'+esc(myName)+'</strong><br><span class="user-id-label">User ID: <code>'+esc(myId||'Connecting…')+'</code></span><br><button id="copyUserId">Copy ID</button> <button id="switchName">Change name</button>';
+const copyIdBtn=document.getElementById('copyUserId');copyIdBtn.addEventListener('click',()=>{if(myId&&navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(myId).then(()=>setStatus('User ID copied.')).catch(()=>setStatus('Your User ID is '+myId));else setStatus('Your User ID is '+(myId||'not ready'));});
 document.getElementById('switchName').addEventListener('click',()=>{nameInput.value=myName;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);});}
 function joinWithName(n){n=(n||'').trim().slice(0,30);if(!n)return;myName=n;try{localStorage.setItem('cs_chat_name',myName);}catch(e){}
 nameModal.classList.add('hidden');showWhoami();
+if(myId&&usersRef)usersRef.child(myId).update({uid:myId,name:myName,updatedAt:Date.now()}).catch(e=>setStatus('Could not update profile: '+(e.message||'')));
 if(pendingText!==null){const t=pendingText;pendingText=null;sendMessage(t);}}
 nameJoin.addEventListener('click',()=>joinWithName(nameInput.value));
 nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')joinWithName(nameInput.value);});
+function saveOutgoing(){try{localStorage.setItem('cs_outgoing_requests',JSON.stringify(outgoingRequests));}catch(e){}}
+function dmPath(other){return [myId,other].sort().join('/');}
+function setMode(mode){viewMode=mode;globalTab.classList.toggle('active',mode==='global');friendsTab.classList.toggle('active',mode==='friends');dmsTab.classList.toggle('active',mode==='dms');peoplePanel.hidden=mode!=='friends';dmPanel.hidden=mode!=='dms';textEl.placeholder=mode==='global'?'Message #global (paste an image with Ctrl+V)':(mode==='dms'&&dmPartner?'Message '+dmPartner.name+'…':'Choose a friend to DM');if(mode==='global'){if(dmListener&&dmRef)dmRef.off('value',dmListener);dmListener=null;dmRef=null;dmPartner=null;render(globalMessages);}else if(mode==='friends'){render([]);renderPeople();}else{renderDmList();if(dmPartner)dmHeaderEl.textContent='DM with '+dmPartner.name+' · ID '+dmPartner.uid;else dmHeaderEl.textContent='Choose a friend to start a DM.';render([]);}}
+function renderPeople(){friendRequestsEl.innerHTML='';let pending=0;Object.keys(requestsMap).forEach(uid=>{const q=requestsMap[uid];if(!q||q.accepted===true||q.ignored===true||friendsMap[uid])return;pending++;const row=document.createElement('div');row.className='person-row';row.innerHTML='<div class="person-name">'+esc(q.name||'User')+'<div class="person-id">ID: '+esc(uid)+'</div></div><button type="button" data-accept="'+esc(uid)+'">Accept</button><button type="button" data-decline="'+esc(uid)+'">Ignore</button>';friendRequestsEl.appendChild(row);});requestCountEl.textContent=pending?'('+pending+')':'';document.getElementById('requestsEmpty').textContent=pending?'('+pending+')':'— none';if(!friendRequestsEl.children.length)friendRequestsEl.innerHTML='<div class="social-hint">No pending requests.</div>';
+friendsListEl.innerHTML='';const ids=Object.keys(friendsMap).filter(uid=>friendsMap[uid]===true);if(!ids.length)friendsListEl.innerHTML='<div class="social-hint">No friends yet. Add someone using their User ID.</div>';ids.forEach(uid=>{usersRef.child(uid).once('value').then(snap=>{const p=snap.val()||{};const row=document.createElement('div');row.className='person-row';row.innerHTML='<div class="person-name">'+esc(p.name||'Friend')+'<div class="person-id">ID: '+esc(uid)+'</div></div><button type="button" data-open-dm="'+esc(uid)+'">Message</button>';friendsListEl.appendChild(row);}).catch(()=>{});});}
+function renderDmList(){dmListEl.innerHTML='';const ids=Object.keys(friendsMap).filter(uid=>friendsMap[uid]===true);if(!ids.length){dmListEl.innerHTML='<div class="social-hint">Add friends first to start DMs.</div>';return;}ids.forEach(uid=>{usersRef.child(uid).once('value').then(snap=>{const p=snap.val()||{};const row=document.createElement('div');row.className='person-row';row.innerHTML='<div class="person-name">'+esc(p.name||'Friend')+'<div class="person-id">ID: '+esc(uid)+'</div></div><button type="button" data-open-dm="'+esc(uid)+'">Open DM</button>';dmListEl.appendChild(row);}).catch(()=>{});});}
+function openDM(uid,name){if(!uid||uid===myId||!friendsMap[uid]){setStatus('You can DM people after they accept your friend request.');return;}if(dmListener&&dmRef)dmRef.off('value',dmListener);dmPartner={uid:uid,name:name||'Friend'};dmRef=firebase.database().ref(socialRoot+'/directMessages/'+dmPath(uid)+'/messages');dmListener=null;setMode('dms');dmHeaderEl.textContent='DM with '+dmPartner.name+' · ID '+uid;dmListener=snap=>{const v=snap.val()||{};const list=Object.keys(v).map(k=>Object.assign({id:k},v[k])).sort((a,b)=>(a.ts||0)-(b.ts||0)).slice(-MAX);if(viewMode==='dms'&&dmPartner&&dmPartner.uid===uid)render(list);};dmRef.limitToLast(MAX).on('value',dmListener,err=>setStatus('DM sync error: '+(err&&err.message||'check Firebase rules')));render([]);}
+async function sendFriendRequest(uid){uid=(uid||'').trim();if(!uid||uid===myId){setStatus('Enter another person’s User ID.');return;}if(!liveReady||!myId||!usersRef){setStatus('Chat is still connecting. Try again shortly.');return;}if(friendsMap[uid]){setStatus('You are already friends with this user.');return;}try{const snap=await usersRef.child(uid).once('value');const p=snap.val();if(!p){setStatus('No user found with that ID. Ask them to open chat once and share their ID.');return;}await firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).set({uid:myId,name:myName,ts:Date.now()});outgoingRequests[uid]=true;saveOutgoing();setStatus('Friend request sent to '+(p.name||'user')+'.');findUserId.value='';}catch(e){setStatus('Could not send request: '+(e.message||'check Firebase rules'));}}
+async function acceptRequest(uid){try{await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);await firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/accepted').set(true);friendsMap[uid]=true;renderPeople();render(globalMessages);setStatus('Friend added! You can now DM each other.');}catch(e){setStatus('Could not accept request: '+(e.message||'check Firebase rules'));}}
+async function syncAcceptedOutgoing(){for(const uid of Object.keys(outgoingRequests)){try{const snap=await firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).once('value');const q=snap.val();if(q&&q.accepted===true){await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);friendsMap[uid]=true;delete outgoingRequests[uid];saveOutgoing();}}catch(e){}}renderPeople();renderDmList();}
+function installSocialListeners(){usersRef=firebase.database().ref(socialRoot+'/users');friendsRef=firebase.database().ref(socialRoot+'/friends/'+myId);requestsRef=firebase.database().ref(socialRoot+'/friendRequests/'+myId);friendsRef.on('value',snap=>{friendsMap=snap.val()||{};renderPeople();renderDmList();});requestsRef.on('value',snap=>{requestsMap=snap.val()||{};renderPeople();});syncAcceptedOutgoing();}
+globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));
+findUserBtn.addEventListener('click',()=>sendFriendRequest(findUserId.value));findUserId.addEventListener('keydown',e=>{if(e.key==='Enter')sendFriendRequest(findUserId.value);});
+document.getElementById('chatSocial').addEventListener('click',e=>{const a=e.target.closest('[data-accept]');if(a){acceptRequest(a.getAttribute('data-accept'));return;}const d=e.target.closest('[data-decline]');if(d){const uid=d.getAttribute('data-decline');firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/ignored').set(true).then(()=>{requestsMap[uid]=Object.assign({},requestsMap[uid],{ignored:true});renderPeople();}).catch(err=>setStatus('Could not ignore request: '+err.message));return;}const o=e.target.closest('[data-open-dm]');if(o){const uid=o.getAttribute('data-open-dm');usersRef.child(uid).once('value').then(s=>openDM(uid,(s.val()||{}).name||'Friend'));}});
+mainEl.addEventListener('click',e=>{const b=e.target.closest('[data-add-friend]');if(b)sendFriendRequest(b.getAttribute('data-add-friend'));});
 if(myName){showWhoami();}else if(document.getElementById('view-chat').classList.contains('active')){nameModal.classList.remove('hidden');nameInput.focus();}
 init();
 })();}catch(e){console.error("[init:chat]",e&&e.message);}
