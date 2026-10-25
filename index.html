@@ -648,7 +648,7 @@ async function init(){
     await usersRef.child(myId).update({uid:myId,name:myName||'Guest',updatedAt:Date.now()});
     installSocialListeners();
     Object.keys(outgoingRequests).forEach(uid=>{firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).on('value',snap=>{const q=snap.val();if(q&&q.accepted===true)syncAcceptedOutgoing();});});
-    liveRef.limitToLast(MAX).on('value',snap=>{}
+    liveRef.limitToLast(MAX).on('value',snap=>{
       const v=snap.val()||{};
       const list=Object.keys(v).map(k=>Object.assign({id:k},v[k]));
       list.sort((a,b)=>(a.ts||0)-(b.ts||0));
@@ -664,7 +664,7 @@ async function init(){
       if(list.length)showMessageBall();
       globalMessages=mergeLocal(list);
       if(viewMode==='global')render(globalMessages);
-    },err=>{}
+    },err=>{
       liveReady=false;
       setStatus('Chat sync error: '+(err&&err.message||'check Firebase rules'));
     });
