@@ -11,7 +11,7 @@
 <footer class="wrap footer"><span>NEURAL / FIELD GUIDE</span><span>Learn the ideas. Stay curious.</span></footer>
 <div class="backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle" aria-describedby="authDesc"><div class="modal"><div class="modal-head"><span class="eyebrow">Restricted area</span><button class="close" type="button" id="closeModal" aria-label="Close access dialog">✕</button></div><h2 id="authTitle">Enter access code</h2><p id="authDesc">Verify your access to continue to the main site.</p><form id="authForm" novalidate><label class="label" for="passcode">Access code</label><input class="pass" id="passcode" name="passcode" type="password" autocomplete="current-password" required aria-describedby="authError" placeholder="Enter your access code"><div class="error" id="authError" role="alert" aria-live="polite"></div><div class="modal-actions"><button class="btn primary" id="submitCode" type="submit">Continue →</button><button class="btn" type="button" id="cancelModal">Cancel</button></div></form><div class="hint">Shortcut: Ctrl + Shift + Q</div></div></div>
 <script>
-const WORKER_URL = "YOUR_CLOUDFLARE_WORKER_URL";
+const WORKER_URL = "https://gatekeeper.sapktaayush.workers.dev/";
 const DESTINATION_URL = "./app.html";
 const modal=document.getElementById("authModal"),passInput=document.getElementById("passcode"),errorBox=document.getElementById("authError"),form=document.getElementById("authForm"),submitButton=document.getElementById("submitCode");
 let previousFocus=null;
