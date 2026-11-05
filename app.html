@@ -1,3 +1,9 @@
+<script>
+  // Front-door session check: this is a convenience gate, not full content security.
+  if (sessionStorage.getItem("neuralSiteAccessGranted") !== "1") {
+    window.location.replace("./index.html");
+  }
+</script>
 Aayush's PREMIUM UBG + MOVIES <!DOCTYPE html>
 <html lang="en">
 <head>
