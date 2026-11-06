@@ -1,24 +1,888 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f172a"><meta name="description" content="A beginner-friendly field guide to Artificial Intelligence and Machine Learning."><title>Google</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{color-scheme:dark;--bg:#0f172a;--panel:rgba(30,41,59,.72);--line:rgba(148,163,184,.2);--text:#f8fafc;--muted:#cbd5e1;--subtle:#94a3b8;--accent:#a5b4fc;--cyan:#67e8f9;--danger:#fca5a5}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 85% 8%,rgba(99,102,241,.2),transparent 34%),radial-gradient(ellipse at 8% 45%,rgba(8,145,178,.13),transparent 32%),var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.6}a{color:inherit;text-decoration:none}button,input{font:inherit}.wrap{width:min(1120px,calc(100% - 40px));margin:auto}.top{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(148,163,184,.1)}.brand{display:flex;gap:11px;align-items:center;font-size:13px;font-weight:800;letter-spacing:.12em}.mark{display:grid;place-items:center;width:35px;height:35px;border-radius:12px;background:linear-gradient(135deg,#818cf8,#67e8f9);color:#0f172a}.nav{display:flex;gap:28px;color:var(--muted);font-size:13px}.btn{min-height:46px;padding:0 19px;border-radius:13px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer;background:rgba(30,41,59,.5);color:var(--text)}.btn.primary{border:0;background:linear-gradient(110deg,#a5b4fc,#67e8f9);color:#0b1224}.btn:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}.hero{padding:90px 0 70px;display:grid;grid-template-columns:1.08fr .92fr;gap:54px;align-items:center}.eyebrow,.kicker{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}h1{font-size:clamp(42px,6vw,68px);line-height:1.06;letter-spacing:-.06em;margin:18px 0}.gradient{background:linear-gradient(100deg,#c4b5fd,#67e8f9);color:transparent;background-clip:text}.lead{max-width:540px;color:var(--muted);font-size:16px;line-height:1.8}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.note{font-size:11px;color:var(--subtle);margin-top:16px}.art{min-height:370px;border:1px solid var(--line);border-radius:30px;background:linear-gradient(145deg,rgba(30,41,59,.82),rgba(15,23,42,.5));backdrop-filter:blur(16px);display:grid;place-items:center;position:relative;overflow:hidden;box-shadow:0 24px 80px #02061755}.art:before,.art:after{content:"";position:absolute;width:280px;height:280px;border:1px solid #a5b4fc33;border-radius:50%}.art:after{width:390px;height:390px}.art video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.78;z-index:0}.art-label{z-index:2}.art-label{position:absolute;bottom:20px;left:23px;font-size:10px;letter-spacing:.14em;color:var(--subtle);text-transform:uppercase}.section{padding:56px 0}.section-head{max-width:650px;margin-bottom:26px}.section h2{font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-.045em;margin:9px 0}.section-head p{color:var(--muted);margin:0}.cards,.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.glass{background:var(--panel);border:1px solid var(--line);border-radius:22px;backdrop-filter:blur(16px);box-shadow:0 12px 36px #02061722}.card{padding:24px;min-height:205px}.ico{width:43px;height:43px;display:grid;place-items:center;border-radius:13px;background:#818cf822;border:1px solid #a5b4fc44;color:#c4b5fd;font-size:20px}.card h3{font-size:17px;margin:18px 0 7px}.card p,.step p{font-size:13px;color:var(--muted);margin:0;line-height:1.75}.step{padding:22px}.num{color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:.12em}.step h3{font-size:16px;margin:10px 0 6px}.faq{max-width:780px}.faq details{padding:17px 20px;margin:9px 0}.faq summary{cursor:pointer;font-size:14px;font-weight:600}.faq details p{color:var(--muted);font-size:13px;margin:10px 0 0}.footer{padding:28px 0 40px;border-top:1px solid #94a3b81c;color:var(--subtle);font-size:11px;display:flex;justify-content:space-between}.backdrop{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:20px;background:#020617c9;backdrop-filter:blur(9px)}.backdrop.open{display:flex}.modal{width:min(100%,430px);padding:27px;border-radius:23px;background:#172338;border:1px solid #94a3b844;box-shadow:0 30px 100px #0009}.modal-head{display:flex;justify-content:space-between;align-items:center}.modal h2{font-size:24px;letter-spacing:-.04em;margin:18px 0 4px}.modal p{font-size:13px;color:var(--muted);margin:0 0 20px}.close{width:38px;height:38px;border-radius:11px;background:transparent;border:1px solid var(--line);color:var(--muted);cursor:pointer}.label{display:block;font-size:12px;font-weight:700;margin-bottom:8px}.pass{width:100%;height:49px;padding:0 14px;border:1px solid #94a3b855;border-radius:12px;background:#0f172a;color:white}.error{min-height:23px;color:var(--danger);font-size:12px;padding-top:5px}.modal-actions{display:flex;gap:10px}.modal-actions .btn{flex:1}.hint{font-size:10px;color:var(--subtle);margin-top:15px}@media(max-width:800px){.nav{display:none}.hero{grid-template-columns:1fr;padding:58px 0 40px;gap:30px}.art{min-height:290px}.cards,.steps{grid-template-columns:1fr}.card{min-height:0}.section{padding:42px 0}.footer{flex-direction:column;gap:8px}}@media(max-width:480px){.wrap{width:calc(100% - 28px)}.top{height:68px}.top>.btn{min-height:40px;padding:0 12px}h1{font-size:43px}.lead{font-size:14px}.modal{padding:21px}.modal-actions{flex-direction:column}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
-</style></head><body>
-<header class="wrap top"><a class="brand" href="#" aria-label="Neural Field Guide home"><span class="mark" aria-hidden="true">N</span>NEURAL <span style="color:#94a3b8">/ FIELD GUIDE</span></a><nav class="nav" aria-label="Main navigation"><a href="#concepts">Concepts</a><a href="#path">Learning path</a><a href="#faq">FAQ</a></nav></header>
-<main><section class="wrap hero"><div><div class="eyebrow">A field guide to intelligence</div><h1>Understand the intelligence <span class="gradient">behind the interface.</span></h1><p class="lead">Start with the ideas that power modern AI. Explore how machines learn from examples, recognise patterns and turn data into useful predictions — one clear concept at a time.</p><div class="actions"><a class="btn primary" href="#concepts">Explore the basics ↓</a></div><div class="note">A beginner-friendly introduction · No experience required</div></div><div class="art" role="img" aria-label="Abstract neural network illustration"><video class="art-video" autoplay muted loop playsinline preload="auto" aria-hidden="true"><source src="https://cdn.pixabay.com/video/2016/09/13/5224-183786646_large.mp4" type="video/mp4">Your browser does not support HTML video.</video><div class="art-label">Signals · Patterns · Predictions</div></div></section>
-<section class="wrap section" id="concepts"><div class="section-head"><div class="kicker">The building blocks</div><h2>Three ideas. One bigger picture.</h2><p>AI is a broad field. Machine learning is one way to build it, and neural networks are one family of learning models.</p></div><div class="cards"><article class="glass card"><div class="ico" aria-hidden="true">✳</div><h3>Artificial Intelligence</h3><p>AI describes computer systems designed to perform tasks that usually need human-like abilities, such as understanding language or recognising images.</p></article><article class="glass card"><div class="ico" aria-hidden="true">⌁</div><h3>Machine Learning</h3><p>Machine learning lets a system find patterns in examples and use those patterns to make predictions, rather than relying only on hand-written rules.</p></article><article class="glass card"><div class="ico" aria-hidden="true">◎</div><h3>Neural Networks</h3><p>Neural networks are machine-learning models made from connected layers that can learn complex relationships from data.</p></article></div></section>
-<section class="wrap section" id="path"><div class="section-head"><div class="kicker">A simple learning path</div><h2>Build your understanding, step by step.</h2><p>Follow the flow from raw examples to a useful result.</p></div><div class="steps"><article class="glass step"><div class="num">01 / INPUT</div><h3>Give it examples</h3><p>Collect useful, representative data. The quality of examples shapes what a model can learn.</p></article><article class="glass step"><div class="num">02 / LEARNING</div><h3>Find the patterns</h3><p>During training, a model adjusts its internal parameters to reduce errors on the examples it sees.</p></article><article class="glass step"><div class="num">03 / OUTPUT</div><h3>Make a prediction</h3><p>After evaluation, the model can use what it learned to make predictions on new information.</p></article></div></section>
-<section class="wrap section faq" id="faq"><div class="section-head"><div class="kicker">Quick answers</div><h2>Good questions to start with.</h2></div><details class="glass"><summary>Is AI the same as machine learning?</summary><p>No. AI is the broader field; machine learning is a set of techniques within AI that learn patterns from data.</p></details><details class="glass"><summary>Does a model understand like a person?</summary><p>Not necessarily. Models calculate patterns from training and input data. Useful output does not imply human experience or understanding.</p></details><details class="glass"><summary>Why do training data and testing matter?</summary><p>Testing on data the model did not train on helps estimate how well it may perform on new examples and can reveal overfitting.</p></details></section></main>
-<footer class="wrap footer"><span>NEURAL / FIELD GUIDE</span><span>Learn the ideas. Stay curious.</span><span>Typeface: Inter · SIL Open Font License 1.1</span></footer>
-<div class="backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle" aria-describedby="authDesc"><div class="modal"><div class="modal-head"><span class="eyebrow">Restricted area</span><button class="close" type="button" id="closeModal" aria-label="Close access dialog">✕</button></div><h2 id="authTitle">Enter access code</h2><p id="authDesc">Verify your access to continue to the main site.</p><form id="authForm" novalidate><label class="label" for="passcode">Access code</label><input class="pass" id="passcode" name="passcode" type="password" autocomplete="current-password" required aria-describedby="authError" placeholder="Enter your access code"><div class="error" id="authError" role="alert" aria-live="polite"></div><div class="modal-actions"><button class="btn primary" id="submitCode" type="submit">Continue →</button><button class="btn" type="button" id="cancelModal">Cancel</button></div></form></div></div>
-<script>
-const WORKER_URL = "https://gatekeeper.sapktaayush.workers.dev/";
-const DESTINATION_URL = "./app.html";
-const modal=document.getElementById("authModal"),passInput=document.getElementById("passcode"),errorBox=document.getElementById("authError"),form=document.getElementById("authForm"),submitButton=document.getElementById("submitCode");
-let previousFocus=null;
-function openModal(){previousFocus=document.activeElement;modal.classList.add("open");errorBox.textContent="";passInput.value="";setTimeout(()=>passInput.focus(),0)}
-function closeModal(){modal.classList.remove("open");if(previousFocus&&previousFocus.focus)previousFocus.focus()}
-document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==="q"){e.preventDefault();modal.classList.contains("open")?closeModal():openModal()}if(e.key==="Escape"&&modal.classList.contains("open"))closeModal();if(e.key==="Tab"&&modal.classList.contains("open")){const items=[...modal.querySelectorAll("button:not([disabled]),input:not([disabled]),a[href]")];const first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090e19">
+  <meta name="description" content="A clear, considered introduction to artificial intelligence, machine learning and neural networks.">
+  <meta property="og:title" content="Neural — Field Guide to Intelligence">
+  <meta property="og:description" content="Understand the intelligence behind the interface.">
+  <title>Neural — Field Guide to Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #090e19;
+      --ink-soft: #101827;
+      --ink-raised: #152033;
+      --paper: #f0f0e9;
+      --white: #fbfcfa;
+      --muted: #a7b0be;
+      --quiet: #758196;
+      --line: rgba(190, 204, 221, .16);
+      --line-strong: rgba(190, 204, 221, .27);
+      --aqua: #8bd8d9;
+      --blue: #a4b5f4;
+      --gold: #c7b18b;
+      --danger: #ffb0aa;
+      --sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+      --serif: "Instrument Serif", Georgia, serif;
+      --content: 1240px;
+    }
 
-document.getElementById("closeModal").addEventListener("click",closeModal);document.getElementById("cancelModal").addEventListener("click",closeModal);modal.addEventListener("click",e=>{if(e.target===modal)closeModal()});
-form.addEventListener("submit",async e=>{e.preventDefault();errorBox.textContent="";const passcode=passInput.value;if(!passcode){errorBox.textContent="Enter your access passcode.";passInput.focus();return}if(!WORKER_URL||WORKER_URL==="YOUR_CLOUDFLARE_WORKER_URL"){errorBox.textContent="Access verification is not configured yet.";return}submitButton.disabled=true;submitButton.textContent="Verifying…";try{const response=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({passcode}),cache:"no-store"});const result=await response.json().catch(()=>({}));if(response.ok&&result.success===true){sessionStorage.setItem("neuralSiteAccessGranted","1");location.assign(DESTINATION_URL);return}errorBox.textContent="Invalid access passcode";passInput.select()}catch(err){errorBox.textContent="Unable to verify right now. Check your connection and try again."}finally{submitButton.disabled=false;submitButton.textContent="Continue →"}});
-</script></body></html>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(ellipse at 80% 13%, rgba(85, 116, 171, .12), transparent 34rem),
+        radial-gradient(ellipse at 5% 46%, rgba(71, 149, 156, .08), transparent 30rem),
+        var(--ink);
+      color: var(--paper);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      opacity: .12;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.15'/%3E%3C/svg%3E");
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--aqua);
+      outline-offset: 4px;
+    }
+    .shell { width: min(var(--content), calc(100% - 72px)); margin-inline: auto; }
+    .topbar {
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .22em;
+      white-space: nowrap;
+    }
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(139, 216, 217, .58);
+      border-radius: 50%;
+      color: var(--aqua);
+      position: relative;
+    }
+    .brand-mark::before, .brand-mark::after {
+      content: "";
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--aqua);
+    }
+    .brand-mark::before { top: 4px; right: 3px; }
+    .brand-mark::after { bottom: 4px; left: 3px; }
+    .brand-sub {
+      color: var(--quiet);
+      font-weight: 500;
+      letter-spacing: .13em;
+      margin-left: -5px;
+    }
+    .nav { display: flex; align-items: center; gap: 34px; }
+    .nav a {
+      color: #bdc5d0;
+      font-size: 12px;
+      transition: color .2s ease;
+    }
+    .nav a:hover { color: var(--aqua); }
+    .nav .nav-cta {
+      color: var(--paper);
+      border: 1px solid var(--line-strong);
+      padding: 9px 15px;
+      border-radius: 3px;
+    }
+    .nav .nav-cta:hover { border-color: var(--aqua); color: var(--aqua); }
+
+    .hero {
+      min-height: 690px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(420px, .92fr);
+      gap: clamp(42px, 6vw, 92px);
+      align-items: center;
+      padding-block: 84px 92px;
+    }
+    .hero-copy { max-width: 630px; position: relative; z-index: 1; }
+    .eyebrow, .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      color: var(--aqua);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .2em;
+      line-height: 1.4;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 26px;
+      height: 1px;
+      background: var(--aqua);
+      opacity: .8;
+    }
+    h1 {
+      max-width: 700px;
+      margin: 25px 0 24px;
+      color: var(--white);
+      font-size: clamp(54px, 6.4vw, 86px);
+      font-weight: 500;
+      letter-spacing: -.075em;
+      line-height: .99;
+    }
+    h1 em {
+      color: var(--aqua);
+      font-family: var(--serif);
+      font-size: 1.1em;
+      font-weight: 400;
+      letter-spacing: -.035em;
+    }
+    .hero-lede {
+      max-width: 500px;
+      margin: 0;
+      color: #adb7c5;
+      font-size: 15px;
+      line-height: 1.95;
+    }
+    .hero-actions { display: flex; align-items: center; gap: 22px; margin-top: 34px; }
+    .button {
+      min-height: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 0 20px;
+      border: 1px solid var(--aqua);
+      border-radius: 2px;
+      background: var(--aqua);
+      color: #08131b;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      transition: background .2s ease, color .2s ease, transform .2s ease;
+    }
+    .button:hover { background: transparent; color: var(--aqua); transform: translateY(-2px); }
+    .button .arrow { font-size: 17px; line-height: 1; }
+    .hero-note {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 24px;
+      color: var(--quiet);
+      font-size: 10px;
+      letter-spacing: .06em;
+    }
+    .hero-note::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 12px rgba(199, 177, 139, .7);
+    }
+
+    .visual-wrap { position: relative; min-width: 0; }
+    .visual-index {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      color: var(--quiet);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    .art {
+      position: relative;
+      min-height: 510px;
+      overflow: hidden;
+      isolation: isolate;
+      border: 1px solid rgba(183, 199, 221, .2);
+      background: #131e32;
+      box-shadow: 0 35px 100px rgba(0, 0, 0, .32);
+    }
+    .art video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      z-index: -2;
+      opacity: .86;
+      filter: saturate(.82) contrast(1.04);
+    }
+    .art::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(180deg, rgba(7, 13, 25, .04) 15%, rgba(7, 13, 25, .2) 52%, rgba(7, 13, 25, .82) 100%),
+        linear-gradient(90deg, rgba(8, 14, 27, .2), transparent 55%);
+    }
+    .orbit {
+      position: absolute;
+      border: 1px solid rgba(183, 201, 255, .2);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .orbit.one { width: 72%; aspect-ratio: 1; right: -10%; top: -18%; }
+    .orbit.two { width: 52%; aspect-ratio: 1; right: 0; top: -7%; border-color: rgba(139, 216, 217, .2); }
+    .art-topline {
+      position: absolute;
+      top: 21px;
+      left: 22px;
+      right: 22px;
+      display: flex;
+      justify-content: space-between;
+      color: rgba(239, 244, 249, .82);
+      font-size: 9px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .live-indicator { display: inline-flex; align-items: center; gap: 8px; }
+    .live-indicator::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--aqua);
+      box-shadow: 0 0 12px var(--aqua);
+    }
+    .art-bottom {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 24px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .art-caption {
+      color: rgba(240, 243, 246, .78);
+      font-size: 9px;
+      letter-spacing: .19em;
+      text-transform: uppercase;
+    }
+    .art-label {
+      max-width: 150px;
+      color: rgba(240, 243, 246, .6);
+      font-family: var(--serif);
+      font-size: 19px;
+      font-style: italic;
+      line-height: 1.1;
+      text-align: right;
+    }
+    .visual-foot {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 12px;
+      color: var(--quiet);
+      font-size: 9px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .section { padding-block: 104px; border-top: 1px solid var(--line); }
+    .section-heading {
+      display: grid;
+      grid-template-columns: minmax(0, .85fr) minmax(250px, .6fr);
+      align-items: end;
+      gap: 40px;
+      margin-bottom: 52px;
+    }
+    .section-kicker { color: var(--gold); }
+    .section-title {
+      margin: 13px 0 0;
+      color: var(--white);
+      font-size: clamp(36px, 4.4vw, 58px);
+      font-weight: 500;
+      letter-spacing: -.065em;
+      line-height: 1.04;
+    }
+    .section-title em { color: var(--aqua); font-family: var(--serif); font-weight: 400; }
+    .section-intro {
+      max-width: 420px;
+      margin: 0 0 3px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.9;
+    }
+
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--line-strong);
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .concept {
+      min-height: 250px;
+      padding: 25px 28px 31px 0;
+      position: relative;
+    }
+    .concept + .concept { border-left: 1px solid var(--line); padding-left: 28px; }
+    .concept-number {
+      color: var(--aqua);
+      font-size: 10px;
+      letter-spacing: .16em;
+    }
+    .concept-symbol {
+      width: 41px;
+      height: 41px;
+      display: grid;
+      place-items: center;
+      margin: 25px 0 19px;
+      border: 1px solid rgba(139, 216, 217, .32);
+      border-radius: 50%;
+      color: var(--aqua);
+    }
+    .concept-symbol svg { width: 18px; height: 18px; }
+    .concept h3 {
+      margin: 0 0 10px;
+      color: var(--paper);
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -.03em;
+    }
+    .concept p {
+      max-width: 330px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.9;
+    }
+
+    .path-section { padding-top: 88px; }
+    .path-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--line-strong);
+    }
+    .path-step { position: relative; padding: 28px 30px 0 0; }
+    .path-step + .path-step { padding-left: 30px; border-left: 1px solid var(--line); }
+    .path-step::before {
+      content: "";
+      position: absolute;
+      top: -4px;
+      left: 0;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--aqua);
+      box-shadow: 0 0 0 5px var(--ink), 0 0 0 6px rgba(139, 216, 217, .32);
+    }
+    .path-step + .path-step::before { left: 30px; }
+    .path-num { color: var(--gold); font-size: 9px; font-weight: 700; letter-spacing: .19em; }
+    .path-step h3 {
+      margin: 18px 0 8px;
+      color: var(--paper);
+      font-size: 19px;
+      font-weight: 500;
+      letter-spacing: -.035em;
+    }
+    .path-step p { max-width: 330px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.9; }
+
+    .faq-section { padding-bottom: 110px; }
+    .faq-layout {
+      display: grid;
+      grid-template-columns: minmax(240px, .65fr) minmax(0, 1fr);
+      gap: 80px;
+    }
+    .faq-aside p { max-width: 260px; color: var(--muted); font-size: 12px; line-height: 1.9; }
+    .faq-list { border-top: 1px solid var(--line-strong); }
+    .faq-list details { border-bottom: 1px solid var(--line); }
+    .faq-list summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 68px;
+      color: var(--paper);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .faq-list summary::-webkit-details-marker { display: none; }
+    .faq-list summary::after {
+      content: "+";
+      color: var(--aqua);
+      font-size: 19px;
+      font-weight: 400;
+      transition: transform .2s ease;
+    }
+    .faq-list details[open] summary::after { transform: rotate(45deg); }
+    .faq-list details p {
+      max-width: 630px;
+      margin: -2px 34px 22px 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.9;
+    }
+    .closing {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 36px;
+      padding: 42px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .closing p { margin: 0; color: var(--paper); font-family: var(--serif); font-size: clamp(26px, 3vw, 38px); line-height: 1.1; }
+    .closing p em { color: var(--aqua); }
+    .footer {
+      min-height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      color: var(--quiet);
+      font-size: 9px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .footer-brand { color: #c8d0d9; font-weight: 700; letter-spacing: .2em; }
+    .footer-note { letter-spacing: .06em; text-transform: none; }
+
+    /* Keyboard-triggered access dialog */
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      background: rgba(3, 7, 14, .82);
+      backdrop-filter: blur(16px);
+    }
+    .backdrop.open { display: flex; }
+    .modal {
+      width: min(100%, 440px);
+      padding: 32px;
+      border: 1px solid rgba(181, 205, 218, .24);
+      background:
+        radial-gradient(ellipse at 100% 0, rgba(139, 216, 217, .11), transparent 46%),
+        #101a29;
+      box-shadow: 0 36px 110px rgba(0, 0, 0, .55);
+    }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; }
+    .modal-kicker { color: var(--aqua); font-size: 9px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+    .close {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .close:hover { border-color: var(--aqua); color: var(--aqua); }
+    .modal h2 { margin: 20px 0 6px; color: var(--white); font-size: 29px; font-weight: 500; letter-spacing: -.05em; }
+    .modal-copy { margin: 0 0 24px; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    .label { display: block; margin-bottom: 8px; color: #d9e0e7; font-size: 11px; font-weight: 600; }
+    .pass {
+      width: 100%;
+      height: 49px;
+      padding: 0 14px;
+      border: 1px solid rgba(181, 205, 218, .25);
+      border-radius: 2px;
+      background: #09111d;
+      color: var(--white);
+    }
+    .pass::placeholder { color: #687589; }
+    .error { min-height: 24px; padding-top: 5px; color: var(--danger); font-size: 11px; }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-actions .button { flex: 1; cursor: pointer; }
+    .modal-actions .button:disabled { opacity: .65; cursor: wait; transform: none; }
+    .cancel {
+      min-height: 50px;
+      padding: 0 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 2px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .cancel:hover { border-color: var(--aqua); color: var(--aqua); }
+
+    @media (max-width: 980px) {
+      .hero { grid-template-columns: minmax(0, 1fr) minmax(340px, .9fr); gap: 38px; }
+      h1 { font-size: clamp(52px, 6vw, 70px); }
+      .art { min-height: 450px; }
+      .faq-layout { gap: 44px; }
+    }
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 40px, var(--content)); }
+      .topbar { min-height: 72px; }
+      .nav { gap: 16px; }
+      .nav a { font-size: 10px; }
+      .nav .nav-cta { padding: 7px 10px; }
+      .hero {
+        min-height: 0;
+        grid-template-columns: 1fr;
+        gap: 42px;
+        padding-block: 68px 70px;
+      }
+      .hero-copy { max-width: 620px; }
+      h1 { max-width: 620px; font-size: clamp(58px, 10vw, 76px); }
+      .hero-lede { max-width: 560px; }
+      .visual-wrap { width: min(100%, 620px); }
+      .art { min-height: clamp(340px, 72vw, 470px); }
+      .section { padding-block: 76px; }
+      .section-heading { grid-template-columns: 1fr; gap: 18px; margin-bottom: 38px; }
+      .section-intro { max-width: 540px; }
+      .concept { min-height: 240px; padding-right: 20px; }
+      .concept + .concept { padding-left: 20px; }
+      .path-step { padding-right: 18px; }
+      .path-step + .path-step { padding-left: 18px; }
+      .path-step + .path-step::before { left: 18px; }
+      .faq-layout { grid-template-columns: 1fr; gap: 26px; }
+      .faq-aside p { max-width: 480px; margin-bottom: 0; }
+    }
+    @media (max-width: 520px) {
+      .shell { width: calc(100% - 32px); }
+      .topbar { min-height: 68px; }
+      .brand { gap: 8px; font-size: 10px; letter-spacing: .17em; }
+      .brand-mark { width: 27px; height: 27px; }
+      .brand-sub { display: none; }
+      .nav { gap: 12px; }
+      .nav a { font-size: 9px; }
+      .nav .nav-cta { display: none; }
+      .hero { padding-block: 58px 58px; gap: 34px; }
+      h1 { margin-top: 20px; font-size: clamp(48px, 13vw, 64px); }
+      .hero-lede { font-size: 13px; }
+      .hero-actions { margin-top: 26px; }
+      .button { min-height: 48px; padding-inline: 15px; }
+      .art { min-height: 360px; }
+      .art-topline { top: 16px; left: 16px; right: 16px; font-size: 8px; }
+      .art-bottom { left: 17px; right: 17px; bottom: 18px; }
+      .art-label { font-size: 17px; }
+      .visual-foot { font-size: 8px; }
+      .section { padding-block: 64px; }
+      .section-title { font-size: 40px; }
+      .concept-grid { grid-template-columns: 1fr; }
+      .concept, .concept + .concept {
+        min-height: 0;
+        padding: 23px 0 26px;
+        border-left: 0;
+      }
+      .concept + .concept { border-top: 1px solid var(--line); }
+      .concept-symbol { margin: 17px 0 13px; }
+      .concept p { max-width: 440px; }
+      .path-grid { grid-template-columns: 1fr; border-top: 0; border-left: 1px solid var(--line-strong); margin-left: 4px; }
+      .path-step, .path-step + .path-step {
+        min-height: 150px;
+        padding: 0 0 28px 25px;
+        border-left: 0;
+      }
+      .path-step::before, .path-step + .path-step::before { top: 3px; left: -4px; }
+      .path-step h3 { margin-top: 12px; }
+      .closing { align-items: flex-start; flex-direction: column; padding-block: 32px; }
+      .footer { min-height: 110px; align-items: flex-start; justify-content: center; flex-direction: column; gap: 8px; padding-block: 22px; }
+      .modal { padding: 24px; }
+      .modal-actions { flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      .art video { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="shell topbar">
+    <a class="brand" href="#" aria-label="Neural Field Guide home">
+      <span class="brand-mark" aria-hidden="true">N</span>
+      <span>NEURAL</span>
+      <span class="brand-sub">/ FIELD GUIDE</span>
+    </a>
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#concepts">Concepts</a>
+      <a href="#path">Learning path</a>
+      <a href="#faq">FAQ</a>
+      <a class="nav-cta" href="#concepts">Explore the guide <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="shell hero">
+      <div class="hero-copy">
+        <div class="eyebrow">A field guide to intelligence</div>
+        <h1>Understand the intelligence <em>behind the interface.</em></h1>
+        <p class="hero-lede">Start with the ideas that power modern AI. Explore how machines learn from examples, recognise patterns and turn data into useful predictions — one clear concept at a time.</p>
+        <div class="hero-actions">
+          <a class="button" href="#concepts">Explore the basics <span class="arrow" aria-hidden="true">↗</span></a>
+        </div>
+        <div class="hero-note">A beginner-friendly introduction <span aria-hidden="true">·</span> No experience required</div>
+      </div>
+
+      <div class="visual-wrap">
+        <div class="visual-index"><span>01 / The neural field</span><span>Visual study</span></div>
+        <div class="art" role="img" aria-label="Abstract animated visual representing signals and connections in a neural network">
+          <video class="art-video" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+            <source src="https://cdn.pixabay.com/video/2016/09/13/5224-183786646_large.mp4" type="video/mp4">
+          </video>
+          <div class="orbit one"></div>
+          <div class="orbit two"></div>
+          <div class="art-topline"><span>Neural systems / 001</span><span class="live-indicator">In motion</span></div>
+          <div class="art-bottom">
+            <span class="art-caption">Signals · Patterns · Predictions</span>
+            <span class="art-label">A living system,<br>in motion.</span>
+          </div>
+        </div>
+        <div class="visual-foot"><span>Fig. 01 — Connected intelligence</span><span>Explore below ↓</span></div>
+      </div>
+    </section>
+
+    <section class="shell section" id="concepts">
+      <div class="section-heading">
+        <div>
+          <div class="section-kicker">01 — The building blocks</div>
+          <h2 class="section-title">Three ideas.<br><em>One bigger picture.</em></h2>
+        </div>
+        <p class="section-intro">AI is a broad field. Machine learning is one way to build it, and neural networks are one family of learning models. Start with the distinctions that make everything else easier to understand.</p>
+      </div>
+
+      <div class="concept-grid">
+        <article class="concept">
+          <div class="concept-number">01 / INTELLIGENCE</div>
+          <div class="concept-symbol" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 2.8 14.2 9.8 21.2 12l-7 2.2-2.2 7-2.2-7L2.8 12l7-2.2L12 2.8Z"/><path d="m19 3 .7 2.3L22 6l-2.3.7L19 9l-.7-2.3L16 6l2.3-.7L19 3Z"/></svg>
+          </div>
+          <h3>Artificial Intelligence</h3>
+          <p>AI describes computer systems designed to perform tasks that usually need human-like abilities, such as understanding language or recognising images.</p>
+        </article>
+        <article class="concept">
+          <div class="concept-number">02 / LEARNING</div>
+          <div class="concept-symbol" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="5" cy="7" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="12" cy="18" r="2"/><path d="m7 7 10-2M6.4 8.8l4.4 7.4M17.8 6.8l-4.5 9.4"/></svg>
+          </div>
+          <h3>Machine Learning</h3>
+          <p>Machine learning lets a system find patterns in examples and use those patterns to make predictions, rather than relying only on hand-written rules.</p>
+        </article>
+        <article class="concept">
+          <div class="concept-number">03 / NETWORKS</div>
+          <div class="concept-symbol" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="12" r="2"/><path d="m6.8 10.8 3.4-4.2m3.6 0 3.4 4.2m0 2.4-3.4 4.2m-3.6 0-3.4-4.2"/></svg>
+          </div>
+          <h3>Neural Networks</h3>
+          <p>Neural networks are machine-learning models made from connected layers that can learn complex relationships from data.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell section path-section" id="path">
+      <div class="section-heading">
+        <div>
+          <div class="section-kicker">02 — A simple learning path</div>
+          <h2 class="section-title">From examples<br>to <em>understanding.</em></h2>
+        </div>
+        <p class="section-intro">Follow the flow from raw examples to a useful result. These are the broad stages behind how a machine-learning model is developed and used.</p>
+      </div>
+      <div class="path-grid">
+        <article class="path-step">
+          <div class="path-num">01 / INPUT</div>
+          <h3>Give it examples</h3>
+          <p>Collect useful, representative data. The quality of examples shapes what a model can learn.</p>
+        </article>
+        <article class="path-step">
+          <div class="path-num">02 / LEARNING</div>
+          <h3>Find the patterns</h3>
+          <p>During training, a model adjusts its internal parameters to reduce errors on the examples it sees.</p>
+        </article>
+        <article class="path-step">
+          <div class="path-num">03 / OUTPUT</div>
+          <h3>Make a prediction</h3>
+          <p>After evaluation, the model can use what it learned to make predictions on new information.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell section faq-section" id="faq">
+      <div class="faq-layout">
+        <div class="faq-aside">
+          <div class="section-kicker">03 — Quick answers</div>
+          <h2 class="section-title">Curiosity is<br><em>a good place to start.</em></h2>
+          <p>A few useful distinctions to keep in mind as you explore the field.</p>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>Is AI the same as machine learning?</summary>
+            <p>No. AI is the broader field; machine learning is a set of techniques within AI that learn patterns from data.</p>
+          </details>
+          <details>
+            <summary>Does a model understand like a person?</summary>
+            <p>Not necessarily. Models calculate patterns from training and input data. Useful output does not imply human experience or understanding.</p>
+          </details>
+          <details>
+            <summary>Why do training data and testing matter?</summary>
+            <p>Testing on data the model did not train on helps estimate how well it may perform on new examples and can reveal overfitting.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell closing">
+      <p>Learn the ideas.<br><em>Stay curious.</em></p>
+      <a class="button" href="#concepts">Return to the basics <span class="arrow" aria-hidden="true">↗</span></a>
+    </section>
+  </main>
+
+  <footer class="shell footer">
+    <span class="footer-brand">NEURAL / FIELD GUIDE</span>
+    <span class="footer-note">A clearer way to explore artificial intelligence.</span>
+    <span>© NEURAL</span>
+  </footer>
+
+  <div class="backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle" aria-describedby="authDesc" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-kicker">Restricted area</span>
+        <button class="close" type="button" id="closeModal" aria-label="Close access dialog">×</button>
+      </div>
+      <h2 id="authTitle">Enter access code</h2>
+      <p class="modal-copy" id="authDesc">Verify your access to continue to the main site.</p>
+      <form id="authForm" novalidate>
+        <label class="label" for="passcode">Access code</label>
+        <input class="pass" id="passcode" name="passcode" type="password" autocomplete="current-password" required aria-describedby="authError" placeholder="Enter your access code">
+        <div class="error" id="authError" role="alert" aria-live="polite"></div>
+        <div class="modal-actions">
+          <button class="button" id="submitCode" type="submit">Continue <span aria-hidden="true">→</span></button>
+          <button class="cancel" type="button" id="cancelModal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const WORKER_URL = "https://gatekeeper.sapktaayush.workers.dev/";
+    const DESTINATION_URL = "./app.html";
+    const modal = document.getElementById("authModal");
+    const passInput = document.getElementById("passcode");
+    const errorBox = document.getElementById("authError");
+    const form = document.getElementById("authForm");
+    const submitButton = document.getElementById("submitCode");
+    let previousFocus = null;
+
+    function openModal() {
+      previousFocus = document.activeElement;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      errorBox.textContent = "";
+      passInput.value = "";
+      window.setTimeout(() => passInput.focus(), 0);
+    }
+
+    function closeModal() {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      if (previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
+    }
+
+    document.addEventListener("keydown", event => {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === "q") {
+        event.preventDefault();
+        modal.classList.contains("open") ? closeModal() : openModal();
+      }
+      if (event.key === "Escape" && modal.classList.contains("open")) closeModal();
+      if (event.key === "Tab" && modal.classList.contains("open")) {
+        const focusable = [...modal.querySelectorAll("button:not([disabled]), input:not([disabled])")];
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    document.getElementById("closeModal").addEventListener("click", closeModal);
+    document.getElementById("cancelModal").addEventListener("click", closeModal);
+    modal.addEventListener("click", event => {
+      if (event.target === modal) closeModal();
+    });
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      errorBox.textContent = "";
+      const passcode = passInput.value;
+
+      if (!passcode) {
+        errorBox.textContent = "Enter your access passcode.";
+        passInput.focus();
+        return;
+      }
+      if (!WORKER_URL || WORKER_URL === "YOUR_CLOUDFLARE_WORKER_URL") {
+        errorBox.textContent = "Access verification is not configured yet.";
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Verifying…";
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ passcode }),
+          cache: "no-store"
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result.success === true) {
+          sessionStorage.setItem("neuralSiteAccessGranted", "1");
+          location.assign(DESTINATION_URL);
+          return;
+        }
+        errorBox.textContent = "Invalid access passcode";
+        passInput.select();
+      } catch (error) {
+        errorBox.textContent = "Unable to verify right now. Check your connection and try again.";
+      } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Continue <span aria-hidden="true">→</span>';
+      }
+    });
+
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const heroVideo = document.querySelector(".art-video");
+      if (heroVideo) heroVideo.pause();
+    }
+  </script>
+</body>
+</html>
