@@ -168,7 +168,7 @@ if(renderer){
   core.rotation.y=reduced?0:t*.075+scrollP*2.3;core.rotation.x=reduced?0:Math.sin(t*.2)*.1;core.scale.setScalar(1+(reduced?0:Math.sin(t*.7)*.012));shell.rotation.y=reduced?0:-t*.045;shell.rotation.z=reduced?0:t*.025;ring.rotation.z=reduced?0:t*.2;ring.rotation.x=Math.PI/2.35+(reduced?0:Math.sin(t*.35)*.13);stations.forEach(s=>{s.rotation.x=reduced?0:t*s.userData.spin;s.rotation.y=reduced?0:t*s.userData.spin*1.35;});field.rotation.z=reduced?0:t*.012;renderer.render(scene,camera);
  }
  if(reduced){readScroll();animate();}else{readScroll();animate();}
- document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);}else if(!raf)animate();});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;}else if(!raf)animate();});
 }
 const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on');}),{threshold:.16});
 document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
