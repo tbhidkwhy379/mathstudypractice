@@ -13,8 +13,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08090d;col
 .back:hover{background:#2c303b}
 .heading{font-size:15px;font-weight:700;letter-spacing:.2px}
 .hint{margin-left:auto;color:#9298a6;font-size:12px}
-.game-wrap{height:calc(100% - 54px);width:100%;background:#000}
+.game-wrap{height:calc(100% - 54px);width:100%;background:#000;position:relative}
 #game{display:block;width:100%;height:100%;border:0;background:#000}
+#status{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#cbd0dc;background:#08090d;font-size:14px}
 @media(max-width:560px){.hint{display:none}.topbar{height:50px}.game-wrap{height:calc(100% - 50px)}}
 </style>
 <script>
@@ -33,10 +34,29 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08090d;col
 <header class="topbar">
 <button class="back" type="button" onclick="window.location.href='./app.html'">← Back to main</button>
 <div class="heading">Minecraft</div>
-<div class="hint">Your ClassroomSpot session stays active</div>
+<div class="hint">Loading game from its text-source file</div>
 </header>
 <main class="game-wrap">
-<iframe id="game" src="./minecraft-game.html" title="Minecraft game" allow="fullscreen; autoplay; gamepad; pointer-lock" allowfullscreen></iframe>
+<div id="status" role="status">Loading Minecraft… This may take a little while because the game file is large.</div>
+<iframe id="game" title="Minecraft game" allow="fullscreen; autoplay; gamepad; pointer-lock" allowfullscreen hidden></iframe>
 </main>
+<script>
+(async function(){
+  var status=document.getElementById('status');
+  var frame=document.getElementById('game');
+  try {
+    var response=await fetch('./minecraft-game.txt',{cache:'no-store'});
+    if(!response.ok) throw new Error('Could not load minecraft-game.txt (HTTP '+response.status+').');
+    var source=await response.text();
+    if(!source || source.length<1000) throw new Error('The text file appears to be empty or incomplete.');
+    var gameBlob=new Blob([source],{type:'text/html;charset=utf-8'});
+    var gameUrl=URL.createObjectURL(gameBlob);
+    frame.onload=function(){status.hidden=true;frame.hidden=false;};
+    frame.src=gameUrl;
+  } catch(error) {
+    status.textContent='Could not load Minecraft. '+(error&&error.message?error.message:'Please refresh and try again.');
+  }
+})();
+</script>
 </body>
 </html>
