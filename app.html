@@ -197,6 +197,20 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-chat .user-id-label{display:inline-block;max-width:220px;overflow-wrap:anywhere;font-size:10px;color:var(--muted2);margin-top:3px}
 #view-chat .user-id-label code{font-size:10px;color:var(--text2)}
 @media(max-width:520px){#view-chat .chat-tabs button{padding:7px 9px;font-size:11px}}
+/* AI chat styles */
+#view-chat #aiPanel{padding:12px;background:rgba(22,24,28,.72);border-bottom:1px solid var(--border2)}
+#view-chat #aiPanel[hidden]{display:none}
+#view-chat .ai-library-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+#view-chat .ai-library-head strong{font-size:12px;color:var(--muted2)}
+#view-chat #aiNewChat{background:var(--acc2);border:1px solid var(--acc2);color:#fff;border-radius:9px;padding:8px 12px;font:inherit;font-size:12px;font-weight:650;cursor:pointer}
+#view-chat #aiChatList{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px}
+#view-chat .ai-chat-row{display:flex;align-items:center;gap:5px;flex:0 0 auto;max-width:230px;background:var(--panel2);border:1px solid var(--border2);border-radius:9px;padding:5px}
+#view-chat .ai-chat-row button{border:0;background:transparent;color:var(--text2);font:inherit;font-size:12px;cursor:pointer}
+#view-chat .ai-chat-row .ai-open{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px}
+#view-chat .ai-chat-row .ai-open.active{color:#9db7ff}
+#view-chat .ai-chat-row .ai-delete{color:#ff8b8b;padding:4px 6px}
+#view-chat #aiUsage{font-size:11px;color:var(--muted2);padding:5px 2px 0}
+@media(max-width:600px){#view-chat #aiPanel{padding:9px}}
 /* music — floating draggable + resizable window */
 #view-music{--bg-black:#1c1c1e;--bg-base:#232326;--bg-elevated:#2b2b2e;--bg-highlight:#35353a;--brand-green:#1db954;--brand-green-light:#1ed760;--text-base:#fff;--text-subdued:#a7a7a7;--essential-negative:#e91429;--panel-gap:8px;--border-radius:8px;position:fixed;right:16px;bottom:86px;width:min(900px,94vw);height:min(620px,74vh);z-index:6000;display:none;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(18,18,22,.94);backdrop-filter:blur(14px);box-shadow:0 24px 60px rgba(0,0,0,.65);color:var(--text-base);font-family:'Circular Std',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;grid-template-rows:38px 1fr 90px}
 #view-music *{box-sizing:border-box;margin:0;padding:0;user-select:none}
@@ -428,9 +442,9 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <div id="whoami"></div>
 </header>
 <div id="chatSocial">
- <div class="chat-tabs"><button id="globalTab" class="active" type="button">🌐 Global chat</button><button id="friendsTab" type="button">👥 Friends <span id="requestCount"></span></button><button id="dmsTab" type="button">✉ DMs</button></div>
+ <div class="chat-tabs"><button id="globalTab" class="active" type="button">🌐 Global chat</button><button id="friendsTab" type="button">👥 Friends <span id="requestCount"></span></button><button id="dmsTab" type="button">✉ DMs</button><button id="aiTab" type="button">✦ AI Chat</button></div>
  <div id="peoplePanel" hidden><div class="people-search"><input id="findUserId" placeholder="Enter someone's User ID" autocomplete="off"><button id="findUserBtn" type="button">Find / Add</button></div><p class="social-hint">Share your User ID so friends can add you.</p><h3>Friend requests <span id="requestsEmpty"></span></h3><div id="friendRequests" class="people-list"></div><h3>Your friends</h3><div id="friendsList" class="people-list"></div></div>
- <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div>
+ <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div><div id="aiPanel" hidden><div class="ai-library-head"><strong>Your private AI conversations</strong><button id="aiNewChat" type="button">＋ New chat</button></div><div id="aiChatList"></div><div id="aiUsage">Choose a conversation or start a new one · 50,000 characters per chat</div></div>
 </div>
 <main id="main"><div id="empty">No messages yet. Say hello!</div></main>
 <div id="status"></div>
