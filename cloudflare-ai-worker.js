@@ -79,7 +79,7 @@ export default {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: input.model || "claude-haiku-5-5",
+          model: "claude-sonnet-5-5",
           messages: input.messages,
           stream: input.stream === true
         })
