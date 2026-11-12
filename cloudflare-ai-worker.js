@@ -31,7 +31,7 @@ export default {
       return json({ error: "Worker secret COARENA_API_KEY is not configured" }, 500);
     }
 
-    const path = new URL(request.url).pathname.replace(/\\/+$/, "") || "/";
+    const path = new URL(request.url).pathname.replace(/\/+$/, "")) || "/";
 
     try {
       if (path === "/feedback") {
