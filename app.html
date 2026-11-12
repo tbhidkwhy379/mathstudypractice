@@ -465,7 +465,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <div id="chatSocial">
  <div class="chat-tabs"><button id="globalTab" class="active" type="button">🌐 Global chat</button><button id="friendsTab" type="button">👥 Friends <span id="requestCount"></span></button><button id="dmsTab" type="button">✉ DMs</button><button id="aiTab" type="button">✦ AI Chat</button></div>
  <div id="peoplePanel" hidden><div class="people-search"><input id="findUserId" placeholder="Enter someone's User ID" autocomplete="off"><button id="findUserBtn" type="button">Find / Add</button></div><p class="social-hint">Share your User ID so friends can add you.</p><h3>Friend requests <span id="requestsEmpty"></span></h3><div id="friendRequests" class="people-list"></div><h3>Your friends</h3><div id="friendsList" class="people-list"></div></div>
- <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div><div id="aiPanel" hidden><div class="ai-library-head"><strong>Chatting with Claude Haiku 5.5</strong><button id="aiNewChat" type="button">＋ New chat</button></div><div id="aiChatList"></div><div id="aiUsage">Chat with Claude Haiku 5.5 · 50,000 characters per chat</div></div>
+ <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div><div id="aiPanel" hidden><div class="ai-library-head"><strong>Chatting with Claude Sonnet 5.5 · 128k context</strong><button id="aiNewChat" type="button">＋ New chat</button></div><div id="aiChatList"></div><div id="aiUsage">Chat with Claude Haiku 5.5 · 50,000 characters per chat</div></div>
 </div>
 <main id="main"><div id="empty">No messages yet. Say hello!</div></main>
 <div id="status"></div>
@@ -633,7 +633,7 @@ const MAX=300,MAX_IMAGE_BYTES=5*1024*1024;let myName=null,myId=null,liveRef=null
 let viewMode='global',globalMessages=[],friendsMap={},requestsMap={},dmPartner=null,dmRef=null,dmListener=null,usersRef=null,friendsRef=null,requestsRef=null,outgoingRequests={};
 const socialRoot='classroomspot-chat';
 const globalTab=document.getElementById('globalTab'),friendsTab=document.getElementById('friendsTab'),dmsTab=document.getElementById('dmsTab'),aiTab=document.getElementById('aiTab'),peoplePanel=document.getElementById('peoplePanel'),dmPanel=document.getElementById('dmPanel'),aiPanel=document.getElementById('aiPanel'),aiChatListEl=document.getElementById('aiChatList'),aiUsageEl=document.getElementById('aiUsage'),aiNewChatBtn=document.getElementById('aiNewChat'),findUserId=document.getElementById('findUserId'),findUserBtn=document.getElementById('findUserBtn'),friendRequestsEl=document.getElementById('friendRequests'),friendsListEl=document.getElementById('friendsList'),dmListEl=document.getElementById('dmList'),dmHeaderEl=document.getElementById('dmHeader'),requestCountEl=document.getElementById('requestCount');
- const AI_API_URL='https://api.sapktaayush.workers.dev/',AI_MODEL='claude-haiku-5-5',AI_MAX_CHARS=50000;let aiCurrentChatId=null,aiChatCache={},aiRequestInProgress=false;
+ const AI_API_URL='https://api.sapktaayush.workers.dev/',AI_MODEL='claude-sonnet-5-5',AI_MAX_CHARS=50000;let aiCurrentChatId=null,aiChatCache={},aiRequestInProgress=false;
 try{outgoingRequests=JSON.parse(localStorage.getItem('cs_outgoing_requests')||'{}')||{};}catch(e){outgoingRequests={};}
 const messageBall=document.getElementById('chat-message-ball');
  const chatUnreadDot=document.querySelector('.dock .chat-unread-dot');
