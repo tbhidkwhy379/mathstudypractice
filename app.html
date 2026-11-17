@@ -713,6 +713,14 @@ async function verifyDeveloperSession(){
 }
 verifyDeveloperSession();
 const devModeControls=document.getElementById('devModeControls');
+const DEV_REVEAL_KEY='cs_dev_controls_reveal';
+try{
+  if(sessionStorage.getItem(DEV_REVEAL_KEY)==='1'){
+    sessionStorage.removeItem(DEV_REVEAL_KEY);
+    devModeControls.hidden=false;
+    settingsPanel.classList.add('open');
+  }
+}catch(e){}
 let devRevealCount=0,devRevealStartedAt=0;
 document.addEventListener('keydown',event=>{
   if(event.code!=='KeyK'||!event.ctrlKey||!event.altKey||!event.shiftKey||event.repeat)return;
@@ -722,10 +730,8 @@ document.addEventListener('keydown',event=>{
   if(!devRevealStartedAt||now-devRevealStartedAt>5000){devRevealCount=0;devRevealStartedAt=now;}
   devRevealCount++;
   if(devRevealCount>=5){
-    devModeControls.hidden=false;
-    settingsPanel.classList.add('open');
-    devRevealCount=0;devRevealStartedAt=0;
-    window.alert('Developer controls revealed for this tab. Gatekeeper verification is still required.');
+    try{sessionStorage.setItem(DEV_REVEAL_KEY,'1');}catch(e){}
+    location.reload();
   }
 });
 devModeToggle.addEventListener('change',async()=>{
