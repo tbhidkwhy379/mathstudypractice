@@ -177,9 +177,10 @@ async function deleteGlobalMessage(messageId, env) {
       "/classroomspot-chat/messages/" + encodeURIComponent(messageId) + ".json",
       databaseUrl.origin
     );
-    target.searchParams.set("access_token", accessToken);
-
-    const response = await fetch(target.toString(), { method: "DELETE" });
+    const response = await fetch(target.toString(), {
+      method: "DELETE",
+      headers: { "Authorization": "Bearer " + accessToken }
+    });
     if (!response.ok) {
       return jsonResponse({
         success: false,
@@ -216,6 +217,9 @@ export default {
     try {
       body = await request.json();
     } catch {
+      return jsonResponse({ success: false, error: "Invalid request body." }, 400);
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
       return jsonResponse({ success: false, error: "Invalid request body." }, 400);
     }
 
