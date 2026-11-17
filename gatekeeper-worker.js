@@ -104,7 +104,7 @@ async function getFirebaseAccessToken(env) {
   const header = base64UrlEncodeText(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claims = base64UrlEncodeText(JSON.stringify({
     iss: email,
-    scope: FIREBASE_SCOPE,
+    scope: "https://www.googleapis.com/auth/userinfo.email " + FIREBASE_SCOPE,
     aud: GOOGLE_TOKEN_URI,
     iat: now,
     exp: now + 3600
