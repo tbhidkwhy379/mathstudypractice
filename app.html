@@ -1029,25 +1029,35 @@ async function manuallyUnloadLocalAiModel(){
 }
 async function unloadLocalAiModel(){
   if(localAiUnloadPromise)return localAiUnloadPromise;
-  localAiUnloadPromise=(async()=>{
-    const worker=localAiWorker;
-    if(!worker){localAiReady=false;localAiLoadedModel='';localAiLoading=false;return;}
-    await new Promise((resolve,reject)=>{
-      localAiUnloadResolve=resolve;
-      localAiUnloadReject=reject;
-      try{worker.postMessage({type:'unload'});}
-      catch(error){localAiUnloadResolve=null;localAiUnloadReject=null;reject(error);}
-    });
-  })();
-  try{await localAiUnloadPromise;}
-  finally{
-    const worker=localAiWorker;
-    localAiWorker=null;
-    if(worker)worker.terminate();
-    localAiReady=false;localAiLoading=false;localAiLoadedModel='';
-    localAiUnloadResolve=null;localAiUnloadReject=null;
-    localAiUnloadPromise=null;
+  // Terminate the dedicated worker immediately. This destroys its JS/WASM heap
+  // and its WebGPU/WebNN context instead of waiting for the runtime's dispose().
+  const worker=localAiWorker;
+  localAiUnloadPromise=Promise.resolve();
+  localAiWorker=null;
+  localAiReady=false;
+  localAiLoading=false;
+  localAiLoadedModel='';
+  localAiOutput='';
+  localAiStreamBubble=null;
+  if(worker){
+    worker.onmessage=null;
+    worker.onerror=null;
+    try{worker.terminate();}catch(error){console.warn('Could not terminate local AI worker:',error);}
   }
+  const stoppedError=new Error('SmolLM3 was unloaded to release memory.');
+  if(localAiLoadReject){
+    try{localAiLoadReject(stoppedError);}catch(error){}
+  }
+  if(localAiGenerationReject){
+    try{localAiGenerationReject(stoppedError);}catch(error){}
+  }
+  localAiLoadResolve=null;localAiLoadReject=null;
+  localAiGenerationResolve=null;localAiGenerationReject=null;
+  localAiUnloadResolve=null;localAiUnloadReject=null;
+  localAiLoadPromise=null;
+  // Let pending callers pass their await before allowing a fresh worker to start.
+  await Promise.resolve();
+  localAiUnloadPromise=null;
 }
 async function loadLocalAiModel(){
   if(localAiUnloadPromise)await localAiUnloadPromise;
