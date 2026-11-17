@@ -492,7 +492,7 @@ button { line-height: 1.25; }
 </div>
 <button id="bgReset" class="reset-btn">Remove background</button>
 <h3>Developer settings</h3>
-<label class="dev-mode-row" for="devModeToggle"><span><strong>Developer Mode</strong><small>Unlock Local AI features</small></span><input type="checkbox" id="devModeToggle" role="switch" aria-label="Enable Developer Mode"></label>
+<label class="dev-mode-row" for="devModeToggle"><span><strong>Developer Mode</strong></span><input type="checkbox" id="devModeToggle" role="switch" aria-label="Enable Developer Mode"></label>
 </div>
 <!-- HOME -->
 <section class="page-view active" id="view-home">
@@ -688,24 +688,48 @@ function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);stars.forEach(s=>{
 function tick(){if(!reduceMotion){stars.forEach(s=>{s.y+=s.vy;s.x+=s.drift;s.tw+=.02;if(s.y>canvas.height){s.y=0;s.x=Math.random()*canvas.width;}if(s.x>canvas.width)s.x=0;if(s.x<0)s.x=canvas.width;});}draw();requestAnimationFrame(tick);}
 addEventListener('resize',resize);resize();tick();
 const settingsBtn=document.getElementById('settingsBtn'),settingsPanel=document.getElementById('settingsPanel');
-const devModeToggle=document.getElementById('devModeToggle'),DEV_MODE_PASSWORD='6pass7';
-function syncDevModeSetting(){if(devModeToggle)devModeToggle.checked=sessionStorage.getItem('cs_dev_mode_unlocked')==='1';}
-syncDevModeSetting();
-devModeToggle.addEventListener('change',()=>{
+const devModeToggle=document.getElementById('devModeToggle');
+const DEV_GATEKEEPER_URL='https://gatekeeper.sapktaayush.workers.dev/';
+const DEV_TOKEN_KEY='cs_dev_mode_token';
+async function requestDeveloperGate(action,passcodeOrToken){
+  const payload=action==='developer-auth'?{action,passcode:passcodeOrToken}:{action,token:passcodeOrToken};
+  const response=await fetch(DEV_GATEKEEPER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.success)throw new Error('Developer access was not approved.');
+  return data;
+}
+function syncDevModeSetting(){if(devModeToggle)devModeToggle.checked=localAiAccessGranted;}
+async function verifyDeveloperSession(){
+  const token=sessionStorage.getItem(DEV_TOKEN_KEY);
+  if(!token)return;
+  try{
+    await requestDeveloperGate('developer-verify',token);
+    localAiAccessGranted=true;localAiAccessDenied=false;
+    syncDevModeSetting();
+    if(typeof updateAiProviderUi==='function')updateAiProviderUi();
+  }catch(e){sessionStorage.removeItem(DEV_TOKEN_KEY);}
+}
+verifyDeveloperSession();
+devModeToggle.addEventListener('change',async()=>{
   if(devModeToggle.checked){
     const entered=window.prompt('Enter the Developer Mode password:');
-    if(entered===DEV_MODE_PASSWORD){
-      sessionStorage.setItem('cs_dev_mode_unlocked','1');
-    }else{
+    if(entered===null){devModeToggle.checked=false;return;}
+    devModeToggle.disabled=true;
+    try{
+      const result=await requestDeveloperGate('developer-auth',entered);
+      if(!result.token)throw new Error('The gatekeeper did not return an access token.');
+      sessionStorage.setItem(DEV_TOKEN_KEY,result.token);
+      location.reload();
+    }catch(e){
       devModeToggle.checked=false;
-      if(entered!==null)window.alert('Incorrect password. Developer Mode was not enabled.');
-      return;
-    }
+      window.alert('Incorrect password or developer access unavailable.');
+    }finally{devModeToggle.disabled=false;}
   }else{
-    sessionStorage.removeItem('cs_dev_mode_unlocked');
+    sessionStorage.removeItem(DEV_TOKEN_KEY);
+    localAiAccessGranted=false;localAiAccessDenied=true;
     localStorage.setItem('cs_ai_provider','api');
+    location.reload();
   }
-  location.reload();
 });
 settingsBtn.addEventListener('click',()=>settingsPanel.classList.toggle('open'));
 document.addEventListener('click',e=>{if(!settingsPanel.contains(e.target)&&!settingsBtn.contains(e.target))settingsPanel.classList.remove('open');});
@@ -771,20 +795,20 @@ const aiProviderSelect=document.getElementById('aiProviderSelect'),localModelWra
 const aiDeleteModelBtn=document.getElementById('aiDeleteModel');
 const aiUnloadModelBtn=document.getElementById('aiUnloadModel');
 let aiProviderMode=localStorage.getItem('cs_ai_provider')==='api'?'api':'local';
-let localAiAccessGranted=sessionStorage.getItem('cs_dev_mode_unlocked')==='1';
-let localAiAccessDenied=!localAiAccessGranted;
+let localAiAccessGranted=false;
+let localAiAccessDenied=true;
 function unlockLocalAi(){return localAiAccessGranted;}
 function hideLocalAiOption(){
   if(aiProviderSelect){
     const localOption=aiProviderSelect.querySelector('option[value="local"]');
-    if(localOption)localOption.remove();
+    if(localOption)localOption.hidden=true;
   }
   if(localModelWrap)localModelWrap.hidden=true;
 }
 function getAiAssistantName(){return aiProviderMode==='api'?'Claude Opus 5.5':'Local AI';}
 function updateAiProviderUi(){
   if(localAiAccessDenied)hideLocalAiOption();
-  if(aiProviderSelect)aiProviderSelect.value=aiProviderMode;
+  if(aiProviderSelect){const localOption=aiProviderSelect.querySelector('option[value="local"]');if(localOption)localOption.hidden=localAiAccessDenied;aiProviderSelect.value=aiProviderMode;}
   if(localModelWrap)localModelWrap.hidden=localAiAccessDenied||aiProviderMode!=='local';
 }
 let localAiWorker=null,localAiReady=false,localAiLoading=false,localAiLoadedModel='',localAiLoadPromise=null,localAiLoadResolve=null,localAiLoadReject=null,localAiGenerationResolve=null,localAiGenerationReject=null,localAiStreamBubble=null,localAiOutput='',localAiDeleteResolve=null,localAiDeleteReject=null;
