@@ -43,6 +43,48 @@ function devicePlan(preference) {
 
 self.onmessage = async ({ data }) => {
   try {
+    if (data.type === 'delete-model') {
+      const allowedModels = [
+        'onnx-community/Qwen2.5-0.5B-Instruct',
+        'onnx-community/SmolLM2-360M-ONNX',
+        'onnx-community/Qwen3-1.7B-ONNX'
+      ];
+      if (!allowedModels.includes(data.modelId)) {
+        throw new Error('That local model is not supported for deletion.');
+      }
+
+      if (activeModel === data.modelId) {
+        stopping?.interrupt();
+        generator = null;
+        activeModel = '';
+        activeDevice = '';
+        stopping = null;
+      }
+
+      if (!self.caches || typeof self.caches.open !== 'function') {
+        throw new Error('This browser does not support deleting cached model files.');
+      }
+
+      const cache = await self.caches.open(env.cacheKey || 'transformers-cache');
+      const requests = await cache.keys();
+      const modelPath = '/' + data.modelId + '/';
+      let deleted = 0;
+
+      for (const request of requests) {
+        try {
+          const url = new URL(request.url);
+          if (url.hostname === 'huggingface.co' && url.pathname.includes(modelPath)) {
+            if (await cache.delete(request)) deleted++;
+          }
+        } catch (error) {
+          // Ignore unrelated cache entries that cannot be parsed.
+        }
+      }
+
+      postMessage({ type: 'deleted-model', modelId: data.modelId, deleted });
+      return;
+    }
+
     if (data.type === 'stop') {
       stopping?.interrupt();
       return;
