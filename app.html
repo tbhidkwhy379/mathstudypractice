@@ -49,6 +49,10 @@ body{background:var(--bg);background-size:cover;background-position:center;backg
 .settings-btn svg{width:20px;height:20px;fill:currentColor}
 .settings-panel{position:fixed;top:76px;right:28px;z-index:10;width:240px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;display:none;flex-direction:column;gap:14px;box-shadow:0 12px 32px rgba(0,0,0,.5);max-height:80vh;overflow-y:auto}
 .settings-panel.open{display:flex}
+.dev-mode-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--border);color:var(--text);cursor:pointer}
+.dev-mode-row span{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.dev-mode-row small{font-size:11px;color:var(--muted)}
+.dev-mode-row input{width:38px;height:21px;accent-color:var(--accent);cursor:pointer;flex:none}
 .settings-panel h3{margin:0;font-size:13px;font-weight:600;color:var(--muted)}
 .swatches{display:flex;gap:10px;flex-wrap:wrap}
 .swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent}
@@ -487,6 +491,8 @@ button { line-height: 1.25; }
 <input type="file" id="bgUpload" accept="image/*" style="display:none">
 </div>
 <button id="bgReset" class="reset-btn">Remove background</button>
+<h3>Developer settings</h3>
+<label class="dev-mode-row" for="devModeToggle"><span><strong>Developer Mode</strong><small>Unlock Local AI features</small></span><input type="checkbox" id="devModeToggle" role="switch" aria-label="Enable Developer Mode"></label>
 </div>
 <!-- HOME -->
 <section class="page-view active" id="view-home">
@@ -682,6 +688,25 @@ function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);stars.forEach(s=>{
 function tick(){if(!reduceMotion){stars.forEach(s=>{s.y+=s.vy;s.x+=s.drift;s.tw+=.02;if(s.y>canvas.height){s.y=0;s.x=Math.random()*canvas.width;}if(s.x>canvas.width)s.x=0;if(s.x<0)s.x=canvas.width;});}draw();requestAnimationFrame(tick);}
 addEventListener('resize',resize);resize();tick();
 const settingsBtn=document.getElementById('settingsBtn'),settingsPanel=document.getElementById('settingsPanel');
+const devModeToggle=document.getElementById('devModeToggle'),DEV_MODE_PASSWORD='6pass7';
+function syncDevModeSetting(){if(devModeToggle)devModeToggle.checked=sessionStorage.getItem('cs_dev_mode_unlocked')==='1';}
+syncDevModeSetting();
+devModeToggle.addEventListener('change',()=>{
+  if(devModeToggle.checked){
+    const entered=window.prompt('Enter the Developer Mode password:');
+    if(entered===DEV_MODE_PASSWORD){
+      sessionStorage.setItem('cs_dev_mode_unlocked','1');
+    }else{
+      devModeToggle.checked=false;
+      if(entered!==null)window.alert('Incorrect password. Developer Mode was not enabled.');
+      return;
+    }
+  }else{
+    sessionStorage.removeItem('cs_dev_mode_unlocked');
+    localStorage.setItem('cs_ai_provider','api');
+  }
+  location.reload();
+});
 settingsBtn.addEventListener('click',()=>settingsPanel.classList.toggle('open'));
 document.addEventListener('click',e=>{if(!settingsPanel.contains(e.target)&&!settingsBtn.contains(e.target))settingsPanel.classList.remove('open');});
 function hexToRgb(h){return h.replace('#','').match(/.{1,2}/g).map(x=>parseInt(x,16));}
@@ -746,29 +771,9 @@ const aiProviderSelect=document.getElementById('aiProviderSelect'),localModelWra
 const aiDeleteModelBtn=document.getElementById('aiDeleteModel');
 const aiUnloadModelBtn=document.getElementById('aiUnloadModel');
 let aiProviderMode=localStorage.getItem('cs_ai_provider')==='api'?'api':'local';
-const LOCAL_AI_PASSWORD='6pass7';
 let localAiAccessGranted=sessionStorage.getItem('cs_dev_mode_unlocked')==='1';
-let localAiAccessDenied=sessionStorage.getItem('cs_dev_mode_denied')==='1';
-function unlockLocalAi(){
-  if(localAiAccessGranted)return true;
-  if(localAiAccessDenied)return false;
-  const wantsDevMode=window.confirm('Would you like to enable Developer Mode? Developer Mode includes Local AI.');
-  if(!wantsDevMode){
-    localAiAccessDenied=true;
-    sessionStorage.setItem('cs_dev_mode_denied','1');
-    return false;
-  }
-  const entered=window.prompt('Enter the Developer Mode password:');
-  if(entered===LOCAL_AI_PASSWORD){
-    localAiAccessGranted=true;
-    sessionStorage.setItem('cs_dev_mode_unlocked','1');
-    return true;
-  }
-  localAiAccessDenied=true;
-  sessionStorage.setItem('cs_dev_mode_denied','1');
-  window.alert('Incorrect password. Developer Mode and Local AI have been disabled for this session.');
-  return false;
-}
+let localAiAccessDenied=!localAiAccessGranted;
+function unlockLocalAi(){return localAiAccessGranted;}
 function hideLocalAiOption(){
   if(aiProviderSelect){
     const localOption=aiProviderSelect.querySelector('option[value="local"]');
@@ -1280,7 +1285,7 @@ async function sendFriendRequest(uid){uid=(uid||'').trim();if(!uid||uid===myId){
 async function acceptRequest(uid){try{await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);await firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/accepted').set(true);friendsMap[uid]=true;renderPeople();render(globalMessages);setStatus('Friend added! You can now DM each other.');}catch(e){setStatus('Could not accept request: '+(e.message||'check Firebase rules'));}}
 async function syncAcceptedOutgoing(){for(const uid of Object.keys(outgoingRequests)){try{const snap=await firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).once('value');const q=snap.val();if(q&&q.accepted===true){await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);friendsMap[uid]=true;delete outgoingRequests[uid];saveOutgoing();}}catch(e){}}renderPeople();renderDmList();}
 function installSocialListeners(){usersRef=firebase.database().ref(socialRoot+'/users');friendsRef=firebase.database().ref(socialRoot+'/friends/'+myId);requestsRef=firebase.database().ref(socialRoot+'/friendRequests/'+myId);friendsRef.on('value',snap=>{friendsMap=snap.val()||{};renderPeople();renderDmList();});requestsRef.on('value',snap=>{requestsMap=snap.val()||{};renderPeople();});syncAcceptedOutgoing();}
-globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;const requestedMode=aiProviderSelect.value==='api'?'api':'local';if(requestedMode==='local'&&!unlockLocalAi()){aiProviderSelect.value=aiProviderMode;return;}aiProviderMode=requestedMode;localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();syncLocalAiLifecycle();if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);});}if(!unlockLocalAi()){localAiAccessDenied=true;aiProviderMode='api';localStorage.setItem('cs_ai_provider','api');hideLocalAiOption();}updateAiProviderUi();syncLocalAiLifecycle();if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';syncLocalAiLifecycle();});}if(aiDeleteModelBtn)aiDeleteModelBtn.addEventListener('click',deleteSelectedLocalAiModel);if(aiUnloadModelBtn)aiUnloadModelBtn.addEventListener('click',manuallyUnloadLocalAiModel);updateAiUnloadButton();aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
+globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;const requestedMode=aiProviderSelect.value==='api'?'api':'local';if(requestedMode==='local'&&!unlockLocalAi()){aiProviderSelect.value=aiProviderMode;return;}aiProviderMode=requestedMode;localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();syncLocalAiLifecycle();if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);});}if(!localAiAccessGranted&&aiProviderMode==='local'){aiProviderMode='api';localStorage.setItem('cs_ai_provider','api');}updateAiProviderUi();syncLocalAiLifecycle();if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';syncLocalAiLifecycle();});}if(aiDeleteModelBtn)aiDeleteModelBtn.addEventListener('click',deleteSelectedLocalAiModel);if(aiUnloadModelBtn)aiUnloadModelBtn.addEventListener('click',manuallyUnloadLocalAiModel);updateAiUnloadButton();aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
 findUserBtn.addEventListener('click',()=>sendFriendRequest(findUserId.value));findUserId.addEventListener('keydown',e=>{if(e.key==='Enter')sendFriendRequest(findUserId.value);});
 document.getElementById('chatSocial').addEventListener('click',e=>{const a=e.target.closest('[data-accept]');if(a){acceptRequest(a.getAttribute('data-accept'));return;}const d=e.target.closest('[data-decline]');if(d){const uid=d.getAttribute('data-decline');firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/ignored').set(true).then(()=>{requestsMap[uid]=Object.assign({},requestsMap[uid],{ignored:true});renderPeople();}).catch(err=>setStatus('Could not ignore request: '+err.message));return;}const o=e.target.closest('[data-open-dm]');if(o){const uid=o.getAttribute('data-open-dm');usersRef.child(uid).once('value').then(s=>openDM(uid,(s.val()||{}).name||'Friend'));}});
 mainEl.addEventListener('click',e=>{const b=e.target.closest('[data-add-friend]');if(b)sendFriendRequest(b.getAttribute('data-add-friend'));});
