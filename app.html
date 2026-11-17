@@ -847,8 +847,12 @@ function renderAiMarkdown(value,includeThinking=false){
   let source=String(value==null?'':value);
   const thoughts=[];
   if(includeThinking){
+    source=source.replace(/\[\[THINKING_SUMMARY\]\]([\s\S]*?)\[\[\/THINKING_SUMMARY\]\]/gi,(match,thought)=>{
+      const index=thoughts.push(thought.trim())-1;
+      return '\n\n<!--SMOL_THINKING_BLOCK_'+index+'-->\n\n';
+    });
     source=source.replace(/<think\b[^>]*>([\s\S]*?)(?:<\/think\s*>|$)/gi,(match,thought)=>{
-      const index=thoughts.push(thought)-1;
+      const index=thoughts.push(thought.trim())-1;
       return '\n\n<!--SMOL_THINKING_BLOCK_'+index+'-->\n\n';
     });
   }
@@ -1080,7 +1084,7 @@ function buildLocalAiHistory(chat){
     if(selected.length&&used+size>LOCAL_AI_CONTEXT_CHARS)break;
     selected.unshift(item);used+=size;
   }
-  return [{role:'system',content:'You are SmolLM3 3B, a compact language model running locally in the user’s browser. Be helpful, clear, accurate, and honest about uncertainty. Reply naturally and stay focused on the user’s request. Start each response with a short <think>...</think> section containing only a brief reasoning summary or plan; do not reveal private internal chain-of-thought. Then give the actual answer outside the tags. When a useful short chat title can be inferred, emit a title marker in this exact format: *(Your chat title) on its own line near the start of the response. Replace the example text with the actual title, keep it under 48 characters, and do not use this marker for ordinary emphasis. The app will use this marker to rename the current chat, and will remove the marker from the displayed answer. If no good title is available, omit it.'},...selected];
+  return [{role:'system',content:'/no_think You are SmolLM3 3B, a helpful assistant running locally in the user’s browser. Answer the message directly and naturally. Never narrate your own instructions or pretend to be an observer describing a conversation. Never write phrases such as “The user said…”, “The user just…”, “I need to respond…”, “I should…”, “Let me think…”, or describe how you plan to answer. Never output generic labels like “Chat:”, “Answer:”, “Response:”, or “Chat?”. For greetings and short casual messages, reply briefly and naturally; for example, if the user says “yo”, reply “Hey! What’s up?” and nothing else. Do not add a heading, a thinking section, or a chat title to a greeting, acknowledgement, one-word message, or vague follow-up. For a genuinely difficult or multi-step request, you may include a short user-facing approach summary before the answer using exactly [[THINKING_SUMMARY]]one or two concise sentences[[/THINKING_SUMMARY]]. This is only a high-level summary of the approach, never private internal reasoning or a step-by-step thought trace. Omit it for ordinary conversation and simple questions. The app displays this summary in a collapsed Thinking panel. When the conversation has a clear substantive topic that is genuinely useful to name, add one standalone title marker near the beginning in exactly this format: *(Short topic title). Keep it under 48 characters. Never add a title for greetings, small talk, acknowledgements, or unclear topics. Do not explain or mention the marker. Be clear, accurate, concise when appropriate, and honest when uncertain.'},...selected];
 }
 function runLocalAi(messages,bubble){
   const worker=ensureLocalAiWorker();localAiOutput='';localAiStreamBubble=bubble;
@@ -1171,8 +1175,8 @@ async function sendAiMessage(raw){
       answer=await runLocalAi(history,bubble);
       if(!localAiAreaIsActive()||localAiAreaRevision!==localAiAreaRevisionAtStart)throw new Error('Local AI stopped because you left the AI chat area. Re-enter the AI chat to continue.');
       if(!answer.trim())throw new Error('The local model returned an empty response. Try another model or a shorter message.');
-      const titleMatch=answer.match(/\*\(([^)\r\n]{1,48})\)/);
-      if(titleMatch){const suggestedTitle=titleMatch[1].trim();if(suggestedTitle){chat.title=suggestedTitle;answer=(answer.slice(0,titleMatch.index)+answer.slice(titleMatch.index+titleMatch[0].length)).replace(/\n{3,}/g,'\n\n').trim();await aiDbAction('put',chat);aiChatCache[chatId]=chat;renderAiChatList();updateAiMarkdownBubble(bubble,answer,true);}}
+      const titleMatch=answer.match(/(?:^|\n)[ \t]*\*\(([^)\r\n]{1,48})\)[ \t]*(?=\r?\n|$)/);
+      if(titleMatch&&titleMatch.index<600){const suggestedTitle=titleMatch[1].trim();if(suggestedTitle){chat.title=suggestedTitle;answer=(answer.slice(0,titleMatch.index)+answer.slice(titleMatch.index+titleMatch[0].length)).replace(/\n{3,}/g,'\n\n').trim();await aiDbAction('put',chat);aiChatCache[chatId]=chat;renderAiChatList();updateAiMarkdownBubble(bubble,answer,true);}}
     }
     const room=Math.max(0,AI_MAX_CHARS-(Number(chat.charCount)||0));
     if(!room){temp.remove();setAiUsage('The chat reached its 128,000-character limit. Create a new chat.');return;}
