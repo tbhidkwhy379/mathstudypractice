@@ -221,7 +221,8 @@ self.onmessage = async ({ data }) => {
         await generator(data.messages, {
           max_new_tokens: 384,
           do_sample: true,
-          temperature: 0.7,
+          temperature: 0.6,
+          top_p: 0.95,
           streamer,
           stopping_criteria: [stopping]
         });
