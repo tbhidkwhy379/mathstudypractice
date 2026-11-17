@@ -89,6 +89,9 @@ self.onmessage = async ({ data }) => {
     }
 
     if (data.type === 'load') {
+      if (data.model?.id !== 'opalitestudios/Qwen2.5-3B-Instruct-ONNX') {
+        throw new Error('Only the Qwen 2.5 3B local model is enabled.');
+      }
       if (generator && activeModel === data.model.id) {
         postMessage({ type: 'ready', model: activeModel, device: activeDevice });
         return;
