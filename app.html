@@ -972,7 +972,8 @@ function ensureLocalAiWorker(){
   return localAiWorker;
 }
 function localAiAreaIsActive(){
-  return aiChatPageVisible&&viewMode==='ai'&&aiProviderMode==='local';
+  // Keep SmolLM3 resident only while the Local AI chat is visible in the active browser tab.
+  return aiChatPageVisible&&viewMode==='ai'&&aiProviderMode==='local'&&document.visibilityState==='visible';
 }
 function syncLocalAiLifecycle(){
   const areaActive=localAiAreaIsActive();
@@ -1004,6 +1005,8 @@ window.setAiChatPageVisible=function(visible){
   aiChatPageVisible=!!visible;
   syncLocalAiLifecycle();
 };
+// Leaving this browser tab unloads SmolLM3; returning reloads it only if Local AI is still open.
+document.addEventListener('visibilitychange',syncLocalAiLifecycle);
 function updateAiUnloadButton(){
   if(!aiUnloadModelBtn)return;
   aiUnloadModelBtn.textContent=localAiManuallyUnloaded?'AI unloaded · loads on next message':'Unload AI from memory';
