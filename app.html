@@ -840,7 +840,33 @@ nameJoin.addEventListener('click',()=>joinWithName(nameInput.value));
 nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')joinWithName(nameInput.value);});
 
 function setAiUsage(s){if(aiUsageEl)aiUsageEl.textContent=s;}
-function renderAiMarkdown(value,includeThinking=false){let source=String(value==null?'':value);const thoughts=[];if(includeThinking){source=source.replace(/<think\\b[^>]*>([\\s\\S]*?)(?:<\\/think\\s*>|$)/gi,(match,thought)=>{const index=thoughts.push(thought)-1;return '\\n\\n<!--SMOL_THINKING_BLOCK_'+index+'-->\\n\\n';});}try{if(window.marked&&window.DOMPurify){let html=window.marked.parse(source,{gfm:true,breaks:true});thoughts.forEach((thought,index)=>{const body=window.marked.parse(thought,{gfm:true,breaks:true});const block='<details class=\"ai-thinking-details\"><summary>Thinking</summary><div class=\"ai-thinking-content\">'+body+'</div></details>';html=html.replace('<!--SMOL_THINKING_BLOCK_'+index+'-->',block);});return window.DOMPurify.sanitize(html);}}catch(e){console.warn('[AI markdown]',e);}let html=esc(source).replace(/\\n/g,'<br>');thoughts.forEach((thought,index)=>{const block='<details class=\"ai-thinking-details\"><summary>Thinking</summary><div class=\"ai-thinking-content\">'+esc(thought).replace(/\\n/g,'<br>')+'</div></details>';html=html.replace('&lt;!--SMOL_THINKING_BLOCK_'+index+'--&gt;',block);});return html;}
+function renderAiMarkdown(value,includeThinking=false){
+  let source=String(value==null?'':value);
+  const thoughts=[];
+  if(includeThinking){
+    source=source.replace(/<think\b[^>]*>([\s\S]*?)(?:<\/think\s*>|$)/gi,(match,thought)=>{
+      const index=thoughts.push(thought)-1;
+      return '\n\n<!--SMOL_THINKING_BLOCK_'+index+'-->\n\n';
+    });
+  }
+  try{
+    if(window.marked&&window.DOMPurify){
+      let html=window.marked.parse(source,{gfm:true,breaks:true});
+      thoughts.forEach((thought,index)=>{
+        const body=window.marked.parse(thought,{gfm:true,breaks:true});
+        const block='<details class="ai-thinking-details"><summary>Thinking</summary><div class="ai-thinking-content">'+body+'</div></details>';
+        html=html.replace('<!--SMOL_THINKING_BLOCK_'+index+'-->',block);
+      });
+      return window.DOMPurify.sanitize(html);
+    }
+  }catch(e){console.warn('[AI markdown]',e);}
+  let html=esc(source).replace(/\n/g,'<br>');
+  thoughts.forEach((thought,index)=>{
+    const block='<details class="ai-thinking-details"><summary>Thinking</summary><div class="ai-thinking-content">'+esc(thought).replace(/\n/g,'<br>')+'</div></details>';
+    html=html.replace('&lt;!--SMOL_THINKING_BLOCK_'+index+'--&gt;',block);
+  });
+  return html;
+}
 function updateAiMarkdownBubble(bubble,value,includeThinking=false){const wasOpen=!!(bubble.querySelector('details.ai-thinking-details')&&bubble.querySelector('details.ai-thinking-details').open);bubble.innerHTML=renderAiMarkdown(value,includeThinking);const toggle=bubble.querySelector('details.ai-thinking-details');if(toggle&&wasOpen)toggle.open=true;}
 let aiDbPromise=null,aiStorageReady=false;
 function openAiDatabase(){if(aiDbPromise)return aiDbPromise;aiDbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open('ClassroomSpotAIChats',1);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains('chats'))db.createObjectStore('chats',{keyPath:'id'});};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('Could not open local AI chat storage.'));request.onblocked=()=>reject(new Error('AI chat storage is blocked by another tab.'));});return aiDbPromise;}
