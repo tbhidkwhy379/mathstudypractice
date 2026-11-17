@@ -14,6 +14,20 @@ let generator = null;
 let activeModel = '';
 let activeDevice = '';
 let stopping = null;
+let generationActive = false;
+let loadingActive = false;
+let unloadRequested = false;
+
+async function disposeActiveGenerator() {
+  const current = generator;
+  generator = null;
+  activeModel = '';
+  activeDevice = '';
+  stopping = null;
+  if (current && typeof current.dispose === 'function') {
+    await current.dispose();
+  }
+}
 
 function devicePlan(preference) {
   const plan = [];
@@ -53,10 +67,10 @@ self.onmessage = async ({ data }) => {
 
       if (activeModel === data.modelId) {
         stopping?.interrupt();
-        generator = null;
-        activeModel = '';
-        activeDevice = '';
-        stopping = null;
+        if (generationActive || loadingActive) {
+          throw new Error('Wait for the local model to finish loading or generating before deleting it.');
+        }
+        await disposeActiveGenerator();
       }
 
       if (!self.caches || typeof self.caches.open !== 'function') {
@@ -88,6 +102,22 @@ self.onmessage = async ({ data }) => {
       return;
     }
 
+    if (data.type === 'unload') {
+      unloadRequested = true;
+      if (generationActive) {
+        stopping?.interrupt();
+        postMessage({ type: 'unloading' });
+        return;
+      }
+      if (loadingActive) {
+        postMessage({ type: 'unloading' });
+        return;
+      }
+      await disposeActiveGenerator();
+      postMessage({ type: 'unloaded' });
+      return;
+    }
+
     if (data.type === 'load') {
       if (data.model?.id !== 'HuggingFaceTB/SmolLM3-3B-ONNX') {
         throw new Error('Only SmolLM3 3B is enabled as the local model.');
@@ -97,60 +127,74 @@ self.onmessage = async ({ data }) => {
         return;
       }
 
-      generator = null;
-      activeModel = '';
-      activeDevice = '';
+      await disposeActiveGenerator();
+      unloadRequested = false;
+      loadingActive = true;
       const plan = devicePlan(data.accelerator || 'auto');
       let lastError;
 
-      for (const candidate of plan) {
-        postMessage({
-          type: 'progress',
-          text: 'Preparing ' + candidate.label + '…',
-          percent: 0,
-          device: candidate.device
-        });
-
-        try {
-          generator = await pipeline('text-generation', data.model.id, {
-            dtype: candidate.dtype,
-            device: candidate.device,
-            progress_callback: progress => {
-              if (progress.status === 'progress') {
-                postMessage({
-                  type: 'progress',
-                  text: 'Downloading ' + (progress.file || 'model files') + '…',
-                  percent: progress.progress || 0,
-                  device: candidate.device
-                });
-              }
-            }
-          });
-
-          activeModel = data.model.id;
-          activeDevice = candidate.device;
-          postMessage({
-            type: 'ready',
-            model: activeModel,
-            device: activeDevice,
-            label: candidate.label
-          });
-          return;
-        } catch (error) {
-          lastError = error;
-          generator = null;
+      try {
+        for (const candidate of plan) {
           postMessage({
             type: 'progress',
-            text: candidate.label + ' unavailable. Trying another option…',
-            percent: 0
+            text: 'Preparing ' + candidate.label + '…',
+            percent: 0,
+            device: candidate.device
           });
-        }
-      }
 
-      throw new Error(
-        'Could not load this model on the available hardware. ' +
-        (lastError?.message || 'Try a smaller model or choose CPU mode.')
-      );
+          try {
+            generator = await pipeline('text-generation', data.model.id, {
+              dtype: candidate.dtype,
+              device: candidate.device,
+              progress_callback: progress => {
+                if (progress.status === 'progress') {
+                  postMessage({
+                    type: 'progress',
+                    text: 'Downloading ' + (progress.file || 'model files') + '…',
+                    percent: progress.progress || 0,
+                    device: candidate.device
+                  });
+                }
+              }
+            });
+
+            if (unloadRequested) {
+              await disposeActiveGenerator();
+              postMessage({ type: 'unloaded' });
+              return;
+            }
+
+            activeModel = data.model.id;
+            activeDevice = candidate.device;
+            postMessage({
+              type: 'ready',
+              model: activeModel,
+              device: activeDevice,
+              label: candidate.label
+            });
+            return;
+          } catch (error) {
+            lastError = error;
+            await disposeActiveGenerator();
+            if (unloadRequested) {
+              postMessage({ type: 'unloaded' });
+              return;
+            }
+            postMessage({
+              type: 'progress',
+              text: candidate.label + ' unavailable. Trying another option…',
+              percent: 0
+            });
+          }
+        }
+
+        throw new Error(
+          'Could not load this model on the available hardware. ' +
+          (lastError?.message || 'Try a smaller model or choose CPU mode.')
+        );
+      } finally {
+        loadingActive = false;
+      }
     }
 
     if (data.type === 'generate') {
@@ -158,34 +202,44 @@ self.onmessage = async ({ data }) => {
         throw new Error('The selected local model is not loaded yet.');
       }
 
+      unloadRequested = false;
+      generationActive = true;
       stopping = new InterruptableStoppingCriteria();
       const started = Date.now();
       let output = '';
 
-      const streamer = new TextStreamer(generator.tokenizer, {
-        skip_prompt: true,
-        skip_special_tokens: true,
-        callback_function: token => {
-          output += token;
-          postMessage({ type: 'token', text: output });
+      try {
+        const streamer = new TextStreamer(generator.tokenizer, {
+          skip_prompt: true,
+          skip_special_tokens: true,
+          callback_function: token => {
+            output += token;
+            postMessage({ type: 'token', text: output });
+          }
+        });
+
+        await generator(data.messages, {
+          max_new_tokens: 384,
+          do_sample: true,
+          temperature: 0.7,
+          streamer,
+          stopping_criteria: [stopping]
+        });
+
+        postMessage({
+          type: 'done',
+          text: output,
+          elapsed: Date.now() - started,
+          device: activeDevice
+        });
+      } finally {
+        generationActive = false;
+        stopping = null;
+        if (unloadRequested) {
+          await disposeActiveGenerator();
+          postMessage({ type: 'unloaded' });
         }
-      });
-
-      await generator(data.messages, {
-        max_new_tokens: 384,
-        do_sample: true,
-        temperature: 0.7,
-        streamer,
-        stopping_criteria: [stopping]
-      });
-
-      postMessage({
-        type: 'done',
-        text: output,
-        elapsed: Date.now() - started,
-        device: activeDevice
-      });
-      stopping = null;
+      }
     }
   } catch (error) {
     postMessage({ type: 'error', message: error?.message || String(error) });
