@@ -725,7 +725,7 @@ const globalTab=document.getElementById('globalTab'),friendsTab=document.getElem
  const AI_MAX_CHARS=128000,LOCAL_AI_CONTEXT_CHARS=10000;let aiCurrentChatId=null,aiChatCache={},aiRequestInProgress=false;let aiPendingFiles=[];const aiFileInput=document.getElementById('aiFileInput'),aiAttachBtn=document.getElementById('aiAttachBtn'),aiFileTray=document.getElementById('aiFileTray'),aiModelSelect=document.getElementById('aiModelSelect');
 const LOCAL_AI_MODELS=[{id:'onnx-community/Qwen2.5-0.5B-Instruct',name:'Qwen 2.5 · 0.5B'},{id:'onnx-community/SmolLM2-360M-ONNX',name:'SmolLM 2 · 360M'},{id:'onnx-community/Qwen3-1.7B-ONNX',name:'Qwen 3 · 1.7B'}];
 let localAiWorker=null,localAiReady=false,localAiLoading=false,localAiLoadedModel='',localAiLoadPromise=null,localAiLoadResolve=null,localAiLoadReject=null,localAiGenerationResolve=null,localAiGenerationReject=null,localAiStreamBubble=null,localAiOutput='';
-let localAiModelId=localStorage.getItem('cs_local_ai_model')||LOCAL_AI_MODELS[0].id;if(aiModelSelect)aiModelSelect.value=localAiModelId;
+let localAiModelId=localStorage.getItem('cs_local_ai_model')||LOCAL_AI_MODELS[0].id;if(!LOCAL_AI_MODELS.some(model=>model.id===localAiModelId))localAiModelId=LOCAL_AI_MODELS[0].id;if(aiModelSelect)aiModelSelect.value=localAiModelId;
 try{outgoingRequests=JSON.parse(localStorage.getItem('cs_outgoing_requests')||'{}')||{};}catch(e){outgoingRequests={};}
 const messageBall=document.getElementById('chat-message-ball');
  const chatUnreadDot=document.querySelector('.dock .chat-unread-dot');
@@ -895,7 +895,7 @@ async function loadLocalAiModel(){
   const worker=ensureLocalAiWorker();
   localAiReady=false;localAiLoading=true;
   setAiUsage('Loading '+model.name+' for on-device inference. The first download may take a while…');
-  if(!aiRequestInProgress){sendBtn.disabled=true;textEl.disabled=true;aiAttachBtn.disabled=true;aiNewChatBtn.disabled=true;}
+  if(!aiRequestInProgress){sendBtn.disabled=true;textEl.disabled=true;aiAttachBtn.disabled=true;aiNewChatBtn.disabled=true;if(aiModelSelect)aiModelSelect.disabled=true;}
   localAiLoadPromise=new Promise((resolve,reject)=>{
     localAiLoadResolve=resolve;localAiLoadReject=reject;
     worker.postMessage({type:'load',model:model,accelerator:'auto'});
@@ -903,7 +903,7 @@ async function loadLocalAiModel(){
   try{await localAiLoadPromise;}
   finally{
     localAiLoadPromise=null;localAiLoading=false;
-    if(!aiRequestInProgress){sendBtn.disabled=false;textEl.disabled=false;aiAttachBtn.disabled=false;aiNewChatBtn.disabled=false;}
+    if(!aiRequestInProgress){sendBtn.disabled=false;textEl.disabled=false;aiAttachBtn.disabled=false;aiNewChatBtn.disabled=false;if(aiModelSelect)aiModelSelect.disabled=false;}
   }
 }
 function buildLocalAiHistory(chat){
