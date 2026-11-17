@@ -745,6 +745,8 @@ let aiProviderMode=localStorage.getItem('cs_ai_provider')==='api'?'api':'local';
 function getAiAssistantName(){return aiProviderMode==='api'?'Claude Opus 5.5':'Local AI';}
 function updateAiProviderUi(){if(aiProviderSelect)aiProviderSelect.value=aiProviderMode;if(localModelWrap)localModelWrap.hidden=aiProviderMode!=='local';}
 let localAiWorker=null,localAiReady=false,localAiLoading=false,localAiLoadedModel='',localAiLoadPromise=null,localAiLoadResolve=null,localAiLoadReject=null,localAiGenerationResolve=null,localAiGenerationReject=null,localAiStreamBubble=null,localAiOutput='',localAiDeleteResolve=null,localAiDeleteReject=null;
+let localAiUnloadPromise=null,localAiUnloadResolve=null,localAiUnloadReject=null;
+let aiChatPageVisible=document.getElementById('view-chat').classList.contains('active');
 let localAiModelId=localStorage.getItem('cs_local_ai_model')||LOCAL_AI_MODELS[0].id;if(!LOCAL_AI_MODELS.some(model=>model.id===localAiModelId))localAiModelId=LOCAL_AI_MODELS[0].id;if(aiModelSelect)aiModelSelect.value=localAiModelId;
 try{outgoingRequests=JSON.parse(localStorage.getItem('cs_outgoing_requests')||'{}')||{};}catch(e){outgoingRequests={};}
 const messageBall=document.getElementById('chat-message-ball');
@@ -896,6 +898,16 @@ function ensureLocalAiWorker(){
       setAiUsage(data.text+(percent>0?' · '+Math.round(percent)+'%':'')+' · Model files are downloaded from Hugging Face.');
       return;
     }
+    if(data.type==='unloading'){
+      setAiUsage('Releasing SmolLM3 memory…');
+      return;
+    }
+    if(data.type==='unloaded'){
+      localAiReady=false;localAiLoading=false;localAiLoadedModel='';
+      if(localAiUnloadResolve)localAiUnloadResolve();
+      localAiUnloadResolve=null;localAiUnloadReject=null;
+      return;
+    }
     if(data.type==='ready'){
       localAiReady=true;localAiLoading=false;localAiLoadedModel=data.model||localAiModelId;
       setAiUsage((data.label||'Local model ready')+' · Running on this device · Chat saved in this browser.');
@@ -926,6 +938,7 @@ function ensureLocalAiWorker(){
     if(data.type==='error'){
       const error=new Error(data.message||'Local model failed.');
       if(localAiDeleteReject){localAiDeleteReject(error);localAiDeleteResolve=null;localAiDeleteReject=null;return;}
+      if(localAiUnloadReject){localAiUnloadReject(error);localAiUnloadResolve=null;localAiUnloadReject=null;}
       localAiReady=false;localAiLoading=false;
       if(localAiLoadReject){localAiLoadReject(error);localAiLoadResolve=null;localAiLoadReject=null;}
       else if(localAiGenerationReject){localAiGenerationReject(error);localAiGenerationResolve=null;localAiGenerationReject=null;localAiStreamBubble=null;}
@@ -935,7 +948,8 @@ function ensureLocalAiWorker(){
   localAiWorker.onerror=event=>{
     const error=new Error(event.message||'The local AI worker stopped unexpectedly.');
     localAiReady=false;localAiLoading=false;
-    if(localAiDeleteReject){localAiDeleteReject(error);localAiDeleteResolve=null;localAiDeleteReject=null;}
+    if(localAiUnloadReject){localAiUnloadReject(error);localAiUnloadResolve=null;localAiUnloadReject=null;}
+    else if(localAiDeleteReject){localAiDeleteReject(error);localAiDeleteResolve=null;localAiDeleteReject=null;}
     else if(localAiLoadReject){localAiLoadReject(error);localAiLoadResolve=null;localAiLoadReject=null;}
     else if(localAiGenerationReject){localAiGenerationReject(error);localAiGenerationResolve=null;localAiGenerationReject=null;localAiStreamBubble=null;}
     localAiWorker=null;
@@ -943,7 +957,60 @@ function ensureLocalAiWorker(){
   };
   return localAiWorker;
 }
+function localAiAreaIsActive(){
+  return aiChatPageVisible&&viewMode==='ai'&&aiProviderMode==='local';
+}
+function syncLocalAiLifecycle(){
+  if(localAiAreaIsActive()){
+    if(localAiUnloadPromise){
+      const unloading=localAiUnloadPromise;
+      unloading.then(()=>{
+        if(localAiAreaIsActive()&&!localAiReady&&!localAiLoading&&!aiRequestInProgress){
+          loadLocalAiModel().catch(error=>setAiUsage('Could not reload local model: '+error.message));
+        }
+      }).catch(error=>setAiUsage('Could not release local model: '+error.message));
+      return;
+    }
+    if(!localAiReady&&!localAiLoading&&!localAiLoadPromise&&!aiRequestInProgress){
+      loadLocalAiModel().catch(error=>setAiUsage('Could not load local model: '+error.message));
+    }
+    return;
+  }
+  if(localAiReady||localAiLoading||localAiLoadPromise){
+    unloadLocalAiModel().catch(error=>setAiUsage('Could not unload local model: '+error.message));
+  }
+}
+window.setAiChatPageVisible=function(visible){
+  aiChatPageVisible=!!visible;
+  syncLocalAiLifecycle();
+};
+async function unloadLocalAiModel(){
+  if(localAiUnloadPromise)return localAiUnloadPromise;
+  localAiUnloadPromise=(async()=>{
+    if(localAiLoadPromise){
+      try{await localAiLoadPromise;}catch(e){}
+    }
+    const worker=localAiWorker;
+    if(!worker){localAiReady=false;localAiLoadedModel='';localAiLoading=false;return;}
+    await new Promise((resolve,reject)=>{
+      localAiUnloadResolve=resolve;
+      localAiUnloadReject=reject;
+      try{worker.postMessage({type:'unload'});}
+      catch(error){localAiUnloadResolve=null;localAiUnloadReject=null;reject(error);}
+    });
+  })();
+  try{await localAiUnloadPromise;}
+  finally{
+    const worker=localAiWorker;
+    localAiWorker=null;
+    if(worker)worker.terminate();
+    localAiReady=false;localAiLoading=false;localAiLoadedModel='';
+    localAiUnloadResolve=null;localAiUnloadReject=null;
+    localAiUnloadPromise=null;
+  }
+}
 async function loadLocalAiModel(){
+  if(localAiUnloadPromise)await localAiUnloadPromise;
   const model=selectedLocalAiModel();
   if(localAiReady&&localAiLoadedModel===model.id)return;
   if(localAiLoadPromise)return localAiLoadPromise;
@@ -961,6 +1028,7 @@ async function loadLocalAiModel(){
     if(!aiRequestInProgress){sendBtn.disabled=false;textEl.disabled=false;aiAttachBtn.disabled=false;aiNewChatBtn.disabled=false;if(aiModelSelect)aiModelSelect.disabled=false;}
   }
 }
+
 async function deleteSelectedLocalAiModel(){
   if(aiRequestInProgress||localAiLoading||localAiDeleteResolve)return;
   const model=selectedLocalAiModel();
@@ -1049,7 +1117,7 @@ async function sendAiMessage(raw){
   if(aiModelSelect)aiModelSelect.disabled=true;if(aiProviderSelect)aiProviderSelect.disabled=true;
   let temp=null;
   try{
-    if(aiProviderMode==='local')await loadLocalAiModel();
+    if(aiProviderMode==='local'){await loadLocalAiModel();if(!localAiAreaIsActive())throw new Error('Local AI stopped because you left the AI chat area. Re-enter the AI chat to continue.');}
     if(!aiCurrentChatId)await createAiChat();
     const chatId=aiCurrentChatId;
     if(!chatId)throw new Error('Create a new chat to continue.');
@@ -1093,6 +1161,7 @@ async function sendAiMessage(raw){
     }else{
       setAiUsage(selectedLocalAiModel().name+' · Generating on this device.');
       answer=await runLocalAi(history,bubble);
+      if(!localAiAreaIsActive())throw new Error('Local AI stopped because you left the AI chat area. Re-enter the AI chat to continue.');
       if(!answer.trim())throw new Error('The local model returned an empty response. Try another model or a shorter message.');
       const titleMatch=answer.match(/\*\(([^)\r\n]{1,48})\)/);
       if(titleMatch){const suggestedTitle=titleMatch[1].trim();if(suggestedTitle){chat.title=suggestedTitle;answer=(answer.slice(0,titleMatch.index)+answer.slice(titleMatch.index+titleMatch[0].length)).replace(/\n{3,}/g,'\n\n').trim();await aiDbAction('put',chat);aiChatCache[chatId]=chat;renderAiChatList();updateAiMarkdownBubble(bubble,answer,true);}}
@@ -1119,7 +1188,7 @@ async function sendAiMessage(raw){
 }
 function saveOutgoing(){try{localStorage.setItem('cs_outgoing_requests',JSON.stringify(outgoingRequests));}catch(e){}}
 function dmPath(other){return [myId,other].sort().join('/');}
-function setMode(mode){viewMode=mode;document.getElementById('view-chat').classList.toggle('ai-mode',mode==='ai');globalTab.classList.toggle('active',mode==='global');friendsTab.classList.toggle('active',mode==='friends');dmsTab.classList.toggle('active',mode==='dms');aiTab.classList.toggle('active',mode==='ai');peoplePanel.hidden=mode!=='friends';dmPanel.hidden=mode!=='dms';aiPanel.hidden=mode!=='ai';document.getElementById('attachImage').hidden=mode==='ai';document.getElementById('imageFile').hidden=mode==='ai';aiAttachBtn.hidden=mode!=='ai';if(mode!=='ai'){aiFileTray.hidden=true;}textEl.placeholder=mode==='global'?'Message #global (paste an image with Ctrl+V)':(mode==='dms'&&dmPartner?'Message '+dmPartner.name+'…':(mode==='ai'?'Message the AI…':'Choose a friend to DM'));if(mode==='global'){if(dmListener&&dmRef)dmRef.off('value',dmListener);dmListener=null;dmRef=null;dmPartner=null;render(globalMessages);}else if(mode==='friends'){render([]);renderPeople();}else if(mode==='dms'){renderDmList();if(dmPartner)dmHeaderEl.textContent='DM with '+dmPartner.name+' · ID '+dmPartner.uid;else dmHeaderEl.textContent='Choose a friend to start a DM.';render([]);}else{if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);else render([]);}}
+function setMode(mode){viewMode=mode;document.getElementById('view-chat').classList.toggle('ai-mode',mode==='ai');globalTab.classList.toggle('active',mode==='global');friendsTab.classList.toggle('active',mode==='friends');dmsTab.classList.toggle('active',mode==='dms');aiTab.classList.toggle('active',mode==='ai');peoplePanel.hidden=mode!=='friends';dmPanel.hidden=mode!=='dms';aiPanel.hidden=mode!=='ai';document.getElementById('attachImage').hidden=mode==='ai';document.getElementById('imageFile').hidden=mode==='ai';aiAttachBtn.hidden=mode!=='ai';if(mode!=='ai'){aiFileTray.hidden=true;}textEl.placeholder=mode==='global'?'Message #global (paste an image with Ctrl+V)':(mode==='dms'&&dmPartner?'Message '+dmPartner.name+'…':(mode==='ai'?'Message the AI…':'Choose a friend to DM'));if(mode==='global'){if(dmListener&&dmRef)dmRef.off('value',dmListener);dmListener=null;dmRef=null;dmPartner=null;render(globalMessages);}else if(mode==='friends'){render([]);renderPeople();}else if(mode==='dms'){renderDmList();if(dmPartner)dmHeaderEl.textContent='DM with '+dmPartner.name+' · ID '+dmPartner.uid;else dmHeaderEl.textContent='Choose a friend to start a DM.';render([]);}else{if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);else render([]);}syncLocalAiLifecycle();}
 function renderPeople(){friendRequestsEl.innerHTML='';let pending=0;Object.keys(requestsMap).forEach(uid=>{const q=requestsMap[uid];if(!q||q.accepted===true||q.ignored===true||friendsMap[uid])return;pending++;const row=document.createElement('div');row.className='person-row';row.innerHTML='<div class="person-name">'+esc(q.name||'User')+'<div class="person-id">ID: '+esc(uid)+'</div></div><button type="button" data-accept="'+esc(uid)+'">Accept</button><button type="button" data-decline="'+esc(uid)+'">Ignore</button>';friendRequestsEl.appendChild(row);});requestCountEl.textContent=pending?'('+pending+')':'';document.getElementById('requestsEmpty').textContent=pending?'('+pending+')':'— none';if(!friendRequestsEl.children.length)friendRequestsEl.innerHTML='<div class="social-hint">No pending requests.</div>';
 friendsListEl.innerHTML='';const ids=Object.keys(friendsMap).filter(uid=>friendsMap[uid]===true);if(!ids.length)friendsListEl.innerHTML='<div class="social-hint">No friends yet. Add someone using their User ID.</div>';ids.forEach(uid=>{usersRef.child(uid).once('value').then(snap=>{const p=snap.val()||{};const row=document.createElement('div');row.className='person-row';row.innerHTML='<div class="person-name">'+esc(p.name||'Friend')+'<div class="person-id">ID: '+esc(uid)+'</div></div><button type="button" data-open-dm="'+esc(uid)+'">Message</button>';friendsListEl.appendChild(row);}).catch(()=>{});});}
 function renderDmList(){dmListEl.innerHTML='';const ids=Object.keys(friendsMap).filter(uid=>friendsMap[uid]===true);if(!ids.length){dmListEl.innerHTML='<div class="social-hint">Add friends first to start DMs.</div>';return;}ids.forEach(uid=>{usersRef.child(uid).once('value').then(snap=>{const p=snap.val()||{};const row=document.createElement('div');row.className='person-row';row.innerHTML='<div class="person-name">'+esc(p.name||'Friend')+'<div class="person-id">ID: '+esc(uid)+'</div></div><button type="button" data-open-dm="'+esc(uid)+'">Open DM</button>';dmListEl.appendChild(row);}).catch(()=>{});});}
@@ -1128,7 +1197,7 @@ async function sendFriendRequest(uid){uid=(uid||'').trim();if(!uid||uid===myId){
 async function acceptRequest(uid){try{await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);await firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/accepted').set(true);friendsMap[uid]=true;renderPeople();render(globalMessages);setStatus('Friend added! You can now DM each other.');}catch(e){setStatus('Could not accept request: '+(e.message||'check Firebase rules'));}}
 async function syncAcceptedOutgoing(){for(const uid of Object.keys(outgoingRequests)){try{const snap=await firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).once('value');const q=snap.val();if(q&&q.accepted===true){await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);friendsMap[uid]=true;delete outgoingRequests[uid];saveOutgoing();}}catch(e){}}renderPeople();renderDmList();}
 function installSocialListeners(){usersRef=firebase.database().ref(socialRoot+'/users');friendsRef=firebase.database().ref(socialRoot+'/friends/'+myId);requestsRef=firebase.database().ref(socialRoot+'/friendRequests/'+myId);friendsRef.on('value',snap=>{friendsMap=snap.val()||{};renderPeople();renderDmList();});requestsRef.on('value',snap=>{requestsMap=snap.val()||{};renderPeople();});syncAcceptedOutgoing();}
-globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='local')loadLocalAiModel().catch(error=>setAiUsage('Could not load local model: '+error.message));else setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;aiProviderMode=aiProviderSelect.value==='api'?'api':'local';localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();if(aiProviderMode==='local')loadLocalAiModel().catch(error=>setAiUsage('Could not load local model: '+error.message));else setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);});}if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';loadLocalAiModel().catch(error=>setAiUsage('Could not load local model: '+error.message));});}if(aiDeleteModelBtn)aiDeleteModelBtn.addEventListener('click',deleteSelectedLocalAiModel);aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
+globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;aiProviderMode=aiProviderSelect.value==='api'?'api':'local';localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();syncLocalAiLifecycle();if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);});}if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';syncLocalAiLifecycle();});}if(aiDeleteModelBtn)aiDeleteModelBtn.addEventListener('click',deleteSelectedLocalAiModel);aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
 findUserBtn.addEventListener('click',()=>sendFriendRequest(findUserId.value));findUserId.addEventListener('keydown',e=>{if(e.key==='Enter')sendFriendRequest(findUserId.value);});
 document.getElementById('chatSocial').addEventListener('click',e=>{const a=e.target.closest('[data-accept]');if(a){acceptRequest(a.getAttribute('data-accept'));return;}const d=e.target.closest('[data-decline]');if(d){const uid=d.getAttribute('data-decline');firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/ignored').set(true).then(()=>{requestsMap[uid]=Object.assign({},requestsMap[uid],{ignored:true});renderPeople();}).catch(err=>setStatus('Could not ignore request: '+err.message));return;}const o=e.target.closest('[data-open-dm]');if(o){const uid=o.getAttribute('data-open-dm');usersRef.child(uid).once('value').then(s=>openDM(uid,(s.val()||{}).name||'Friend'));}});
 mainEl.addEventListener('click',e=>{const b=e.target.closest('[data-add-friend]');if(b)sendFriendRequest(b.getAttribute('data-add-friend'));});
@@ -1525,6 +1594,7 @@ function showPage(name){if(!pageViews[name])return;
 if(name==="chat"){var unreadDot=document.querySelector(".dock .chat-unread-dot");if(unreadDot)unreadDot.classList.remove("visible");}
 Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active");});
 pageViews[name].classList.add("active");
+if(typeof window.setAiChatPageVisible==="function")window.setAiChatPageVisible(name==="chat");
 document.querySelectorAll(".dock a[data-page]").forEach(function(a){
 var p=a.getAttribute("data-page");if(p==="music")return; /* music dock state tracks the floating window, not the page */
 a.classList.toggle("active",p===name);});
