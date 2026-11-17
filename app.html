@@ -901,8 +901,10 @@ function ensureLocalAiWorker(){
   localAiWorker.onerror=event=>{
     const error=new Error(event.message||'The local AI worker stopped unexpectedly.');
     localAiReady=false;localAiLoading=false;
-    if(localAiLoadReject){localAiLoadReject(error);localAiLoadResolve=null;localAiLoadReject=null;}
+    if(localAiDeleteReject){localAiDeleteReject(error);localAiDeleteResolve=null;localAiDeleteReject=null;}
+    else if(localAiLoadReject){localAiLoadReject(error);localAiLoadResolve=null;localAiLoadReject=null;}
     else if(localAiGenerationReject){localAiGenerationReject(error);localAiGenerationResolve=null;localAiGenerationReject=null;localAiStreamBubble=null;}
+    localAiWorker=null;
     setAiUsage('Local AI worker error: '+error.message);
   };
   return localAiWorker;
@@ -929,6 +931,10 @@ async function deleteSelectedLocalAiModel(){
   if(aiRequestInProgress||localAiLoading||localAiDeleteResolve)return;
   const model=selectedLocalAiModel();
   if(!confirm('Delete the downloaded files for '+model.name+' from this browser? This will not delete your chats or other local models. You can download it again later.'))return;
+  aiRequestInProgress=true;
+  sendBtn.disabled=true;textEl.disabled=true;aiAttachBtn.disabled=true;aiNewChatBtn.disabled=true;
+  document.getElementById('aiBackBtn').disabled=true;
+  if(aiProviderSelect)aiProviderSelect.disabled=true;
   if(aiDeleteModelBtn)aiDeleteModelBtn.disabled=true;
   if(aiModelSelect)aiModelSelect.disabled=true;
   setAiUsage('Removing cached files for '+model.name+'…');
@@ -944,6 +950,10 @@ async function deleteSelectedLocalAiModel(){
     setAiUsage('Could not delete '+model.name+': '+(error.message||String(error)));
   }finally{
     localAiDeleteResolve=null;localAiDeleteReject=null;
+    aiRequestInProgress=false;
+    sendBtn.disabled=false;textEl.disabled=false;aiAttachBtn.disabled=false;aiNewChatBtn.disabled=false;
+    document.getElementById('aiBackBtn').disabled=false;
+    if(aiProviderSelect)aiProviderSelect.disabled=false;
     if(aiDeleteModelBtn)aiDeleteModelBtn.disabled=false;
     if(aiModelSelect)aiModelSelect.disabled=false;
   }
