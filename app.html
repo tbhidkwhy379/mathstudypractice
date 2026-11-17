@@ -551,7 +551,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <div id="chatSocial">
  <div class="chat-tabs"><button id="globalTab" class="active" type="button">🌐 Global chat</button><button id="friendsTab" type="button">👥 Friends <span id="requestCount"></span></button><button id="dmsTab" type="button">✉ DMs</button><button id="aiTab" type="button">✦ AI Chat</button></div>
  <div id="peoplePanel" hidden><div class="people-search"><input id="findUserId" placeholder="Enter someone's User ID" autocomplete="off"><button id="findUserBtn" type="button">Find / Add</button></div><p class="social-hint">Share your User ID so friends can add you.</p><h3>Friend requests <span id="requestsEmpty"></span></h3><div id="friendRequests" class="people-list"></div><h3>Your friends</h3><div id="friendsList" class="people-list"></div></div>
- <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div><div id="aiPanel" hidden><div class="ai-library-head"><button id="aiBackBtn" type="button">← Human chats</button><strong>Your AI chats</strong><label class="ai-model-label" for="aiModelSelect">LOCAL MODEL</label><select id="aiModelSelect"><option value="onnx-community/Qwen2.5-0.5B-Instruct">Qwen 2.5 · 0.5B (recommended)</option><option value="onnx-community/SmolLM2-360M-ONNX">SmolLM 2 · 360M (lightweight)</option><option value="onnx-community/Qwen3-1.7B-ONNX">Qwen 3 · 1.7B (larger download)</option></select><button id="aiNewChat" type="button">＋ New chat</button></div><div id="aiChatList"></div><div id="aiUsage">Runs on this device · Chats are saved in this browser.</div></div>
+ <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div><div id="aiPanel" hidden><div class="ai-library-head"><button id="aiBackBtn" type="button">← Human chats</button><strong>Your AI chats</strong><label class="ai-model-label" for="aiProviderSelect">AI MODE</label><select id="aiProviderSelect"><option value="local">Local · runs on this device</option><option value="api">API · Claude Opus 5.5</option></select><span id="localModelWrap"><label class="ai-model-label" for="aiModelSelect">LOCAL MODEL</label><select id="aiModelSelect"><option value="onnx-community/Qwen2.5-0.5B-Instruct">Qwen 2.5 · 0.5B (recommended)</option><option value="onnx-community/SmolLM2-360M-ONNX">SmolLM 2 · 360M (lightweight)</option><option value="onnx-community/Qwen3-1.7B-ONNX">Qwen 3 · 1.7B (larger download)</option></select></span><button id="aiNewChat" type="button">＋ New chat</button></div><div id="aiChatList"></div><div id="aiUsage">Runs on this device · Chats are saved in this browser.</div></div>
 </div>
 <main id="main"><div id="empty">No messages yet. Say hello!</div></main>
 <div id="status"></div>
@@ -724,6 +724,11 @@ const socialRoot='classroomspot-chat';
 const globalTab=document.getElementById('globalTab'),friendsTab=document.getElementById('friendsTab'),dmsTab=document.getElementById('dmsTab'),aiTab=document.getElementById('aiTab'),peoplePanel=document.getElementById('peoplePanel'),dmPanel=document.getElementById('dmPanel'),aiPanel=document.getElementById('aiPanel'),aiChatListEl=document.getElementById('aiChatList'),aiUsageEl=document.getElementById('aiUsage'),aiNewChatBtn=document.getElementById('aiNewChat'),findUserId=document.getElementById('findUserId'),findUserBtn=document.getElementById('findUserBtn'),friendRequestsEl=document.getElementById('friendRequests'),friendsListEl=document.getElementById('friendsList'),dmListEl=document.getElementById('dmList'),dmHeaderEl=document.getElementById('dmHeader'),requestCountEl=document.getElementById('requestCount');
  const AI_MAX_CHARS=128000,LOCAL_AI_CONTEXT_CHARS=10000;let aiCurrentChatId=null,aiChatCache={},aiRequestInProgress=false;let aiPendingFiles=[];const aiFileInput=document.getElementById('aiFileInput'),aiAttachBtn=document.getElementById('aiAttachBtn'),aiFileTray=document.getElementById('aiFileTray'),aiModelSelect=document.getElementById('aiModelSelect');
 const LOCAL_AI_MODELS=[{id:'onnx-community/Qwen2.5-0.5B-Instruct',name:'Qwen 2.5 · 0.5B'},{id:'onnx-community/SmolLM2-360M-ONNX',name:'SmolLM 2 · 360M'},{id:'onnx-community/Qwen3-1.7B-ONNX',name:'Qwen 3 · 1.7B'}];
+const AI_API_URL='https://api.sapktaayush.workers.dev/',AI_API_MODEL='claude-opus-5-5';
+const aiProviderSelect=document.getElementById('aiProviderSelect'),localModelWrap=document.getElementById('localModelWrap');
+let aiProviderMode=localStorage.getItem('cs_ai_provider')==='api'?'api':'local';
+function getAiAssistantName(){return aiProviderMode==='api'?'Claude Opus 5.5':'Local AI';}
+function updateAiProviderUi(){if(aiProviderSelect)aiProviderSelect.value=aiProviderMode;if(localModelWrap)localModelWrap.hidden=aiProviderMode!=='local';}
 let localAiWorker=null,localAiReady=false,localAiLoading=false,localAiLoadedModel='',localAiLoadPromise=null,localAiLoadResolve=null,localAiLoadReject=null,localAiGenerationResolve=null,localAiGenerationReject=null,localAiStreamBubble=null,localAiOutput='';
 let localAiModelId=localStorage.getItem('cs_local_ai_model')||LOCAL_AI_MODELS[0].id;if(!LOCAL_AI_MODELS.some(model=>model.id===localAiModelId))localAiModelId=LOCAL_AI_MODELS[0].id;if(aiModelSelect)aiModelSelect.value=localAiModelId;
 try{outgoingRequests=JSON.parse(localStorage.getItem('cs_outgoing_requests')||'{}')||{};}catch(e){outgoingRequests={};}
@@ -825,7 +830,7 @@ let aiDbPromise=null,aiStorageReady=false;
 function openAiDatabase(){if(aiDbPromise)return aiDbPromise;aiDbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open('ClassroomSpotAIChats',1);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains('chats'))db.createObjectStore('chats',{keyPath:'id'});};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('Could not open local AI chat storage.'));request.onblocked=()=>reject(new Error('AI chat storage is blocked by another tab.'));});return aiDbPromise;}
 async function aiDbAction(mode,value){const db=await openAiDatabase();return new Promise((resolve,reject)=>{const tx=db.transaction('chats',mode==='getAll'||mode==='get'?'readonly':'readwrite');const store=tx.objectStore('chats');let req;if(mode==='getAll')req=store.getAll();else if(mode==='get')req=store.get(value);else if(mode==='put')req=store.put(value);else if(mode==='delete')req=store.delete(value);if(req){req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('Local AI chat storage failed.'));}tx.onerror=()=>reject(tx.error||new Error('Local AI chat storage failed.'));});}
 function renderAiChatList(){if(!aiChatListEl)return;aiChatListEl.innerHTML='';const entries=Object.keys(aiChatCache).map(id=>({id:id,data:aiChatCache[id]||{}})).sort((a,b)=>(b.data.updatedAt||b.data.createdAt||0)-(a.data.updatedAt||a.data.createdAt||0));if(!entries.length){aiChatListEl.innerHTML='<span class="social-hint">No AI chats yet — create one to begin.</span>';return;}entries.forEach(item=>{const row=document.createElement('div');row.className='ai-chat-row';const open=document.createElement('button');open.type='button';open.className='ai-open'+(item.id===aiCurrentChatId?' active':'');open.setAttribute('data-ai-open',item.id);open.textContent=item.data.title||'New chat';const del=document.createElement('button');del.type='button';del.className='ai-delete';del.setAttribute('data-ai-delete',item.id);del.setAttribute('aria-label','Delete conversation');del.title='Delete conversation';del.textContent='×';row.append(open,del);aiChatListEl.appendChild(row);});}
-function renderAiChat(chat){if(!chat){render([]);setAiUsage('This conversation is unavailable on this device.');return;}const msgs=chat.messages||{};const list=Object.keys(msgs).map(k=>Object.assign({id:k},msgs[k])).sort((a,b)=>(a.ts||0)-(b.ts||0)).map(m=>({uid:m.role==='assistant'?'__ai__':myId,name:m.role==='assistant'?'Local AI':'You',text:m.text||'',aiAttachments:m.role==='user'?(m.attachments||[]):[],ts:m.ts||Date.now(),aiRequestId:m.role==='assistant'?m.requestId:null,aiRating:m.role==='assistant'?m.rating:null}));if(viewMode==='ai')render(list);setAiUsage('Local AI · '+(chat.title||'AI chat')+' · '+(chat.charCount||0).toLocaleString()+' / 128,000 saved characters · Stored in this browser');renderAiChatList();}
+function renderAiChat(chat){if(!chat){render([]);setAiUsage('This conversation is unavailable on this device.');return;}const msgs=chat.messages||{};const list=Object.keys(msgs).map(k=>Object.assign({id:k},msgs[k])).sort((a,b)=>(a.ts||0)-(b.ts||0)).map(m=>({uid:m.role==='assistant'?'__ai__':myId,name:m.role==='assistant'?getAiAssistantName():'You',text:m.text||'',aiAttachments:m.role==='user'?(m.attachments||[]):[],ts:m.ts||Date.now(),aiRequestId:m.role==='assistant'?m.requestId:null,aiRating:m.role==='assistant'?m.rating:null}));if(viewMode==='ai')render(list);setAiUsage('Local AI · '+(chat.title||'AI chat')+' · '+(chat.charCount||0).toLocaleString()+' / 128,000 saved characters · Stored in this browser');renderAiChatList();}
 async function installAiChatList(){try{await openAiDatabase();if(myId&&window.firebase&&window.firebase.database){const cloudRef=window.firebase.database().ref(socialRoot+'/aiChats/'+myId);const snap=await cloudRef.once('value');const oldChats=snap.val()||{};if(Object.keys(oldChats).length){for(const id of Object.keys(oldChats)){const existing=await aiDbAction('get',id);if(!existing){const chat=oldChats[id]||{};await aiDbAction('put',{id:id,title:chat.title||'AI chat',createdAt:chat.createdAt||Date.now(),updatedAt:chat.updatedAt||Date.now(),charCount:Number(chat.charCount)||0,messages:chat.messages||{}});}}await cloudRef.remove();setAiUsage('Your previous AI chats were moved onto this device.');}}const chats=await aiDbAction('getAll');aiChatCache={};(chats||[]).forEach(chat=>{aiChatCache[chat.id]=chat;});aiStorageReady=true;renderAiChatList();if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);}catch(e){aiStorageReady=false;setAiUsage('Local AI chat storage error: '+(e.message||'enable browser storage'));console.error('[AI local storage]',e);}}
 function newAiId(){return 'ai_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);}
 async function createAiChat(){if(!aiStorageReady){setAiUsage('AI chat storage is still loading. Try again in a moment.');return;}try{const id=newAiId(),now=Date.now(),chat={id:id,title:'New chat',createdAt:now,updatedAt:now,charCount:0,messages:{}};await aiDbAction('put',chat);aiChatCache[id]=chat;await openAiChat(id);setAiUsage('New local conversation · Saved in this browser.');}catch(e){setAiStorageReady=false;setAiUsage('Could not create local chat: '+(e.message||'check browser storage'));}}
@@ -928,15 +933,42 @@ function runLocalAi(messages,bubble){
     worker.postMessage({type:'generate',messages:messages,model:selectedLocalAiModel()});
   });
 }
+async function readAiApiStream(response,onText){
+  if(!response.body||!response.body.getReader)throw new Error('Streaming is not supported by this browser.');
+  const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',full='',requestId=response.headers.get('x-request-id')||response.headers.get('request-id')||null;
+  function consume(line){
+    line=line.trim();if(!line||line.indexOf('data:')!==0)return;
+    const data=line.slice(5).trim();if(data==='[DONE]')return;
+    let packet;try{packet=JSON.parse(data);}catch(e){return;}
+    if(packet.error){const detail=packet.error.message||packet.error;throw new Error(String(detail));}
+    if(packet.id||packet.request_id)requestId=packet.id||packet.request_id;
+    const choice=packet.choices&&packet.choices[0],delta=choice&&(choice.delta||choice.message||choice);
+    let piece=delta&&(delta.content!==undefined?delta.content:delta.text);
+    if(Array.isArray(piece))piece=piece.map(part=>part.text||'').join('');
+    if(typeof piece==='string'&&piece){full+=piece;onText(piece,full);}
+  }
+  while(true){const part=await reader.read();if(part.done)break;buffer+=decoder.decode(part.value,{stream:true});const lines=buffer.split(/\r?\n/);buffer=lines.pop()||'';for(const line of lines)consume(line);}
+  buffer+=decoder.decode();if(buffer.trim())consume(buffer);
+  return{text:full,requestId:requestId};
+}
+function buildApiAiHistory(chat){
+  return Object.values(chat.messages||{}).sort((a,b)=>(a.ts||0)-(b.ts||0)).map(m=>{
+    if(m.role==='assistant')return{role:'assistant',content:m.text||''};
+    const content=[{type:'text',text:(m.text||'')+(m.attachments||[]).filter(f=>f.type==='text'&&f.content).map(f=>'\n\n[File: '+(f.name||'attachment')+']\n'+f.content).join('')}];
+    (m.attachments||[]).filter(f=>f.type==='image'&&f.dataUrl).forEach(f=>content.push({type:'image_url',image_url:{url:f.dataUrl}}));
+    return{role:'user',content:content.length===1?content[0].text:content};
+  });
+}
 async function sendAiMessage(raw){
   const message=(raw||'').trim();
   if((!message&&!aiPendingFiles.length)||aiRequestInProgress)return;
   if(!aiStorageReady){setAiUsage('Your local chat library is still opening. Try again in a moment.');return;}
-  if(aiPendingFiles.some(file=>file.type==='image')){setAiUsage('This local model is text-only. Remove image attachments and send text or documents instead.');return;}
-  aiRequestInProgress=true;sendBtn.disabled=true;textEl.disabled=true;aiAttachBtn.disabled=true;aiNewChatBtn.disabled=true;document.getElementById('aiBackBtn').disabled=true;if(aiModelSelect)aiModelSelect.disabled=true;
+  if(aiProviderMode==='local'&&aiPendingFiles.some(file=>file.type==='image')){setAiUsage('Local models are text-only. Switch to API mode to send image attachments.');return;}
+  aiRequestInProgress=true;sendBtn.disabled=true;textEl.disabled=true;aiAttachBtn.disabled=true;aiNewChatBtn.disabled=true;document.getElementById('aiBackBtn').disabled=true;
+  if(aiModelSelect)aiModelSelect.disabled=true;if(aiProviderSelect)aiProviderSelect.disabled=true;
   let temp=null;
   try{
-    await loadLocalAiModel();
+    if(aiProviderMode==='local')await loadLocalAiModel();
     if(!aiCurrentChatId)await createAiChat();
     const chatId=aiCurrentChatId;
     if(!chatId)throw new Error('Create a new chat to continue.');
@@ -954,29 +986,53 @@ async function sendAiMessage(raw){
     chat.updatedAt=now;
     await aiDbAction('put',chat);aiChatCache[chatId]=chat;
     aiPendingFiles=[];renderAiFileTray();renderAiChat(chat);
-    const history=buildLocalAiHistory(chat);
-    setAiUsage(selectedLocalAiModel().name+' · Generating on this device · Recent context: '+Math.min(LOCAL_AI_CONTEXT_CHARS,history.reduce((n,item)=>n+item.content.length,0)).toLocaleString()+' characters.');
+    const isApi=aiProviderMode==='api';
+    const history=isApi?buildApiAiHistory(chat):buildLocalAiHistory(chat);
+    setAiUsage(isApi?'Connecting to Claude Opus 5.5 through your Worker…':'Preparing '+selectedLocalAiModel().name+' on this device…');
     temp=document.createElement('div');temp.className='msg other ai-message';
-    const label=document.createElement('div');label.className='name';label.textContent='Local AI';
+    const label=document.createElement('div');label.className='name';label.textContent=getAiAssistantName();
     const bubble=document.createElement('div');bubble.className='bubble ai-markdown ai-thinking';
-    const thinkingLabel=document.createElement('span');thinkingLabel.className='ai-thinking-label';thinkingLabel.textContent='Thinking locally';
-    const dots=document.createElement('span');dots.className='ai-thinking-dots';dots.innerHTML='<i></i><i></i><i></i>';dots.setAttribute('aria-label','Local model is generating');
+    const thinkingLabel=document.createElement('span');thinkingLabel.className='ai-thinking-label';thinkingLabel.textContent=isApi?'Thinking':'Thinking locally';
+    const dots=document.createElement('span');dots.className='ai-thinking-dots';dots.innerHTML='<i></i><i></i><i></i>';dots.setAttribute('aria-label','AI is generating');
     bubble.append(thinkingLabel,dots);
     const time=document.createElement('div');time.className='time';time.textContent=fmt(Date.now());
     temp.append(label,bubble,time);mainEl.appendChild(temp);mainEl.scrollTop=mainEl.scrollHeight;
-    const answer=await runLocalAi(history,bubble);
-    if(!answer.trim())throw new Error('The local model returned an empty response. Try another model or a shorter message.');
-    chat.messages[newAiId()]={role:'assistant',text:answer,ts:Date.now(),requestId:null,rating:null};
-    chat.charCount=(Number(chat.charCount)||0)+answer.length;chat.updatedAt=Date.now();
+    let answer='',requestId=null;
+    if(isApi){
+      const requestBody=JSON.stringify({model:AI_API_MODEL,messages:history,stream:true});
+      if(requestBody.length>230000)throw new Error('This message and its attachments exceed the API upload limit. Try fewer or smaller files.');
+      const response=await fetch(AI_API_URL,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:requestBody});
+      if(!response.ok){let detail='HTTP '+response.status;try{const p=await response.json();if(p&&p.error)detail=p.error.message||p.error;}catch(e){}throw new Error(String(detail));}
+      const streamed=await readAiApiStream(response,(piece,full)=>{
+        bubble.classList.remove('ai-thinking');bubble.innerHTML=renderAiMarkdown(full);
+        if(mainEl.scrollHeight-mainEl.scrollTop-mainEl.clientHeight<120)mainEl.scrollTop=mainEl.scrollHeight;
+      });
+      answer=streamed.text;requestId=streamed.requestId;
+      if(!answer.trim())throw new Error('The API returned an empty response. Check that your Worker is forwarding streaming responses.');
+    }else{
+      setAiUsage(selectedLocalAiModel().name+' · Generating on this device.');
+      answer=await runLocalAi(history,bubble);
+      if(!answer.trim())throw new Error('The local model returned an empty response. Try another model or a shorter message.');
+    }
+    const room=Math.max(0,AI_MAX_CHARS-(Number(chat.charCount)||0));
+    if(!room){temp.remove();setAiUsage('The chat reached its 128,000-character limit. Create a new chat.');return;}
+    const savedAnswer=answer.slice(0,room);
+    chat.messages[newAiId()]={role:'assistant',text:savedAnswer,ts:Date.now(),requestId:requestId||null,rating:null};
+    chat.charCount=(Number(chat.charCount)||0)+savedAnswer.length;chat.updatedAt=Date.now();
     await aiDbAction('put',chat);aiChatCache[chatId]=chat;renderAiChat(chat);
-    setAiUsage(selectedLocalAiModel().name+' · Finished locally · Saved in this browser.');
+    setAiUsage(isApi?'Claude Opus 5.5 · Finished through your API Worker · Chat saved in this browser.':selectedLocalAiModel().name+' · Finished locally · Chat saved in this browser.');
   }catch(error){
     if(temp&&temp.isConnected)temp.remove();
-    setAiUsage('Local AI could not reply: '+(error&&error.message||String(error)));
-    console.error('[local AI]',error);
+    const raw=String(error&&error.message||error||'');
+    const networkFailure=error instanceof TypeError||/failed to fetch|networkerror|load failed/i.test(raw);
+    const contextLimit=/context.{0,40}(?:limit|length|window)|(?:maximum|max) context|prompt.{0,30}too long|too many tokens|input tokens?.{0,30}(?:limit|maximum)/i.test(raw);
+    setAiUsage(networkFailure?'API connection failed. Check your Worker URL and CORS settings.':contextLimit?'Context limit reached. Start a new chat or remove older messages/attachments.':(aiProviderMode==='api'?'API request failed: ':'Local AI could not reply: ')+raw);
+    console.error('[AI chat]',error);
   }finally{
-    localAiStreamBubble=null;aiRequestInProgress=false;sendBtn.disabled=false;textEl.disabled=false;aiAttachBtn.disabled=false;aiNewChatBtn.disabled=false;document.getElementById('aiBackBtn').disabled=false;if(aiModelSelect)aiModelSelect.disabled=false;
-    if(localAiReady)setAiUsage(selectedLocalAiModel().name+' · Running locally · Chat saved in this browser.');
+    localAiStreamBubble=null;aiRequestInProgress=false;sendBtn.disabled=false;textEl.disabled=false;aiAttachBtn.disabled=false;aiNewChatBtn.disabled=false;document.getElementById('aiBackBtn').disabled=false;
+    if(aiModelSelect)aiModelSelect.disabled=false;if(aiProviderSelect)aiProviderSelect.disabled=false;
+    if(aiProviderMode==='local'&&localAiReady)setAiUsage(selectedLocalAiModel().name+' · Running locally · Chat saved in this browser.');
+    else if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Chats saved in this browser.');
   }
 }
 function saveOutgoing(){try{localStorage.setItem('cs_outgoing_requests',JSON.stringify(outgoingRequests));}catch(e){}}
@@ -990,7 +1046,7 @@ async function sendFriendRequest(uid){uid=(uid||'').trim();if(!uid||uid===myId){
 async function acceptRequest(uid){try{await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);await firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/accepted').set(true);friendsMap[uid]=true;renderPeople();render(globalMessages);setStatus('Friend added! You can now DM each other.');}catch(e){setStatus('Could not accept request: '+(e.message||'check Firebase rules'));}}
 async function syncAcceptedOutgoing(){for(const uid of Object.keys(outgoingRequests)){try{const snap=await firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).once('value');const q=snap.val();if(q&&q.accepted===true){await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);friendsMap[uid]=true;delete outgoingRequests[uid];saveOutgoing();}}catch(e){}}renderPeople();renderDmList();}
 function installSocialListeners(){usersRef=firebase.database().ref(socialRoot+'/users');friendsRef=firebase.database().ref(socialRoot+'/friends/'+myId);requestsRef=firebase.database().ref(socialRoot+'/friendRequests/'+myId);friendsRef.on('value',snap=>{friendsMap=snap.val()||{};renderPeople();renderDmList();});requestsRef.on('value',snap=>{requestsMap=snap.val()||{};renderPeople();});syncAcceptedOutgoing();}
-globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');loadLocalAiModel().catch(error=>setAiUsage('Could not load local model: '+error.message));});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';loadLocalAiModel().catch(error=>setAiUsage('Could not load local model: '+error.message));});}aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
+globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='local')loadLocalAiModel().catch(error=>setAiUsage('Could not load local model: '+error.message));else setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;aiProviderMode=aiProviderSelect.value==='api'?'api':'local';localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();if(aiProviderMode==='local')loadLocalAiModel().catch(error=>setAiUsage('Could not load local model: '+error.message));else setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');});}if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';loadLocalAiModel().catch(error=>setAiUsage('Could not load local model: '+error.message));});}aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
 findUserBtn.addEventListener('click',()=>sendFriendRequest(findUserId.value));findUserId.addEventListener('keydown',e=>{if(e.key==='Enter')sendFriendRequest(findUserId.value);});
 document.getElementById('chatSocial').addEventListener('click',e=>{const a=e.target.closest('[data-accept]');if(a){acceptRequest(a.getAttribute('data-accept'));return;}const d=e.target.closest('[data-decline]');if(d){const uid=d.getAttribute('data-decline');firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/ignored').set(true).then(()=>{requestsMap[uid]=Object.assign({},requestsMap[uid],{ignored:true});renderPeople();}).catch(err=>setStatus('Could not ignore request: '+err.message));return;}const o=e.target.closest('[data-open-dm]');if(o){const uid=o.getAttribute('data-open-dm');usersRef.child(uid).once('value').then(s=>openDM(uid,(s.val()||{}).name||'Friend'));}});
 mainEl.addEventListener('click',e=>{const b=e.target.closest('[data-add-friend]');if(b)sendFriendRequest(b.getAttribute('data-add-friend'));});
