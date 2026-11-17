@@ -45,7 +45,7 @@ self.onmessage = async ({ data }) => {
   try {
     if (data.type === 'delete-model') {
       const allowedModels = [
-        'opalitestudios/Qwen2.5-3B-Instruct-ONNX'
+        'HuggingFaceTB/SmolLM3-3B-ONNX'
       ];
       if (!allowedModels.includes(data.modelId)) {
         throw new Error('That local model is not supported for deletion.');
@@ -89,8 +89,8 @@ self.onmessage = async ({ data }) => {
     }
 
     if (data.type === 'load') {
-      if (data.model?.id !== 'opalitestudios/Qwen2.5-3B-Instruct-ONNX') {
-        throw new Error('Only the Qwen 2.5 3B local model is enabled.');
+      if (data.model?.id !== 'HuggingFaceTB/SmolLM3-3B-ONNX') {
+        throw new Error('Only SmolLM3 3B is enabled as the local model.');
       }
       if (generator && activeModel === data.model.id) {
         postMessage({ type: 'ready', model: activeModel, device: activeDevice });
