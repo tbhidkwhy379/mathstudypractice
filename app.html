@@ -491,8 +491,10 @@ button { line-height: 1.25; }
 <input type="file" id="bgUpload" accept="image/*" style="display:none">
 </div>
 <button id="bgReset" class="reset-btn">Remove background</button>
+<div id="devModeControls" hidden>
 <h3>Developer settings</h3>
 <label class="dev-mode-row" for="devModeToggle"><span><strong>Developer Mode</strong></span><input type="checkbox" id="devModeToggle" role="switch" aria-label="Enable Developer Mode"></label>
+</div>
 </div>
 <!-- HOME -->
 <section class="page-view active" id="view-home">
@@ -710,24 +712,45 @@ async function verifyDeveloperSession(){
   }catch(e){sessionStorage.removeItem(DEV_TOKEN_KEY);}
 }
 verifyDeveloperSession();
+const devModeControls=document.getElementById('devModeControls');
+let devRevealCount=0,devRevealStartedAt=0;
+document.addEventListener('keydown',event=>{
+  if(event.code!=='KeyK'||!event.ctrlKey||!event.altKey||!event.shiftKey||event.repeat)return;
+  const target=event.target;
+  if(target&&(target.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)))return;
+  const now=Date.now();
+  if(!devRevealStartedAt||now-devRevealStartedAt>5000){devRevealCount=0;devRevealStartedAt=now;}
+  devRevealCount++;
+  if(devRevealCount>=5){
+    devModeControls.hidden=false;
+    settingsPanel.classList.add('open');
+    devRevealCount=0;devRevealStartedAt=0;
+    window.alert('Developer controls revealed for this tab. Gatekeeper verification is still required.');
+  }
+});
 devModeToggle.addEventListener('change',async()=>{
   if(devModeToggle.checked){
+    if(devModeControls.hidden){devModeToggle.checked=false;return;}
     const entered=window.prompt('Enter the Developer Mode password:');
     if(entered===null){devModeToggle.checked=false;return;}
     devModeToggle.disabled=true;
     try{
       const result=await requestDeveloperGate('developer-auth',entered);
       if(!result.token)throw new Error('The gatekeeper did not return an access token.');
+      const confirmation=window.prompt('Final confirmation: type ENABLE DEV MODE exactly to continue.');
+      if(confirmation!=='ENABLE DEV MODE')throw new Error('Developer access confirmation was not completed.');
       sessionStorage.setItem(DEV_TOKEN_KEY,result.token);
+      devModeControls.hidden=true;
       location.reload();
     }catch(e){
       devModeToggle.checked=false;
-      window.alert('Incorrect password or developer access unavailable.');
+      window.alert('Developer access was not completed. Check the password and confirmation phrase.');
     }finally{devModeToggle.disabled=false;}
   }else{
     sessionStorage.removeItem(DEV_TOKEN_KEY);
     localAiAccessGranted=false;localAiAccessDenied=true;
     localStorage.setItem('cs_ai_provider','api');
+    devModeControls.hidden=true;
     location.reload();
   }
 });
