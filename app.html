@@ -730,7 +730,7 @@ let viewMode='global',globalMessages=[],friendsMap={},requestsMap={},dmPartner=n
 const socialRoot='classroomspot-chat';
 const globalTab=document.getElementById('globalTab'),friendsTab=document.getElementById('friendsTab'),dmsTab=document.getElementById('dmsTab'),aiTab=document.getElementById('aiTab'),peoplePanel=document.getElementById('peoplePanel'),dmPanel=document.getElementById('dmPanel'),aiPanel=document.getElementById('aiPanel'),aiChatListEl=document.getElementById('aiChatList'),aiUsageEl=document.getElementById('aiUsage'),aiNewChatBtn=document.getElementById('aiNewChat'),findUserId=document.getElementById('findUserId'),findUserBtn=document.getElementById('findUserBtn'),friendRequestsEl=document.getElementById('friendRequests'),friendsListEl=document.getElementById('friendsList'),dmListEl=document.getElementById('dmList'),dmHeaderEl=document.getElementById('dmHeader'),requestCountEl=document.getElementById('requestCount');
  const AI_MAX_CHARS=128000,LOCAL_AI_CONTEXT_CHARS=10000;let aiCurrentChatId=null,aiChatCache={},aiRequestInProgress=false;let aiPendingFiles=[];const aiFileInput=document.getElementById('aiFileInput'),aiAttachBtn=document.getElementById('aiAttachBtn'),aiFileTray=document.getElementById('aiFileTray'),aiModelSelect=document.getElementById('aiModelSelect');
-const LOCAL_AI_MODELS=[{id:'HuggingFaceTB/SmolLM3-3B-ONNX',name:'Qwen 2.5 · 3B'}];
+const LOCAL_AI_MODELS=[{id:'HuggingFaceTB/SmolLM3-3B-ONNX',name:'SmolLM3 · 3B'}];
 const AI_API_URL='https://api.sapktaayush.workers.dev/',AI_API_MODEL='claude-opus-5-5';
 const aiProviderSelect=document.getElementById('aiProviderSelect'),localModelWrap=document.getElementById('localModelWrap');
 const aiDeleteModelBtn=document.getElementById('aiDeleteModel');
@@ -971,7 +971,7 @@ function buildLocalAiHistory(chat){
     if(selected.length&&used+size>LOCAL_AI_CONTEXT_CHARS)break;
     selected.unshift(item);used+=size;
   }
-  return [{role:'system',content:'You are a helpful, clear assistant. You are running locally in the user’s browser. Be accurate, explain your reasoning briefly, and admit uncertainty.'},...selected];
+  return [{role:'system',content:'You are SmolLM3 3B, a compact language model running locally in the user’s browser. Be helpful, clear, accurate, and honest about uncertainty. Reply naturally and stay focused on the user’s request. Start each response with a short <think>...</think> section containing only a brief reasoning summary or plan; do not reveal private internal chain-of-thought. Then give the actual answer outside the tags. When a useful short chat title can be inferred, emit a title marker in this exact format: *(Your chat title) on its own line near the start of the response. Replace the example text with the actual title, keep it under 48 characters, and do not use this marker for ordinary emphasis. The app will use this marker to rename the current chat, and will remove the marker from the displayed answer. If no good title is available, omit it.'},...selected];
 }
 function runLocalAi(messages,bubble){
   const worker=ensureLocalAiWorker();localAiOutput='';localAiStreamBubble=bubble;
@@ -1060,6 +1060,8 @@ async function sendAiMessage(raw){
       setAiUsage(selectedLocalAiModel().name+' · Generating on this device.');
       answer=await runLocalAi(history,bubble);
       if(!answer.trim())throw new Error('The local model returned an empty response. Try another model or a shorter message.');
+      const titleMatch=answer.match(/^\s*\*\(([^)\r\n]{1,48})\)\s*(?:\r?\n|$)/);
+      if(titleMatch){const suggestedTitle=titleMatch[1].trim();if(suggestedTitle){chat.title=suggestedTitle;answer=answer.slice(titleMatch[0].length).trimStart();await aiDbAction('put',chat);aiChatCache[chatId]=chat;renderAiChatList();bubble.innerHTML=renderAiMarkdown(answer);}}
     }
     const room=Math.max(0,AI_MAX_CHARS-(Number(chat.charCount)||0));
     if(!room){temp.remove();setAiUsage('The chat reached its 128,000-character limit. Create a new chat.');return;}
