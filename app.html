@@ -747,6 +747,7 @@ function updateAiProviderUi(){if(aiProviderSelect)aiProviderSelect.value=aiProvi
 let localAiWorker=null,localAiReady=false,localAiLoading=false,localAiLoadedModel='',localAiLoadPromise=null,localAiLoadResolve=null,localAiLoadReject=null,localAiGenerationResolve=null,localAiGenerationReject=null,localAiStreamBubble=null,localAiOutput='',localAiDeleteResolve=null,localAiDeleteReject=null;
 let localAiUnloadPromise=null,localAiUnloadResolve=null,localAiUnloadReject=null;
 let aiChatPageVisible=document.getElementById('view-chat').classList.contains('active');
+let localAiAreaRevision=0,localAiLastAreaActive=false;
 let localAiModelId=localStorage.getItem('cs_local_ai_model')||LOCAL_AI_MODELS[0].id;if(!LOCAL_AI_MODELS.some(model=>model.id===localAiModelId))localAiModelId=LOCAL_AI_MODELS[0].id;if(aiModelSelect)aiModelSelect.value=localAiModelId;
 try{outgoingRequests=JSON.parse(localStorage.getItem('cs_outgoing_requests')||'{}')||{};}catch(e){outgoingRequests={};}
 const messageBall=document.getElementById('chat-message-ball');
@@ -965,7 +966,12 @@ function localAiAreaIsActive(){
   return aiChatPageVisible&&viewMode==='ai'&&aiProviderMode==='local';
 }
 function syncLocalAiLifecycle(){
-  if(localAiAreaIsActive()){
+  const areaActive=localAiAreaIsActive();
+  if(areaActive!==localAiLastAreaActive){
+    localAiLastAreaActive=areaActive;
+    localAiAreaRevision++;
+  }
+  if(areaActive){
     if(localAiUnloadPromise){
       const unloading=localAiUnloadPromise;
       unloading.then(()=>{
@@ -1112,13 +1118,14 @@ function buildApiAiHistory(chat){
 async function sendAiMessage(raw){
   const message=(raw||'').trim();
   if((!message&&!aiPendingFiles.length)||aiRequestInProgress)return;
+  const localAiAreaRevisionAtStart=localAiAreaRevision;
   if(!aiStorageReady){setAiUsage('Your local chat library is still opening. Try again in a moment.');return;}
   if(aiProviderMode==='local'&&aiPendingFiles.some(file=>file.type==='image')){setAiUsage('Local models are text-only. Switch to API mode to send image attachments.');return;}
   aiRequestInProgress=true;sendBtn.disabled=true;textEl.disabled=true;aiAttachBtn.disabled=true;aiNewChatBtn.disabled=true;document.getElementById('aiBackBtn').disabled=true;
   if(aiModelSelect)aiModelSelect.disabled=true;if(aiProviderSelect)aiProviderSelect.disabled=true;
   let temp=null;
   try{
-    if(aiProviderMode==='local'){await loadLocalAiModel();if(!localAiAreaIsActive())throw new Error('Local AI stopped because you left the AI chat area. Re-enter the AI chat to continue.');}
+    if(aiProviderMode==='local'){await loadLocalAiModel();if(!localAiAreaIsActive()||localAiAreaRevision!==localAiAreaRevisionAtStart)throw new Error('Local AI stopped because you left the AI chat area. Re-enter the AI chat to continue.');}
     if(!aiCurrentChatId)await createAiChat();
     const chatId=aiCurrentChatId;
     if(!chatId)throw new Error('Create a new chat to continue.');
@@ -1162,7 +1169,7 @@ async function sendAiMessage(raw){
     }else{
       setAiUsage(selectedLocalAiModel().name+' · Generating on this device.');
       answer=await runLocalAi(history,bubble);
-      if(!localAiAreaIsActive())throw new Error('Local AI stopped because you left the AI chat area. Re-enter the AI chat to continue.');
+      if(!localAiAreaIsActive()||localAiAreaRevision!==localAiAreaRevisionAtStart)throw new Error('Local AI stopped because you left the AI chat area. Re-enter the AI chat to continue.');
       if(!answer.trim())throw new Error('The local model returned an empty response. Try another model or a shorter message.');
       const titleMatch=answer.match(/\*\(([^)\r\n]{1,48})\)/);
       if(titleMatch){const suggestedTitle=titleMatch[1].trim();if(suggestedTitle){chat.title=suggestedTitle;answer=(answer.slice(0,titleMatch.index)+answer.slice(titleMatch.index+titleMatch[0].length)).replace(/\n{3,}/g,'\n\n').trim();await aiDbAction('put',chat);aiChatCache[chatId]=chat;renderAiChatList();updateAiMarkdownBubble(bubble,answer,true);}}
@@ -1182,7 +1189,7 @@ async function sendAiMessage(raw){
     setAiUsage(networkFailure?'API connection failed. Check your Worker URL and CORS settings.':contextLimit?'Context limit reached. Start a new chat or remove older messages/attachments.':(aiProviderMode==='api'?'API request failed: ':'Local AI could not reply: ')+raw);
     console.error('[AI chat]',error);
   }finally{
-    localAiStreamBubble=null;aiRequestInProgress=false;sendBtn.disabled=false;textEl.disabled=false;aiAttachBtn.disabled=false;aiNewChatBtn.disabled=false;document.getElementById('aiBackBtn').disabled=false;
+    localAiStreamBubble=null;aiRequestInProgress=false;sendBtn.disabled=false;textEl.disabled=false;aiAttachBtn.disabled=false;aiNewChatBtn.disabled=false;document.getElementById('aiBackBtn').disabled=false;syncLocalAiLifecycle();
     if(aiModelSelect)aiModelSelect.disabled=false;if(aiProviderSelect)aiProviderSelect.disabled=false;
 
   }
