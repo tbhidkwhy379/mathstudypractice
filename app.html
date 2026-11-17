@@ -303,6 +303,9 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-chat .ai-delete-model{width:100%;margin-top:6px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--muted2);padding:7px 9px;font:inherit;font-size:11px;cursor:pointer}
 #view-chat .ai-delete-model:hover{border-color:#d66;color:#f08b8b}
 #view-chat .ai-delete-model:disabled{opacity:.5;cursor:wait}
+#view-chat .ai-unload-model{width:100%;margin-top:6px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--text2);padding:7px 9px;font:inherit;font-size:11px;cursor:pointer}
+#view-chat .ai-unload-model:hover{border-color:var(--acc2);color:#b9ccff}
+#view-chat .ai-unload-model:disabled{opacity:.5;cursor:default}
 #view-chat #localModelWrap{display:block;width:100%}
 #view-chat #localModelWrap[hidden]{display:none}
 @media(max-width:600px){#view-chat #aiPanel{padding:9px}}
@@ -565,7 +568,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <div id="chatSocial">
  <div class="chat-tabs"><button id="globalTab" class="active" type="button">🌐 Global chat</button><button id="friendsTab" type="button">👥 Friends <span id="requestCount"></span></button><button id="dmsTab" type="button">✉ DMs</button><button id="aiTab" type="button">✦ AI Chat</button></div>
  <div id="peoplePanel" hidden><div class="people-search"><input id="findUserId" placeholder="Enter someone's User ID" autocomplete="off"><button id="findUserBtn" type="button">Find / Add</button></div><p class="social-hint">Share your User ID so friends can add you.</p><h3>Friend requests <span id="requestsEmpty"></span></h3><div id="friendRequests" class="people-list"></div><h3>Your friends</h3><div id="friendsList" class="people-list"></div></div>
- <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div><div id="aiPanel" hidden><div class="ai-library-head"><button id="aiBackBtn" type="button">← Human chats</button><strong>Your AI chats</strong><label class="ai-model-label" for="aiProviderSelect">AI MODE</label><select id="aiProviderSelect"><option value="local">Local · runs on this device</option><option value="api">API · Claude Opus 5.5</option></select><span id="localModelWrap"><label class="ai-model-label" for="aiModelSelect">LOCAL MODEL</label><select id="aiModelSelect"><option value="HuggingFaceTB/SmolLM3-3B-ONNX">SmolLM3 · 3B parameters (approx. 2.1 GB GPU download)</option></select><button id="aiDeleteModel" type="button" class="ai-delete-model">Delete downloaded model</button></span><button id="aiNewChat" type="button">＋ New chat</button></div><div id="aiChatList"></div><div id="aiUsage">Runs on this device · Chats are saved in this browser.</div></div>
+ <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div><div id="aiPanel" hidden><div class="ai-library-head"><button id="aiBackBtn" type="button">← Human chats</button><strong>Your AI chats</strong><label class="ai-model-label" for="aiProviderSelect">AI MODE</label><select id="aiProviderSelect"><option value="local">Local · runs on this device</option><option value="api">API · Claude Opus 5.5</option></select><span id="localModelWrap"><label class="ai-model-label" for="aiModelSelect">LOCAL MODEL</label><select id="aiModelSelect"><option value="HuggingFaceTB/SmolLM3-3B-ONNX">SmolLM3 · 3B parameters (approx. 2.1 GB GPU download)</option></select><button id="aiDeleteModel" type="button" class="ai-delete-model">Delete downloaded model</button><button id="aiUnloadModel" type="button" class="ai-unload-model">Unload AI from memory</button></span><button id="aiNewChat" type="button">＋ New chat</button></div><div id="aiChatList"></div><div id="aiUsage">Runs on this device · Chats are saved in this browser.</div></div>
 </div>
 <main id="main"><div id="empty">No messages yet. Say hello!</div></main>
 <div id="status"></div>
@@ -741,11 +744,13 @@ const LOCAL_AI_MODELS=[{id:'HuggingFaceTB/SmolLM3-3B-ONNX',name:'SmolLM3 · 3B'}
 const AI_API_URL='https://api.sapktaayush.workers.dev/',AI_API_MODEL='claude-opus-5-5';
 const aiProviderSelect=document.getElementById('aiProviderSelect'),localModelWrap=document.getElementById('localModelWrap');
 const aiDeleteModelBtn=document.getElementById('aiDeleteModel');
+const aiUnloadModelBtn=document.getElementById('aiUnloadModel');
 let aiProviderMode=localStorage.getItem('cs_ai_provider')==='api'?'api':'local';
 function getAiAssistantName(){return aiProviderMode==='api'?'Claude Opus 5.5':'Local AI';}
 function updateAiProviderUi(){if(aiProviderSelect)aiProviderSelect.value=aiProviderMode;if(localModelWrap)localModelWrap.hidden=aiProviderMode!=='local';}
 let localAiWorker=null,localAiReady=false,localAiLoading=false,localAiLoadedModel='',localAiLoadPromise=null,localAiLoadResolve=null,localAiLoadReject=null,localAiGenerationResolve=null,localAiGenerationReject=null,localAiStreamBubble=null,localAiOutput='',localAiDeleteResolve=null,localAiDeleteReject=null;
 let localAiUnloadPromise=null,localAiUnloadResolve=null,localAiUnloadReject=null;
+let localAiManuallyUnloaded=false;
 let aiChatPageVisible=document.getElementById('view-chat').classList.contains('active');
 let localAiAreaRevision=0,localAiLastAreaActive=false;
 let localAiModelId=localStorage.getItem('cs_local_ai_model')||LOCAL_AI_MODELS[0].id;if(!LOCAL_AI_MODELS.some(model=>model.id===localAiModelId))localAiModelId=LOCAL_AI_MODELS[0].id;if(aiModelSelect)aiModelSelect.value=localAiModelId;
@@ -976,10 +981,11 @@ function syncLocalAiLifecycle(){
     localAiAreaRevision++;
   }
   if(areaActive){
+    if(localAiManuallyUnloaded)return;
     if(localAiUnloadPromise){
       const unloading=localAiUnloadPromise;
       unloading.then(()=>{
-        if(localAiAreaIsActive()&&!localAiReady&&!localAiLoading&&!aiRequestInProgress){
+        if(localAiAreaIsActive()&&!localAiManuallyUnloaded&&!localAiReady&&!localAiLoading&&!aiRequestInProgress){
           loadLocalAiModel().catch(error=>setAiUsage('Could not reload local model: '+error.message));
         }
       }).catch(error=>setAiUsage('Could not release local model: '+error.message));
@@ -998,6 +1004,26 @@ window.setAiChatPageVisible=function(visible){
   aiChatPageVisible=!!visible;
   syncLocalAiLifecycle();
 };
+function updateAiUnloadButton(){
+  if(!aiUnloadModelBtn)return;
+  aiUnloadModelBtn.textContent=localAiManuallyUnloaded?'AI unloaded · loads on next message':'Unload AI from memory';
+  aiUnloadModelBtn.disabled=!!(aiRequestInProgress||localAiUnloadPromise||localAiManuallyUnloaded);
+}
+async function manuallyUnloadLocalAiModel(){
+  if(aiRequestInProgress||localAiManuallyUnloaded)return;
+  localAiManuallyUnloaded=true;
+  updateAiUnloadButton();
+  setAiUsage('Unloading SmolLM3 from memory… It will load again when you send a message.');
+  try{
+    await unloadLocalAiModel();
+    setAiUsage('SmolLM3 is unloaded from memory. Send a message to load it again.');
+  }catch(error){
+    localAiManuallyUnloaded=false;
+    setAiUsage('Could not unload SmolLM3: '+(error.message||String(error)));
+  }finally{
+    updateAiUnloadButton();
+  }
+}
 async function unloadLocalAiModel(){
   if(localAiUnloadPromise)return localAiUnloadPromise;
   localAiUnloadPromise=(async()=>{
@@ -1125,8 +1151,11 @@ async function sendAiMessage(raw){
   const localAiAreaRevisionAtStart=localAiAreaRevision;
   if(!aiStorageReady){setAiUsage('Your local chat library is still opening. Try again in a moment.');return;}
   if(aiProviderMode==='local'&&aiPendingFiles.some(file=>file.type==='image')){setAiUsage('Local models are text-only. Switch to API mode to send image attachments.');return;}
-  aiRequestInProgress=true;sendBtn.disabled=true;textEl.disabled=true;aiAttachBtn.disabled=true;aiNewChatBtn.disabled=true;document.getElementById('aiBackBtn').disabled=true;
+  aiRequestInProgress=true;
+  if(aiProviderMode==='local'&&localAiManuallyUnloaded){localAiManuallyUnloaded=false;updateAiUnloadButton();}
+  sendBtn.disabled=true;textEl.disabled=true;aiAttachBtn.disabled=true;aiNewChatBtn.disabled=true;document.getElementById('aiBackBtn').disabled=true;
   if(aiModelSelect)aiModelSelect.disabled=true;if(aiProviderSelect)aiProviderSelect.disabled=true;
+  updateAiUnloadButton();
   let temp=null;
   try{
     if(aiProviderMode==='local'){await loadLocalAiModel();if(!localAiAreaIsActive()||localAiAreaRevision!==localAiAreaRevisionAtStart)throw new Error('Local AI stopped because you left the AI chat area. Re-enter the AI chat to continue.');}
@@ -1195,6 +1224,7 @@ async function sendAiMessage(raw){
   }finally{
     localAiStreamBubble=null;aiRequestInProgress=false;sendBtn.disabled=false;textEl.disabled=false;aiAttachBtn.disabled=false;aiNewChatBtn.disabled=false;document.getElementById('aiBackBtn').disabled=false;syncLocalAiLifecycle();
     if(aiModelSelect)aiModelSelect.disabled=false;if(aiProviderSelect)aiProviderSelect.disabled=false;
+    updateAiUnloadButton();
 
   }
 }
@@ -1209,7 +1239,7 @@ async function sendFriendRequest(uid){uid=(uid||'').trim();if(!uid||uid===myId){
 async function acceptRequest(uid){try{await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);await firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/accepted').set(true);friendsMap[uid]=true;renderPeople();render(globalMessages);setStatus('Friend added! You can now DM each other.');}catch(e){setStatus('Could not accept request: '+(e.message||'check Firebase rules'));}}
 async function syncAcceptedOutgoing(){for(const uid of Object.keys(outgoingRequests)){try{const snap=await firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).once('value');const q=snap.val();if(q&&q.accepted===true){await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);friendsMap[uid]=true;delete outgoingRequests[uid];saveOutgoing();}}catch(e){}}renderPeople();renderDmList();}
 function installSocialListeners(){usersRef=firebase.database().ref(socialRoot+'/users');friendsRef=firebase.database().ref(socialRoot+'/friends/'+myId);requestsRef=firebase.database().ref(socialRoot+'/friendRequests/'+myId);friendsRef.on('value',snap=>{friendsMap=snap.val()||{};renderPeople();renderDmList();});requestsRef.on('value',snap=>{requestsMap=snap.val()||{};renderPeople();});syncAcceptedOutgoing();}
-globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;aiProviderMode=aiProviderSelect.value==='api'?'api':'local';localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();syncLocalAiLifecycle();if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);});}if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';syncLocalAiLifecycle();});}if(aiDeleteModelBtn)aiDeleteModelBtn.addEventListener('click',deleteSelectedLocalAiModel);aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
+globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;aiProviderMode=aiProviderSelect.value==='api'?'api':'local';localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();syncLocalAiLifecycle();if(aiProviderMode==='api')setAiUsage('API mode · Claude Opus 5.5 · Uses your Cloudflare Worker.');if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);});}if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';syncLocalAiLifecycle();});}if(aiDeleteModelBtn)aiDeleteModelBtn.addEventListener('click',deleteSelectedLocalAiModel);if(aiUnloadModelBtn)aiUnloadModelBtn.addEventListener('click',manuallyUnloadLocalAiModel);updateAiUnloadButton();aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
 findUserBtn.addEventListener('click',()=>sendFriendRequest(findUserId.value));findUserId.addEventListener('keydown',e=>{if(e.key==='Enter')sendFriendRequest(findUserId.value);});
 document.getElementById('chatSocial').addEventListener('click',e=>{const a=e.target.closest('[data-accept]');if(a){acceptRequest(a.getAttribute('data-accept'));return;}const d=e.target.closest('[data-decline]');if(d){const uid=d.getAttribute('data-decline');firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/ignored').set(true).then(()=>{requestsMap[uid]=Object.assign({},requestsMap[uid],{ignored:true});renderPeople();}).catch(err=>setStatus('Could not ignore request: '+err.message));return;}const o=e.target.closest('[data-open-dm]');if(o){const uid=o.getAttribute('data-open-dm');usersRef.child(uid).once('value').then(s=>openDM(uid,(s.val()||{}).name||'Friend'));}});
 mainEl.addEventListener('click',e=>{const b=e.target.closest('[data-add-friend]');if(b)sendFriendRequest(b.getAttribute('data-add-friend'));});
