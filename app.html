@@ -1060,8 +1060,8 @@ async function sendAiMessage(raw){
       setAiUsage(selectedLocalAiModel().name+' · Generating on this device.');
       answer=await runLocalAi(history,bubble);
       if(!answer.trim())throw new Error('The local model returned an empty response. Try another model or a shorter message.');
-      const titleMatch=answer.match(/^\s*\*\(([^)\r\n]{1,48})\)\s*(?:\r?\n|$)/);
-      if(titleMatch){const suggestedTitle=titleMatch[1].trim();if(suggestedTitle){chat.title=suggestedTitle;answer=answer.slice(titleMatch[0].length).trimStart();await aiDbAction('put',chat);aiChatCache[chatId]=chat;renderAiChatList();bubble.innerHTML=renderAiMarkdown(answer);}}
+      const titleMatch=answer.match(/\*\(([^)\r\n]{1,48})\)/);
+      if(titleMatch){const suggestedTitle=titleMatch[1].trim();if(suggestedTitle){chat.title=suggestedTitle;answer=(answer.slice(0,titleMatch.index)+answer.slice(titleMatch.index+titleMatch[0].length)).replace(/\n{3,}/g,'\n\n').trim();await aiDbAction('put',chat);aiChatCache[chatId]=chat;renderAiChatList();bubble.innerHTML=renderAiMarkdown(answer);}}
     }
     const room=Math.max(0,AI_MAX_CHARS-(Number(chat.charCount)||0));
     if(!room){temp.remove();setAiUsage('The chat reached its 128,000-character limit. Create a new chat.');return;}
