@@ -904,6 +904,10 @@ function ensureLocalAiWorker(){
     }
     if(data.type==='unloaded'){
       localAiReady=false;localAiLoading=false;localAiLoadedModel='';
+      if(localAiLoadReject){
+        localAiLoadReject(new Error('SmolLM3 loading was cancelled because you left the AI chat area.'));
+        localAiLoadResolve=null;localAiLoadReject=null;
+      }
       if(localAiUnloadResolve)localAiUnloadResolve();
       localAiUnloadResolve=null;localAiUnloadReject=null;
       return;
@@ -987,9 +991,6 @@ window.setAiChatPageVisible=function(visible){
 async function unloadLocalAiModel(){
   if(localAiUnloadPromise)return localAiUnloadPromise;
   localAiUnloadPromise=(async()=>{
-    if(localAiLoadPromise){
-      try{await localAiLoadPromise;}catch(e){}
-    }
     const worker=localAiWorker;
     if(!worker){localAiReady=false;localAiLoadedModel='';localAiLoading=false;return;}
     await new Promise((resolve,reject)=>{
