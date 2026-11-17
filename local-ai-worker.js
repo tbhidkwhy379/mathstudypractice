@@ -45,9 +45,7 @@ self.onmessage = async ({ data }) => {
   try {
     if (data.type === 'delete-model') {
       const allowedModels = [
-        'onnx-community/Qwen2.5-0.5B-Instruct',
-        'onnx-community/SmolLM2-360M-ONNX',
-        'onnx-community/Qwen3-1.7B-ONNX'
+        'opalitestudios/Qwen2.5-3B-Instruct-ONNX'
       ];
       if (!allowedModels.includes(data.modelId)) {
         throw new Error('That local model is not supported for deletion.');
