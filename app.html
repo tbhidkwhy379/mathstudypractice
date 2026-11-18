@@ -840,7 +840,7 @@ async function verifyChatDeveloperSession(){
 const globalTab=document.getElementById('globalTab'),friendsTab=document.getElementById('friendsTab'),dmsTab=document.getElementById('dmsTab'),aiTab=document.getElementById('aiTab'),peoplePanel=document.getElementById('peoplePanel'),dmPanel=document.getElementById('dmPanel'),aiPanel=document.getElementById('aiPanel'),aiChatListEl=document.getElementById('aiChatList'),aiUsageEl=document.getElementById('aiUsage'),aiNewChatBtn=document.getElementById('aiNewChat'),findUserId=document.getElementById('findUserId'),findUserBtn=document.getElementById('findUserBtn'),friendRequestsEl=document.getElementById('friendRequests'),friendsListEl=document.getElementById('friendsList'),dmListEl=document.getElementById('dmList'),dmHeaderEl=document.getElementById('dmHeader'),requestCountEl=document.getElementById('requestCount');
  const AI_MAX_CHARS=128000,LOCAL_AI_CONTEXT_CHARS=10000;let aiCurrentChatId=null,aiChatCache={},aiRequestInProgress=false;let aiPendingFiles=[];const aiFileInput=document.getElementById('aiFileInput'),aiAttachBtn=document.getElementById('aiAttachBtn'),aiFileTray=document.getElementById('aiFileTray'),aiModelSelect=document.getElementById('aiModelSelect');
 const LOCAL_AI_MODELS=[{id:'HuggingFaceTB/SmolLM3-3B-ONNX',name:'SmolLM3 · 3B'}];
-const AI_API_URL='https://api.sapktaayush.workers.dev/',AI_API_MODEL='auto';
+const AI_API_URL='https://api.sapktaayush.workers.dev/',AI_API_MODEL='claude-opus-5-5';
 const aiProviderSelect=document.getElementById('aiProviderSelect'),localModelWrap=document.getElementById('localModelWrap');
 const aiDeleteModelBtn=document.getElementById('aiDeleteModel');
 const aiUnloadModelBtn=document.getElementById('aiUnloadModel');
