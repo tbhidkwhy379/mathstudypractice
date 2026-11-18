@@ -503,6 +503,9 @@ button { line-height: 1.25; }
 #devDashboard th{color:#929bad;font-weight:600}
 #devDashboard td{color:#e2e7f0}
 #devDashboard .dd-muted{color:#929bad}
+#devDashboard .dd-delete-user{border:1px solid rgba(255,107,107,.48);background:rgba(255,80,80,.08);color:#ff9c9c;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap}
+#devDashboard .dd-delete-user:hover{background:rgba(255,80,80,.16);border-color:#ff7777}
+#devDashboard .dd-delete-user:disabled{opacity:.5;cursor:wait}
 #devDashboard .dd-empty{padding:20px;text-align:center;color:#929bad;font-size:13px}
 #devDashboard .dd-feedback{font-size:12px;color:#aeb8c9;margin-top:10px;min-height:18px;overflow-wrap:anywhere}
 #devDashboard .dd-hidden{display:none!important}
@@ -565,7 +568,7 @@ button { line-height: 1.25; }
       <div class="dd-panel"><h2>AI API connectivity</h2><p>Sends a short test request to the production AI endpoint. This uses a small amount of API tokens. It does not expose provider keys.</p><div class="dd-row"><div class="dd-status"><span class="dd-dot" id="dd-api-dot-2"></span><span id="dd-api-summary-2">Not checked</span></div><button class="dd-btn primary" id="dd-run-api">Run API test</button></div><div class="dd-grid"><div class="dd-card"><div class="dd-label">Provider reported</div><div class="dd-value" id="dd-provider" style="font-size:19px">—</div></div><div class="dd-card"><div class="dd-label">Response time</div><div class="dd-value" id="dd-latency">—</div></div><div class="dd-card"><div class="dd-label">Test result</div><div class="dd-value" id="dd-api-result" style="font-size:19px">Not run</div></div></div><div class="dd-feedback" id="dd-api-feedback" aria-live="polite"></div></div>
     </section>
     <section id="dd-view-users" class="dd-hidden">
-      <div class="dd-panel"><div class="dd-row"><div><h2>User dashboard</h2><p>Registered chat profiles. Only public profile fields are shown; private credentials are never returned.</p></div><input id="dd-user-search" class="dd-search" type="search" placeholder="Search username or user ID"></div><div class="dd-table-wrap"><table><thead><tr><th>Username</th><th>User ID</th><th>Last profile update</th></tr></thead><tbody id="dd-users-body"><tr><td colspan="3" class="dd-empty">Load dashboard data to see users.</td></tr></tbody></table></div><div class="dd-feedback" id="dd-users-feedback"></div></div>
+      <div class="dd-panel"><div class="dd-row"><div><h2>User dashboard</h2><p>Registered chat profiles. Delete permanently removes the Firebase account and its shared chat data.</p></div><input id="dd-user-search" class="dd-search" type="search" placeholder="Search username or user ID"></div><div class="dd-table-wrap"><table><thead><tr><th>Username</th><th>User ID</th><th>Last profile update</th><th>Actions</th></tr></thead><tbody id="dd-users-body"><tr><td colspan="4" class="dd-empty">Load dashboard data to see users.</td></tr></tbody></table></div><div class="dd-feedback" id="dd-users-feedback"></div><div class="dd-feedback">Deletion also removes global posts, friend links and requests, direct messages, and legacy cloud AI backups. AI chats saved only in a user’s browser cannot be remotely deleted.</div></div>
     </section>
   </div>
 </div>
@@ -802,13 +805,15 @@ function renderDevUsers(){
   const q=(document.getElementById('dd-user-search').value||'').trim().toLowerCase();
   const rows=devDashboardUsers.filter(u=>(u.name||'').toLowerCase().includes(q)||(u.uid||'').toLowerCase().includes(q));
   body.replaceChildren();
-  if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=3;td.className='dd-empty';td.textContent=devDashboardUsers.length?'No users match that search.':'No registered users were returned.';tr.appendChild(td);body.appendChild(tr);return;}
+  if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.className='dd-empty';td.textContent=devDashboardUsers.length?'No users match that search.':'No registered users were returned.';tr.appendChild(td);body.appendChild(tr);return;}
   rows.forEach(u=>{
     const tr=document.createElement('tr');
     const name=document.createElement('td');name.textContent=u.name||'Guest';
     const uid=document.createElement('td');uid.textContent=u.uid||'—';uid.className='dd-muted';
     const updated=document.createElement('td');updated.textContent=u.updatedAt?new Date(u.updatedAt).toLocaleString():'Unknown';
-    tr.append(name,uid,updated);body.appendChild(tr);
+    const actionCell=document.createElement('td');
+    const remove=document.createElement('button');remove.type='button';remove.className='dd-delete-user';remove.textContent='Delete user';remove.disabled=!u.uid;remove.setAttribute('data-delete-user',u.uid||'');remove.setAttribute('aria-label','Delete user '+(u.name||u.uid||''));
+    actionCell.appendChild(remove);tr.append(name,uid,updated,actionCell);body.appendChild(tr);
   });
 }
 async function loadDevDashboardData(){
@@ -870,6 +875,26 @@ document.getElementById('devDashRefresh').addEventListener('click',()=>{
 });
 document.getElementById('dd-run-api').addEventListener('click',runDevApiCheck);
 document.getElementById('dd-user-search').addEventListener('input',renderDevUsers);
+document.getElementById('dd-users-body').addEventListener('click',async event=>{
+  const button=event.target.closest('[data-delete-user]');if(!button)return;
+  const uid=button.getAttribute('data-delete-user')||'';if(!uid)return;
+  const typed=window.prompt('This permanently deletes the Firebase Auth account and its shared Neural chat data.\n\nType the full User ID to confirm:\n'+uid);
+  if(typed!==uid){document.getElementById('dd-users-feedback').textContent='Deletion cancelled.';return;}
+  const token=sessionStorage.getItem(DEV_TOKEN_KEY)||'';
+  if(!token){document.getElementById('dd-users-feedback').textContent='Developer session missing. Re-enable Developer Mode.';return;}
+  button.disabled=true;button.textContent='Deleting…';
+  const feedback=document.getElementById('dd-users-feedback');feedback.textContent='Deleting Firebase account and associated shared data…';
+  try{
+    const response=await fetch(DEV_GATEKEEPER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'developer-delete-user',token:token,uid:uid})});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||!result.success)throw new Error(result.error||'User deletion was rejected ('+response.status+').');
+    await loadDevDashboardData();
+    feedback.textContent='Deleted user '+uid+' and the associated Firebase account and shared data.';
+  }catch(error){
+    button.disabled=false;button.textContent='Delete user';
+    feedback.textContent='Could not delete '+uid+': '+(error&&error.message||'Gatekeeper request failed');
+  }
+});
 document.querySelectorAll('[data-dd-tab]').forEach(tab=>tab.addEventListener('click',()=>{
   document.querySelectorAll('[data-dd-tab]').forEach(t=>t.classList.toggle('active',t===tab));
   ['overview','api','users'].forEach(name=>document.getElementById('dd-view-'+name).classList.toggle('dd-hidden',tab.dataset.ddTab!==name));
