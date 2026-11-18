@@ -555,6 +555,7 @@ button { line-height: 1.25; }
     <section id="dd-view-overview">
       <div class="dd-grid">
         <div class="dd-card"><div class="dd-label">Registered users</div><div class="dd-value" id="dd-user-count">—</div><div class="dd-note">Profiles in the shared chat database</div></div>
+        <div class="dd-card"><div class="dd-label">Active users · 7 days</div><div class="dd-value" id="dd-active-count">—</div><div class="dd-note">Profiles updated in the last 7 days</div></div>
         <div class="dd-card"><div class="dd-label">AI API</div><div class="dd-value" id="dd-api-status" style="font-size:20px">Not checked</div><div class="dd-note" id="dd-api-note">Run an API check to test the live endpoint</div></div>
         <div class="dd-card"><div class="dd-label">Last data refresh</div><div class="dd-value" id="dd-last-refresh" style="font-size:18px">Not yet</div><div class="dd-note">Dashboard data is only loaded when requested</div></div>
       </div>
@@ -818,6 +819,7 @@ async function loadDevDashboardData(){
   if(!response.ok||!data.success)throw new Error(data.error||'Could not load developer dashboard data.');
   devDashboardUsers=Array.isArray(data.users)?data.users:[];
   document.getElementById('dd-user-count').textContent=String(Number.isFinite(data.userCount)?data.userCount:devDashboardUsers.length);
+  document.getElementById('dd-active-count').textContent=String(Number.isFinite(data.activeUserCount)?data.activeUserCount:'—');
   document.getElementById('dd-last-refresh').textContent=new Date(data.checkedAt||Date.now()).toLocaleTimeString();
   renderDevUsers();
   document.getElementById('dd-users-feedback').textContent='Loaded '+devDashboardUsers.length+' profile'+(devDashboardUsers.length===1?'':'s')+'.';
