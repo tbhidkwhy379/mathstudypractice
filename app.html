@@ -730,6 +730,209 @@ button { line-height: 1.25; }
   #view-chat #send,#view-chat .chat-tabs button,#view-chat .chat-attach{transition:none}
 }
 
+
+/* Friends view: desktop master/detail layout */
+#view-chat.friends-mode{
+  display:grid!important;
+  grid-template-columns:minmax(300px,340px) minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr) auto;
+  height:100vh;
+  min-height:0;
+  padding-bottom:100px;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 72% 8%,rgba(82,116,207,.09),transparent 38%),
+    #0b0f16;
+}
+#view-chat.friends-mode>header{
+  grid-column:1/-1;
+  grid-row:1;
+  min-width:0;
+  padding:14px clamp(18px,2.4vw,34px);
+}
+#view-chat.friends-mode>#chatSocial{
+  grid-column:1;
+  grid-row:2;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  overflow:hidden;
+  padding:18px 16px 22px;
+  background:rgba(15,20,29,.97);
+  border-right:1px solid rgba(160,177,207,.15);
+  border-bottom:0;
+}
+#view-chat.friends-mode .chat-tabs{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  flex:0 0 auto;
+  padding-bottom:15px;
+  border-bottom:1px solid rgba(160,177,207,.12);
+}
+#view-chat.friends-mode .chat-tabs button{
+  min-width:0;
+  min-height:42px;
+  justify-content:center;
+  white-space:nowrap;
+}
+#view-chat.friends-mode #peoplePanel{
+  display:flex!important;
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overflow-x:hidden;
+  flex-direction:column;
+  gap:0;
+  padding:0 3px 8px 0;
+  scrollbar-gutter:stable;
+}
+#view-chat.friends-mode #peoplePanel[hidden]{display:none!important}
+#view-chat.friends-mode .people-search{
+  display:flex;
+  gap:8px;
+  align-items:stretch;
+  margin:0 0 5px;
+}
+#view-chat.friends-mode .people-search input{
+  min-height:43px;
+  border-radius:11px;
+  font-size:13px;
+}
+#view-chat.friends-mode .people-search button{
+  min-height:43px;
+  padding:0 13px;
+  white-space:nowrap;
+}
+#view-chat.friends-mode .social-hint{
+  margin:8px 2px 14px;
+  line-height:1.45;
+}
+#view-chat.friends-mode #peoplePanel h3{
+  margin:14px 2px 9px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#9eacc3;
+}
+#view-chat.friends-mode .people-list{gap:8px}
+#view-chat.friends-mode .person-row{
+  min-height:58px;
+  gap:9px;
+  padding:9px 10px;
+  border-radius:12px;
+  background:rgba(255,255,255,.035);
+  border-color:rgba(160,177,207,.13);
+  transition:background .16s,border-color .16s;
+}
+#view-chat.friends-mode .person-row:hover{
+  background:rgba(104,140,230,.09);
+  border-color:rgba(116,153,255,.32);
+}
+#view-chat.friends-mode .person-name{font-size:12px}
+#view-chat.friends-mode .person-id{margin-top:3px;font-size:10px}
+#view-chat.friends-mode .person-row button{
+  min-height:34px;
+  border-radius:9px;
+  padding:6px 10px;
+  background:rgba(91,130,231,.15);
+  border:1px solid rgba(116,153,255,.25);
+  color:#dce6ff;
+}
+#view-chat.friends-mode>#main{
+  grid-column:2;
+  grid-row:2;
+  min-width:0;
+  min-height:0;
+  align-items:center;
+  justify-content:center;
+  padding:clamp(28px,5vw,72px);
+  background:linear-gradient(180deg,rgba(13,18,27,.18),rgba(8,11,17,.04));
+}
+#view-chat.friends-mode #empty{
+  max-width:440px;
+  margin:0;
+  padding:30px 34px;
+  border:1px solid rgba(160,177,207,.14);
+  border-radius:20px;
+  background:rgba(255,255,255,.025);
+  color:#b7c3d7;
+  line-height:1.65;
+  box-shadow:0 18px 50px rgba(0,0,0,.13);
+}
+#view-chat.friends-mode>#status{
+  grid-column:2;
+  grid-row:3;
+  padding:5px 18px 9px;
+  background:rgba(14,18,25,.92);
+  border-top:1px solid rgba(160,177,207,.10);
+}
+#view-chat.friends-mode>#imagePreview,
+#view-chat.friends-mode>footer{display:none!important}
+#view-chat.friends-mode #dmPanel,
+#view-chat.friends-mode #aiPanel{display:none!important}
+#view-chat.friends-mode button:focus-visible,
+#view-chat.friends-mode input:focus-visible{
+  outline:2px solid #9bb5ff;
+  outline-offset:2px;
+}
+@media(max-width:800px){
+  #view-chat.friends-mode{
+    display:flex!important;
+    flex-direction:column;
+    height:100vh;
+    overflow:hidden;
+  }
+  #view-chat.friends-mode>header{flex:0 0 auto}
+  #view-chat.friends-mode>#chatSocial{
+    flex:0 0 auto;
+    min-height:0;
+    max-height:48vh;
+    overflow:hidden;
+    border-right:0;
+    border-bottom:1px solid rgba(160,177,207,.15);
+    padding:10px 12px 12px;
+    gap:10px;
+  }
+  #view-chat.friends-mode .chat-tabs{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:6px;
+    padding-bottom:10px;
+  }
+  #view-chat.friends-mode .chat-tabs button{
+    min-height:40px;
+    padding:7px 5px;
+    font-size:10px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  #view-chat.friends-mode #peoplePanel{
+    display:flex!important;
+    max-height:calc(48vh - 76px);
+    overflow-y:auto;
+    padding-right:3px;
+  }
+  #view-chat.friends-mode>#main{
+    flex:1 1 auto;
+    min-height:110px;
+    padding:18px 14px 28px;
+  }
+  #view-chat.friends-mode>#status{flex:0 0 auto}
+}
+@media(max-width:480px){
+  #view-chat.friends-mode>header{padding:10px 12px}
+  #view-chat.friends-mode #whoami{max-width:42%;overflow-wrap:anywhere}
+  #view-chat.friends-mode .person-row{min-height:54px}
+  #view-chat.friends-mode .people-search button{padding:0 10px}
+}
+@media(prefers-reduced-motion:reduce){
+  #view-chat.friends-mode .person-row{transition:none}
+}
+
 </style>
 </head>
 <body>
@@ -1773,7 +1976,7 @@ async function sendAiMessage(raw){
 }
 function saveOutgoing(){try{localStorage.setItem('cs_outgoing_requests',JSON.stringify(outgoingRequests));}catch(e){}}
 function dmPath(other){return [myId,other].sort().join('/');}
-function setMode(mode){viewMode=mode;document.getElementById('view-chat').classList.toggle('ai-mode',mode==='ai');globalTab.classList.toggle('active',mode==='global');friendsTab.classList.toggle('active',mode==='friends');dmsTab.classList.toggle('active',mode==='dms');aiTab.classList.toggle('active',mode==='ai');peoplePanel.hidden=mode!=='friends';dmPanel.hidden=mode!=='dms';aiPanel.hidden=mode!=='ai';document.getElementById('attachImage').hidden=mode==='ai';document.getElementById('imageFile').hidden=mode==='ai';aiAttachBtn.hidden=mode!=='ai';if(mode!=='ai'){aiFileTray.hidden=true;}textEl.placeholder=mode==='global'?'Message #global (paste an image with Ctrl+V)':(mode==='dms'&&dmPartner?'Message '+dmPartner.name+'…':(mode==='ai'?'Message the AI…':'Choose a friend to DM'));if(mode==='global'){if(dmListener&&dmRef)dmRef.off('value',dmListener);dmListener=null;dmRef=null;dmPartner=null;render(globalMessages);}else if(mode==='friends'){render([]);renderPeople();}else if(mode==='dms'){renderDmList();if(dmPartner)dmHeaderEl.textContent='DM with '+dmPartner.name+' · ID '+dmPartner.uid;else dmHeaderEl.textContent='Choose a friend to start a DM.';render([]);}else{if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);else render([]);}syncLocalAiLifecycle();}
+function setMode(mode){viewMode=mode;document.getElementById('view-chat').classList.toggle('ai-mode',mode==='ai');document.getElementById('view-chat').classList.toggle('friends-mode',mode==='friends');globalTab.classList.toggle('active',mode==='global');friendsTab.classList.toggle('active',mode==='friends');dmsTab.classList.toggle('active',mode==='dms');aiTab.classList.toggle('active',mode==='ai');peoplePanel.hidden=mode!=='friends';dmPanel.hidden=mode!=='dms';aiPanel.hidden=mode!=='ai';document.getElementById('attachImage').hidden=mode==='ai';document.getElementById('imageFile').hidden=mode==='ai';aiAttachBtn.hidden=mode!=='ai';if(mode!=='ai'){aiFileTray.hidden=true;}textEl.placeholder=mode==='global'?'Message #global (paste an image with Ctrl+V)':(mode==='dms'&&dmPartner?'Message '+dmPartner.name+'…':(mode==='ai'?'Message the AI…':'Choose a friend to DM'));if(mode==='global'){if(dmListener&&dmRef)dmRef.off('value',dmListener);dmListener=null;dmRef=null;dmPartner=null;render(globalMessages);}else if(mode==='friends'){render([]);renderPeople();}else if(mode==='dms'){renderDmList();if(dmPartner)dmHeaderEl.textContent='DM with '+dmPartner.name+' · ID '+dmPartner.uid;else dmHeaderEl.textContent='Choose a friend to start a DM.';render([]);}else{if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);else render([]);}syncLocalAiLifecycle();}
 function renderPeople(){friendRequestsEl.innerHTML='';let pending=0;Object.keys(requestsMap).forEach(uid=>{const q=requestsMap[uid];if(!q||q.accepted===true||q.ignored===true||friendsMap[uid])return;pending++;const row=document.createElement('div');row.className='person-row';row.innerHTML='<div class="person-name">'+esc(q.name||'User')+'<div class="person-id">ID: '+esc(uid)+'</div></div><button type="button" data-accept="'+esc(uid)+'">Accept</button><button type="button" data-decline="'+esc(uid)+'">Ignore</button>';friendRequestsEl.appendChild(row);});requestCountEl.textContent=pending?'('+pending+')':'';document.getElementById('requestsEmpty').textContent=pending?'('+pending+')':'— none';if(!friendRequestsEl.children.length)friendRequestsEl.innerHTML='<div class="social-hint">No pending requests.</div>';
 friendsListEl.innerHTML='';const ids=Object.keys(friendsMap).filter(uid=>friendsMap[uid]===true);if(!ids.length)friendsListEl.innerHTML='<div class="social-hint">No friends yet. Add someone using their User ID.</div>';ids.forEach(uid=>{usersRef.child(uid).once('value').then(snap=>{const p=snap.val()||{};const row=document.createElement('div');row.className='person-row';row.innerHTML='<div class="person-name">'+esc(p.name||'Friend')+'<div class="person-id">ID: '+esc(uid)+'</div></div><button type="button" data-open-dm="'+esc(uid)+'">Message</button>';friendsListEl.appendChild(row);}).catch(()=>{});});}
 function renderDmList(){dmListEl.innerHTML='';const ids=Object.keys(friendsMap).filter(uid=>friendsMap[uid]===true);if(!ids.length){dmListEl.innerHTML='<div class="social-hint">Add friends first to start DMs.</div>';return;}ids.forEach(uid=>{usersRef.child(uid).once('value').then(snap=>{const p=snap.val()||{};const row=document.createElement('div');row.className='person-row';row.innerHTML='<div class="person-name">'+esc(p.name||'Friend')+'<div class="person-id">ID: '+esc(uid)+'</div></div><button type="button" data-open-dm="'+esc(uid)+'">Open DM</button>';dmListEl.appendChild(row);}).catch(()=>{});});}
