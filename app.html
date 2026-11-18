@@ -466,52 +466,62 @@ button { line-height: 1.25; }
 }
 
 
-/* Developer dashboard */
+/* Developer dashboard — Neural command centre */
 #devDashboard[hidden],#devDashboard [hidden]{display:none!important}
-#devDashboard{position:fixed;inset:0;z-index:8000;background:#08090d;color:#eef0f7;overflow:auto;padding:clamp(14px,3vw,30px);font-family:inherit}
-#devDashboard .dd-wrap{max-width:1250px;margin:0 auto}
-#devDashboard .dd-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:24px}
-#devDashboard .dd-eyebrow{font-size:11px;letter-spacing:.18em;color:#8792a8;text-transform:uppercase}
-#devDashboard h1{font-size:clamp(25px,4vw,36px);margin:5px 0 0;letter-spacing:-.04em}
-#devDashboard .dd-sub{color:#929bad;font-size:13px;margin-top:6px}
-#devDashboard .dd-actions{display:flex;gap:8px;flex-wrap:wrap}
+#devDashboard{position:fixed;inset:0;z-index:8000;overflow:auto;padding:clamp(16px,3vw,34px);color:#edf2ff;font-family:inherit;background:radial-gradient(ellipse at 8% 0%,rgba(86,118,255,.18),transparent 34%),radial-gradient(ellipse at 94% 12%,rgba(32,211,190,.09),transparent 28%),#080b12}
+#devDashboard:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,black,transparent 80%)}
+#devDashboard .dd-wrap{position:relative;max-width:1320px;margin:0 auto}
+#devDashboard .dd-top{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:0 0 26px;padding:20px 22px;border:1px solid rgba(148,163,184,.17);border-radius:18px;background:linear-gradient(120deg,rgba(19,27,43,.96),rgba(13,19,31,.88));box-shadow:0 18px 60px rgba(0,0,0,.24)}
+#devDashboard .dd-eyebrow{display:flex;align-items:center;gap:9px;font-size:10px;font-weight:800;letter-spacing:.19em;color:#91a4cb;text-transform:uppercase}
+#devDashboard .dd-eyebrow:before{content:"";width:8px;height:8px;border-radius:50%;background:#5c8dff;box-shadow:0 0 14px #5c8dff}
+#devDashboard h1{font-size:clamp(27px,4vw,38px);margin:7px 0 0;letter-spacing:-.045em;font-weight:800}
+#devDashboard .dd-sub{color:#8e9bb2;font-size:13px;margin-top:7px}
+#devDashboard .dd-actions{display:flex;gap:9px;flex-wrap:wrap}
 #devDashboard button,#devDashboard input{font:inherit}
-#devDashboard .dd-btn{border:1px solid #303747;background:#151a24;color:#e9edf7;padding:9px 13px;border-radius:9px;cursor:pointer}
-#devDashboard .dd-btn.primary{background:var(--accent);border-color:var(--accent);color:#080b13;font-weight:700}
-#devDashboard .dd-btn:disabled{opacity:.5;cursor:wait}
-#devDashboard .dd-nav{display:flex;gap:7px;border-bottom:1px solid #242b38;margin-bottom:18px}
-#devDashboard .dd-tab{border:0;border-bottom:2px solid transparent;background:none;color:#929bad;padding:11px 14px;cursor:pointer}
-#devDashboard .dd-tab.active{color:#fff;border-color:var(--accent)}
-#devDashboard .dd-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
-#devDashboard .dd-card{background:#111620;border:1px solid #252d3b;border-radius:13px;padding:16px;min-width:0}
-#devDashboard .dd-label{font-size:12px;color:#929bad}
-#devDashboard .dd-value{font-size:27px;font-weight:750;letter-spacing:-.04em;margin-top:8px}
-#devDashboard .dd-note{font-size:11px;color:#8490a3;margin-top:4px}
-#devDashboard .dd-status{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#aeb8c9}
-#devDashboard .dd-dot{width:8px;height:8px;border-radius:50%;background:#778197}
-#devDashboard .dd-dot.ok{background:#43d49a;box-shadow:0 0 10px #43d49a66}
-#devDashboard .dd-dot.bad{background:#ff6878}
-#devDashboard .dd-panel{background:#111620;border:1px solid #252d3b;border-radius:13px;padding:17px;margin:12px 0}
-#devDashboard .dd-panel h2{font-size:15px;margin:0 0 5px}
-#devDashboard .dd-panel p{font-size:12px;color:#929bad;margin:0 0 13px;line-height:1.5}
-#devDashboard .dd-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-#devDashboard .dd-search{width:min(100%,310px);background:#0b0f16;border:1px solid #303747;color:#fff;border-radius:9px;padding:10px 12px;outline:none}
-#devDashboard .dd-search:focus{border-color:var(--accent)}
-#devDashboard .dd-table-wrap{overflow:auto;margin-top:12px}
-#devDashboard table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}
-#devDashboard th,#devDashboard td{text-align:left;padding:11px 10px;border-bottom:1px solid #252d3b}
-#devDashboard th{color:#929bad;font-weight:600}
-#devDashboard td{color:#e2e7f0}
-#devDashboard .dd-muted{color:#929bad}
-#devDashboard .dd-delete-user{border:1px solid rgba(255,107,107,.48);background:rgba(255,80,80,.08);color:#ff9c9c;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap}
-#devDashboard .dd-delete-user:hover{background:rgba(255,80,80,.16);border-color:#ff7777}
+#devDashboard .dd-btn{min-height:42px;border:1px solid rgba(148,163,184,.2);background:#151e2e;color:#e5edff;padding:10px 15px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;transition:background .18s,border-color .18s,transform .18s}
+#devDashboard .dd-btn:hover{background:#202c42;border-color:rgba(133,164,255,.55);transform:translateY(-1px)}
+#devDashboard .dd-btn.primary{background:linear-gradient(135deg,#7695ff,#5d7cf0);border-color:#7695ff;color:#08101f;box-shadow:0 7px 22px rgba(92,124,240,.22)}
+#devDashboard .dd-btn:disabled{opacity:.55;cursor:wait;transform:none}
+#devDashboard .dd-nav{display:flex;gap:7px;width:max-content;max-width:100%;overflow:auto;padding:6px;margin:0 0 20px;border:1px solid rgba(148,163,184,.14);border-radius:13px;background:rgba(14,20,32,.8)}
+#devDashboard .dd-tab{min-height:40px;border:0;border-radius:9px;background:transparent;color:#8f9db5;padding:10px 17px;cursor:pointer;font-size:12px;font-weight:750;white-space:nowrap;transition:background .18s,color .18s}
+#devDashboard .dd-tab:hover{color:#eaf0ff;background:rgba(255,255,255,.045)}
+#devDashboard .dd-tab.active{color:#fff;background:linear-gradient(135deg,rgba(108,140,255,.25),rgba(108,140,255,.1));box-shadow:inset 0 0 0 1px rgba(126,154,255,.28)}
+#devDashboard .dd-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:0 0 16px}
+#devDashboard .dd-card{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(20,29,45,.96),rgba(13,19,30,.96));border:1px solid rgba(148,163,184,.16);border-radius:15px;padding:19px;min-width:0;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+#devDashboard .dd-card:after{content:"";position:absolute;width:90px;height:90px;right:-48px;top:-48px;border-radius:50%;background:rgba(108,140,255,.11);filter:blur(3px)}
+#devDashboard .dd-label{font-size:11px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;color:#8f9db5}
+#devDashboard .dd-value{font-size:clamp(26px,3vw,34px);font-weight:800;letter-spacing:-.045em;margin-top:13px;color:#f3f6ff;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#devDashboard .dd-note{font-size:11px;color:#7e8ca5;margin-top:7px;line-height:1.45}
+#devDashboard .dd-status{display:inline-flex;align-items:center;gap:9px;font-size:12px;color:#b8c4d9}
+#devDashboard .dd-dot{width:8px;height:8px;flex:none;border-radius:50%;background:#68758d}
+#devDashboard .dd-dot.ok{background:#35d6a0;box-shadow:0 0 0 4px rgba(53,214,160,.1),0 0 15px #35d6a066}
+#devDashboard .dd-dot.bad{background:#ff7184;box-shadow:0 0 0 4px rgba(255,113,132,.1)}
+#devDashboard .dd-panel{background:linear-gradient(145deg,rgba(18,26,40,.97),rgba(12,18,29,.97));border:1px solid rgba(148,163,184,.16);border-radius:16px;padding:clamp(16px,2vw,22px);margin:14px 0;box-shadow:0 12px 34px rgba(0,0,0,.14)}
+#devDashboard .dd-panel h2{font-size:15px;margin:0 0 7px;letter-spacing:-.01em;color:#f1f5ff}
+#devDashboard .dd-panel p{font-size:12px;color:#8e9bb2;margin:0 0 16px;line-height:1.65;max-width:780px}
+#devDashboard .dd-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+#devDashboard .dd-search{width:min(100%,340px);min-height:42px;background:#0b111d;border:1px solid rgba(148,163,184,.2);color:#fff;border-radius:10px;padding:10px 13px;outline:none;font-size:12px}
+#devDashboard .dd-search::placeholder{color:#66748c}
+#devDashboard .dd-search:focus{border-color:#7896ff;box-shadow:0 0 0 3px rgba(108,140,255,.12)}
+#devDashboard .dd-table-wrap{overflow:auto;margin-top:17px;border:1px solid rgba(148,163,184,.12);border-radius:12px}
+#devDashboard table{width:100%;border-collapse:collapse;min-width:650px;font-size:12px}
+#devDashboard th,#devDashboard td{text-align:left;padding:14px 13px;border-bottom:1px solid rgba(148,163,184,.11)}
+#devDashboard th{position:sticky;top:0;background:#121b2a;color:#8190aa;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+#devDashboard td{color:#e2e9f7;background:rgba(10,15,24,.3)}
+#devDashboard tbody tr:hover td{background:rgba(108,140,255,.055)}
+#devDashboard tbody tr:last-child td{border-bottom:0}
+#devDashboard .dd-muted{color:#8795ad;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px}
+#devDashboard .dd-delete-user{min-height:36px;border:1px solid rgba(255,113,132,.32);background:rgba(255,80,100,.08);color:#ff9eaa;border-radius:9px;padding:8px 12px;cursor:pointer;font-size:11px;font-weight:800;white-space:nowrap;transition:background .18s,border-color .18s}
+#devDashboard .dd-delete-user:hover{background:rgba(255,80,100,.16);border-color:#ff7184}
 #devDashboard .dd-delete-user:disabled{opacity:.5;cursor:wait}
-#devDashboard .dd-empty{padding:20px;text-align:center;color:#929bad;font-size:13px}
-#devDashboard .dd-feedback{font-size:12px;color:#aeb8c9;margin-top:10px;min-height:18px;overflow-wrap:anywhere}
+#devDashboard .dd-empty{padding:26px!important;text-align:center;color:#8492aa!important;font-size:12px}
+#devDashboard .dd-feedback{font-size:12px;color:#9eacc3;margin-top:12px;min-height:18px;overflow-wrap:anywhere;line-height:1.5}
 #devDashboard .dd-hidden{display:none!important}
-@media(max-width:700px){#devDashboard .dd-grid{grid-template-columns:1fr 1fr}#devDashboard .dd-grid .dd-card:last-child{grid-column:1/-1}}
-@media(max-width:430px){#devDashboard .dd-grid{grid-template-columns:1fr}#devDashboard .dd-grid .dd-card:last-child{grid-column:auto}}
-
+#devDashboard .dd-panel .dd-grid{margin-top:18px}
+@media(max-width:900px){#devDashboard .dd-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){#devDashboard{padding:12px}#devDashboard .dd-top{padding:17px;border-radius:14px}#devDashboard .dd-actions{width:100%}#devDashboard .dd-actions .dd-btn{flex:1}#devDashboard .dd-grid{grid-template-columns:1fr 1fr;gap:9px}#devDashboard .dd-card{padding:14px}#devDashboard .dd-value{font-size:25px}#devDashboard .dd-tab{padding:9px 12px}#devDashboard .dd-nav{width:100%}#devDashboard .dd-nav .dd-tab{flex:1}}
+@media(max-width:380px){#devDashboard .dd-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#devDashboard *{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -551,7 +561,7 @@ button { line-height: 1.25; }
 <div id="devDashboard" hidden aria-label="Developer dashboard">
   <div class="dd-wrap">
     <div class="dd-top">
-      <div><div class="dd-eyebrow">Neural · Developer tools</div><h1>Developer Dashboard</h1><div class="dd-sub">Live service checks and registered user overview</div></div>
+      <div><div class="dd-eyebrow">Neural · Control centre</div><h1>Developer Dashboard</h1><div class="dd-sub">Monitor services, inspect users and manage the platform</div></div>
       <div class="dd-actions"><button class="dd-btn" id="devDashRefresh">Refresh data</button><button class="dd-btn" id="devDashClose">Close dashboard</button></div>
     </div>
     <div class="dd-nav" role="tablist"><button class="dd-tab active" data-dd-tab="overview">Overview</button><button class="dd-tab" data-dd-tab="api">API Checker</button><button class="dd-tab" data-dd-tab="users">Users</button></div>
@@ -778,20 +788,28 @@ async function requestDeveloperGate(action,passcodeOrToken){
   return data;
 }
 function syncDevModeSetting(){if(devModeToggle)devModeToggle.checked=localAiAccessGranted;}
-async function verifyDeveloperSession(){
-  const token=sessionStorage.getItem(DEV_TOKEN_KEY);
-  if(!token)return;
-  try{
-    await requestDeveloperGate('developer-verify',token);
-    if(devDashboardLauncher)devDashboardLauncher.hidden=false;
-    localAiAccessGranted=true;localAiAccessDenied=false;
-    syncDevModeSetting();
-    if(typeof updateAiProviderUi==='function')updateAiProviderUi();
-  }catch(e){sessionStorage.removeItem(DEV_TOKEN_KEY);}
-}
-
 const devDashboardLauncher=document.getElementById('devDashboardLauncher');
 const devDashboard=document.getElementById('devDashboard');
+function setDeveloperUiEnabled(enabled){
+  const active=enabled===true;
+  if(devDashboardLauncher)devDashboardLauncher.hidden=!active;
+  if(!active&&devDashboard){devDashboard.hidden=true;document.body.style.overflow='';}
+  if(devModeToggle)devModeToggle.checked=active;
+}
+async function verifyDeveloperSession(){
+  const token=sessionStorage.getItem(DEV_TOKEN_KEY);
+  if(!token){setDeveloperUiEnabled(false);return;}
+  try{
+    await requestDeveloperGate('developer-verify',token);
+    localAiAccessGranted=true;localAiAccessDenied=false;
+    setDeveloperUiEnabled(true);
+    syncDevModeSetting();
+    if(typeof updateAiProviderUi==='function')updateAiProviderUi();
+  }catch(e){
+    sessionStorage.removeItem(DEV_TOKEN_KEY);
+    setDeveloperUiEnabled(false);
+  }
+}
 let devDashboardUsers=[];
 function setDevApiState(ok,message){
   const dot=document.getElementById('dd-api-dot'),dot2=document.getElementById('dd-api-dot-2');
@@ -859,10 +877,19 @@ async function runDevApiCheck(){
     setDevApiState(false,'AI endpoint check failed: '+feedback.textContent);
   }finally{btn.disabled=false;btn.textContent='Run API test';}
 }
-function openDevDashboard(){
-  if(!sessionStorage.getItem(DEV_TOKEN_KEY)){alert('Developer Mode session is not active.');return;}
-  devDashboard.hidden=false;document.body.style.overflow='hidden';
-  loadDevDashboardData().catch(error=>{document.getElementById('dd-users-feedback').textContent=error.message;});
+async function openDevDashboard(){
+  const token=sessionStorage.getItem(DEV_TOKEN_KEY)||'';
+  if(!token){setDeveloperUiEnabled(false);alert('Turn on Developer Mode first.');return;}
+  try{
+    await requestDeveloperGate('developer-verify',token);
+    setDeveloperUiEnabled(true);
+    devDashboard.hidden=false;document.body.style.overflow='hidden';
+    loadDevDashboardData().catch(error=>{document.getElementById('dd-users-feedback').textContent=error.message;});
+  }catch(error){
+    sessionStorage.removeItem(DEV_TOKEN_KEY);
+    setDeveloperUiEnabled(false);
+    alert('Your Developer Mode session expired. Turn it on again.');
+  }
 }
 function closeDevDashboard(){devDashboard.hidden=true;document.body.style.overflow='';}
 if(devDashboardLauncher){
@@ -943,6 +970,7 @@ devModeToggle.addEventListener('change',async()=>{
     }finally{devModeToggle.disabled=false;}
   }else{
     sessionStorage.removeItem(DEV_TOKEN_KEY);
+    setDeveloperUiEnabled(false);
     localAiAccessGranted=false;localAiAccessDenied=true;
     localStorage.setItem('cs_ai_provider','api');
     devModeControls.hidden=true;
