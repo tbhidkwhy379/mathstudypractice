@@ -855,7 +855,7 @@ function hideLocalAiOption(){
   }
   if(localModelWrap)localModelWrap.hidden=true;
 }
-function getAiAssistantName(){return aiProviderMode==='api'?'MathStudy AI':'Local AI';}
+function getAiAssistantName(){return aiProviderMode==='api'?'Claude Opus 5.5':'Local AI';}
 function updateAiProviderUi(){
   if(localAiAccessDenied)hideLocalAiOption();
   if(aiProviderSelect){const localOption=aiProviderSelect.querySelector('option[value="local"]');if(localOption)localOption.hidden=localAiAccessDenied;aiProviderSelect.value=aiProviderMode;}
