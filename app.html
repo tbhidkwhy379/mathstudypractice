@@ -994,6 +994,30 @@ button { line-height: 1.25; }
  .hb-live{font-size:0!important}
 }
 
+
+/* Hyperbeam environment picker */
+.hb-mode-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.hb-mode-card{min-width:0;display:flex;align-items:center;gap:11px;padding:12px 14px;text-align:left;border:1px solid var(--border);border-radius:13px;background:rgba(16,18,26,.82);color:var(--text);cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+.hb-mode-card:hover{transform:translateY(-1px);border-color:rgba(145,166,255,.55)}
+.hb-mode-card.active{border-color:var(--accent);background:rgba(108,140,255,.13);box-shadow:0 0 0 1px rgba(108,140,255,.18) inset}
+.hb-mode-card>i{width:35px;height:35px;flex:0 0 35px;display:grid;place-items:center;border-radius:10px;background:rgba(255,255,255,.06);color:#aabaff;font-size:16px}
+.hb-mode-copy{display:flex;min-width:0;flex-direction:column;gap:3px}
+.hb-mode-copy strong{font-size:13px}
+.hb-mode-copy small{font-size:10px;line-height:1.3;color:var(--muted)}
+.hb-mode-tag{display:inline-flex;align-items:center;margin-top:3px;color:#e8c88a;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.hb-mode-panel{display:flex;align-items:end;gap:12px;flex-wrap:wrap;padding:14px;border:1px solid var(--border);border-radius:13px;background:rgba(16,18,26,.74)}
+.hb-mode-field{display:flex;min-width:200px;flex:1;flex-direction:column;gap:6px;color:var(--muted);font-size:11px;font-weight:700}
+.hb-mode-field input,.hb-mode-field select{width:100%;min-height:38px;padding:9px 11px;border:1px solid #343846;border-radius:9px;background:#090b10;color:#f1f2f7;font:inherit;font-size:13px}
+.hb-mode-field small{font-weight:400;line-height:1.4}
+.hb-mode-help{width:100%;margin:0;color:var(--muted);font-size:11px;line-height:1.5}
+.hb-mode-start{min-height:38px;padding:0 16px;border:0;border-radius:9px;background:var(--accent);color:#080910;font-weight:850;cursor:pointer}
+.hb-mode-start:disabled{opacity:.5;cursor:not-allowed}
+.hb-linux-notice{padding:14px 16px;border:1px solid rgba(230,180,90,.25);border-radius:12px;background:rgba(230,180,90,.07);color:var(--muted);font-size:12px;line-height:1.55}
+.hb-linux-notice strong{display:block;margin-bottom:4px;color:var(--text);font-size:13px}
+.hb-mode-hidden{display:none!important}
+@media(max-width:760px){.hb-mode-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.hb-mode-card{padding:10px}.hb-mode-card>i{width:31px;height:31px;flex-basis:31px}}
+@media(max-width:420px){.hb-mode-card{gap:8px}.hb-mode-copy small{font-size:9px}.hb-mode-copy strong{font-size:12px}}
+
 /* Cloud Browser is a Developer Mode-only tool */
 .dock a[data-page="browser"][hidden]{display:none!important}
 #view-browser[hidden]{display:none!important}
@@ -1073,57 +1097,82 @@ button { line-height: 1.25; }
 <!-- GAMES -->
 <section class="page-view" id="view-games">
 <div class="game-tabs">
-<button class="game-tab active" data-gpanel="lumin">Lumin</button>
-<button class="game-tab" data-gpanel="gn">GN-Math</button>
-<button class="game-tab" data-gpanel="ugs">UGS</button>
-<button class="game-tab" data-gpanel="minecraft">Minecraft</button>
-</div>
-<div class="gpanel active" id="gpanel-lumin"><div id="games"></div></div>
-<div class="gpanel" id="gpanel-gn">
-<div class="gn-head"><h2>GN-Math Games</h2><span id="gn-count"></span><input type="text" id="gn-search" placeholder="Search GN games..." autocomplete="off"></div>
-<div id="gn-grid"></div>
-</div>
-<div class="gpanel" id="gpanel-ugs">
-<div class="gn-head"><h2>Ultimate Game Stash</h2><span id="ugs-count"></span><input type="text" id="ugs-search" placeholder="Search UGS games..." autocomplete="off"></div>
-<div id="ugs-grid"></div>
-</div>
-<div id="gn-player" hidden><div class="gn-player-bar"><span id="gn-player-title"></span><button id="gn-player-close">✕ Close</button></div><iframe id="gn-player-frame" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe></div>
-</section>
-<!-- MOVIES & TV -->
-<section class="page-view" id="view-movies">
-<div class="mv-wrap">
-<h1 class="mv-title">movies &amp; tv</h1>
-<p class="mv-sub">search anything, press play, and if a server spins forever hit <b>next server</b> — posters &amp; search come from TMDB.</p>
-<div class="mv-bar">
-<input id="mvSearch" type="text" placeholder="search movies or shows..." autocomplete="off">
-<button id="mvGo" class="mv-btn">Search</button>
-<button id="mvTrend" class="mv-btn ghost">Trending</button>
-<select id="mvProv" class="mv-sel" title="streaming server"></select>
-</div>
-<div class="mv-keyrow"><a id="mvKeyToggle">set your own tmdb key</a><span id="mvKeyPane" hidden><input id="mvKeyInput" type="text" placeholder="tmdb v3 api key" autocomplete="off"><button id="mvKeySave">save</button></span></div>
-<div id="mvMsg" class="mv-msg"></div>
-<div class="mv-grid" id="mvGrid"></div>
-</div>
-<div id="mvPlayer" hidden>
-<div class="mv-player-bar">
-<span id="mvPlayerTitle"></span>
-<select id="mvServ" class="mv-sel" title="streaming server"></select>
-<button id="mvNextSrv" class="mv-btn ghost">next server ›</button>
-<div class="mv-epctl" id="mvEpCtl" hidden>
-Season <input id="mvSeason" type="number" min="1" value="1">
-Episode <input id="mvEpisode" type="number" min="1" value="1">
-<button id="mvEpGo">▶</button>
-</div>
-<button id="mvPlayerClose">✕ Close</button>
-</div>
-<iframe id="mvFrame" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="border:0"></iframe>
-</div>
-</section>
-<!-- CHAT -->
-<section class="page-view" id="view-browser">
+<button class="game-tab active" data<section class="page-view" id="view-browser">
   <div class="hb-heading">
-    <div><h1><i class="fas fa-globe" aria-hidden="true"></i> Cloud Browser</h1><p>A full Chromium browser running on a Hyperbeam cloud computer.</p></div>
-    <div class="hb-brand"><i class="fas fa-cloud"></i> Remote Chromium</div>
+    <div><h1><i class="fas fa-cloud" aria-hidden="true"></i> Cloud Computer</h1><p>Choose a remote environment to launch inside your website.</p></div>
+    <div class="hb-brand"><i class="fas fa-cloud"></i> HYPERBEAM TEST</div>
+  </div>
+
+  <div class="hb-mode-picker" role="group" aria-label="Choose cloud environment">
+    <button class="hb-mode-card active" type="button" data-hb-mode="browser" aria-pressed="true">
+      <i class="fab fa-chrome" aria-hidden="true"></i><span class="hb-mode-copy"><strong>Browser</strong><small>Remote Chromium</small></span>
+    </button>
+    <button class="hb-mode-card" type="button" data-hb-mode="console" aria-pressed="false">
+      <i class="fas fa-gamepad" aria-hidden="true"></i><span class="hb-mode-copy"><strong>Console</strong><small>NES · SNES · N64 · PS1</small></span>
+    </button>
+    <button class="hb-mode-card" type="button" data-hb-mode="linux" aria-pressed="false">
+      <i class="fab fa-linux" aria-hidden="true"></i><span class="hb-mode-copy"><strong>Linux</strong><small>Full desktop environment</small><span class="hb-mode-tag">Needs activation</span></span>
+    </button>
+    <button class="hb-mode-card" type="button" data-hb-mode="android" aria-pressed="false">
+      <i class="fab fa-android" aria-hidden="true"></i><span class="hb-mode-copy"><strong>Android</strong><small>Remote Android emulator</small></span>
+    </button>
+  </div>
+
+  <div class="hb-mode-panel hb-mode-hidden" id="hb-console-options">
+    <label class="hb-mode-field">Console system
+      <select id="hb-console-type">
+        <option value="nes">Nintendo Entertainment System (NES)</option>
+        <option value="snes">Super Nintendo (SNES)</option>
+        <option value="n64">Nintendo 64 (N64)</option>
+        <option value="ps1">PlayStation 1 (PS1)</option>
+      </select>
+    </label>
+    <label class="hb-mode-field">ROM file URL
+      <input id="hb-console-rom" type="url" inputmode="url" placeholder="https://example.com/your-owned-game.rom">
+    </label>
+    <p class="hb-mode-help">Paste a direct link to a game ROM that you own or are legally allowed to use. Hyperbeam downloads the ROM when the session starts.</p>
+    <button class="hb-mode-start" id="hb-start-console" type="button">Start Console</button>
+  </div>
+
+  <div class="hb-mode-panel hb-mode-hidden" id="hb-android-options">
+    <label class="hb-mode-field">Google Play app ID (optional)
+      <input id="hb-android-app" type="text" placeholder="e.g. com.example.app" autocomplete="off" spellcheck="false">
+      <small>Leave this empty to open the Android home screen.</small>
+    </label>
+    <button class="hb-mode-start" id="hb-start-android" type="button">Start Android</button>
+  </div>
+
+  <div class="hb-linux-notice hb-mode-hidden" id="hb-linux-notice">
+    <strong><i class="fab fa-linux" aria-hidden="true"></i> Linux desktop needs to be enabled for your API account</strong>
+    Hyperbeam advertises Linux environments, but its public REST API documentation currently only provides launch endpoints for Chromium, Android and console emulators. This option is shown here, but cannot start until Hyperbeam gives your Test account a Linux session endpoint. No unsupported request will be sent.
+  </div>
+
+  <div class="hb-browser" id="hb-browser-shell">
+    <div class="hb-tabstrip" id="hb-browser-tabs">
+      <div class="hb-tab-list" id="hb-tab-list"><div class="hb-tab-item active"><button class="hb-tab" type="button"><i class="fab fa-chrome" aria-hidden="true"></i><span>New Tab</span></button></div></div>
+      <button class="hb-tab-add" id="hb-new-tab" type="button" title="New tab" aria-label="New tab"><i class="fas fa-plus"></i></button>
+      <div class="hb-live"><span class="hb-live-dot" id="hb-live-dot"></span><span>HYPERBEAM</span></div>
+    </div>
+    <div class="hb-toolbar" id="hb-browser-toolbar">
+      <button class="hb-navbtn" id="hb-back" type="button" title="Back" aria-label="Back" disabled><i class="fas fa-arrow-left"></i></button>
+      <button class="hb-navbtn" id="hb-forward" type="button" title="Forward" aria-label="Forward" disabled><i class="fas fa-arrow-right"></i></button>
+      <button class="hb-navbtn" id="hb-reload" type="button" title="Reload" aria-label="Reload" disabled><i class="fas fa-rotate-right"></i></button>
+      <button class="hb-navbtn" id="hb-home" type="button" title="Home" aria-label="Home" disabled><i class="fas fa-house"></i></button>
+      <form class="hb-address-form" id="hb-nav-form">
+        <i class="fas fa-lock" id="hb-address-icon" aria-hidden="true"></i>
+        <input id="hb-url" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="Search Google or enter a website address" aria-label="Search or enter website address">
+        <button class="hb-go" id="hb-launch" type="submit">Start</button>
+      </form>
+      <button class="hb-new-session" id="hb-restart" type="button" title="Start a new cloud session" aria-label="Start a new cloud session" hidden><i class="fas fa-plus"></i> New</button>
+    </div>
+    <div class="hb-statusline" role="status" aria-live="polite"><span class="hb-live-dot" id="hb-status-dot"></span><span class="hb-status" id="hb-status">Choose an environment and start a session.</span></div>
+    <div class="hb-frame-wrap" id="hb-frame-wrap">
+      <div class="hb-screen" id="hb-screen"></div>
+      <div class="hb-empty" id="hb-empty"><div><i class="fas fa-cloud"></i><strong>Your cloud computer is ready</strong>Select Browser, Console or Android to start a remote session.</div></div>
+    </div>
+  </div>
+  <div class="hb-note">Sessions run on Hyperbeam's test environment. Availability depends on the environment being enabled for your account.</div>
+</section>="fas fa-cloud"></i> Remote Chromium</div>
   </div>
   <div class="hb-browser">
     <div class="hb-tabstrip">
@@ -2253,82 +2302,7 @@ document.getElementById('context-menu').style.display='none';}};
 const player={
 loadSong:(index,autoPlay=true)=>{if(!state.queue.length)return;
 if(index>=state.queue.length)index=0;if(index<0)index=state.queue.length-1;
-state.currentIndex=index;const song=state.queue[index];
-document.getElementById('pb-title').innerText=song.title;
-document.getElementById('pb-artist').innerText=song.artist;
-document.getElementById('pb-art').style.backgroundImage='url("'+song.cover+'")';
-const h=document.getElementById('pb-heart');
-h.className=state.likedIds.includes(song.id)?'fas fa-heart':'far fa-heart';
-h.style.color=state.likedIds.includes(song.id)?'#1db954':'#b3b3b3';
-const stdCtrl=document.getElementById('standard-controls'),drvCtrl=document.getElementById('drive-player-container');
-if(song.isDrive){stdCtrl.style.display='none';drvCtrl.style.display='flex';
-drvCtrl.innerHTML='<iframe src="'+song.url+'" allow="autoplay" style="width:100%;height:100%;border:none;"></iframe>';
-audio.pause();state.isPlaying=false;}
-else{drvCtrl.style.display='none';drvCtrl.innerHTML='';stdCtrl.style.display='block';
-audio.src=song.url;
-if(autoPlay){audio.play().catch(()=>{});state.isPlaying=true;player.updatePlayIcon();}}},
-playSingle:song=>{const idx=state.queue.findIndex(s=>s.id===song.id);
-if(idx!==-1)player.loadSong(idx);else{state.queue.splice(state.currentIndex+1,0,song);player.loadSong(state.currentIndex+1);}},
-playContext:songList=>{if(!songList||!songList.length)return;state.queue=[...songList];player.loadSong(0);},
-togglePlay:()=>{if(state.queue[state.currentIndex]&&state.queue[state.currentIndex].isDrive)return;
-if(state.isPlaying)audio.pause();else audio.play();state.isPlaying=!state.isPlaying;player.updatePlayIcon();},
-updatePlayIcon:()=>{document.getElementById('main-play-icon').className=state.isPlaying?'fas fa-pause':'fas fa-play';},
-next:()=>{if(state.shuffle)player.loadSong(Math.floor(Math.random()*state.queue.length));else player.loadSong(state.currentIndex+1);},
-prev:()=>{if(audio.currentTime>3)audio.currentTime=0;else player.loadSong(state.currentIndex-1);},
-toggleShuffle:()=>{state.shuffle=!state.shuffle;document.getElementById('btn-shuffle').classList.toggle('active');},
-toggleLoop:()=>{state.loop=!state.loop;document.getElementById('btn-loop').classList.toggle('active');},
-onEnded:()=>{if(state.loop){audio.currentTime=0;audio.play();}else player.next();},
-toggleLikeCurrent:()=>{const s=state.queue[state.currentIndex];if(s)data.toggleLike(s.id,s);},
-toggleMute:()=>{audio.muted=!audio.muted;player.updateVolIcon();},
-updateVolIcon:()=>{const v=document.getElementById('vol-icon');
-v.className=(audio.muted||audio.volume===0)?'fas fa-volume-mute ctrl-btn':(audio.volume<.5?'fas fa-volume-down ctrl-btn':'fas fa-volume-up ctrl-btn');}};
-window.app=app;window.data=data;window.player=player;
-app.init();
-/* draggable + resizable window behaviour */
-(function(){var mw=document.getElementById('view-music'),bar=document.getElementById('musicDrag');
-if(!mw||!bar)return;
-var MINW=420,MINH=360;
-function maxW(){return Math.max(MINW,innerWidth-16);}function maxH(){return Math.max(MINH,innerHeight-16);}
-function saveSize(w,h){try{localStorage.setItem('csp-music-size',JSON.stringify({w:Math.round(w),h:Math.round(h)}));}catch(e){}}
-/* restore last size */
-try{var sz=JSON.parse(localStorage.getItem('csp-music-size')||'null');
-if(sz&&sz.w&&sz.h){mw.style.width=Math.min(Math.max(MINW,sz.w),maxW())+'px';mw.style.height=Math.min(Math.max(MINH,sz.h),maxH())+'px';}}catch(e){}
-/* move */
-var drag=false,dx=0,dy=0;
-bar.addEventListener('pointerdown',function(e){if(e.target.closest('button'))return;drag=true;
-var r=mw.getBoundingClientRect();dx=e.clientX-r.left;dy=e.clientY-r.top;
-mw.style.left=r.left+'px';mw.style.top=r.top+'px';mw.style.right='auto';mw.style.bottom='auto';
-try{bar.setPointerCapture(e.pointerId);}catch(_){}});
-bar.addEventListener('pointermove',function(e){if(!drag)return;
-mw.style.left=Math.max(-mw.offsetWidth+140,Math.min(e.clientX-dx,innerWidth-140))+'px';
-mw.style.top=Math.max(0,Math.min(e.clientY-dy,innerHeight-46))+'px';});
-['pointerup','pointercancel'].forEach(function(ev){bar.addEventListener(ev,function(){drag=false;});});
-/* resize (bottom-right grip) — double-click the grip to reset */
-var grip=document.getElementById('musicResize');
-if(grip){var rs=false,rw=0,rh=0,rx=0,ry=0;
-grip.addEventListener('pointerdown',function(e){e.stopPropagation();rs=true;
-var r=mw.getBoundingClientRect();rw=r.width;rh=r.height;rx=e.clientX;ry=e.clientY;
-try{grip.setPointerCapture(e.pointerId);}catch(_){}});
-grip.addEventListener('pointermove',function(e){if(!rs)return;
-var w=Math.min(Math.max(MINW,rw+(e.clientX-rx)),maxW());
-var h=Math.min(Math.max(MINH,rh+(e.clientY-ry)),maxH());
-mw.style.width=w+'px';mw.style.height=h+'px';
-/* keep the titlebar reachable if we grow off the top/left */
-var r2=mw.getBoundingClientRect();
-if(r2.top<0){mw.style.top='0px';} if(r2.left<0){mw.style.left='0px';}
-});
-['pointerup','pointercancel'].forEach(function(ev){grip.addEventListener(ev,function(){
-if(!rs)return;rs=false;var r=mw.getBoundingClientRect();saveSize(r.width,r.height);});});
-grip.addEventListener('dblclick',function(){mw.style.width='';mw.style.height='';
-mw.style.left='';mw.style.top='';mw.style.right='16px';mw.style.bottom='86px';saveSize(900,620);});}
-addEventListener('resize',function(){var r=mw.getBoundingClientRect();
-if(r.width>maxW())mw.style.width=maxW()+'px';
-if(r.height>maxH())mw.style.height=maxH()+'px';});
-document.getElementById('musicClose').addEventListener('click',function(){mw.classList.remove('open');
-var a=document.querySelector('.dock a[data-page="music"]');if(a)a.classList.remove('active');});
-})();
-})();}catch(e){console.error("[init:music]",e&&e.message);}
-window.initBrowserView=function(){
+swindow.initBrowserView=function(){
   if(!sessionStorage.getItem('cs_dev_mode_token'))return;
   if(window.__hbBrowserInit)return;
   window.__hbBrowserInit=true;
@@ -2347,17 +2321,58 @@ window.initBrowserView=function(){
   const forward=document.getElementById('hb-forward');
   const reload=document.getElementById('hb-reload');
   const home=document.getElementById('hb-home');
-  if(!input||!form||!launch||!screen||!tabList)return;
+  const browserShell=document.getElementById('hb-browser-shell');
+  const browserTabs=document.getElementById('hb-browser-tabs');
+  const browserToolbar=document.getElementById('hb-browser-toolbar');
+  const consolePanel=document.getElementById('hb-console-options');
+  const androidPanel=document.getElementById('hb-android-options');
+  const linuxPanel=document.getElementById('hb-linux-notice');
+  const consoleType=document.getElementById('hb-console-type');
+  const consoleRom=document.getElementById('hb-console-rom');
+  const androidApp=document.getElementById('hb-android-app');
+  const startConsole=document.getElementById('hb-start-console');
+  const startAndroid=document.getElementById('hb-start-android');
+  if(!form||!launch||!screen||!tabList)return;
   const worker=DEV_GATEKEEPER_URL;
   let hb=null;
   let sdkPromise=null;
   let activeTabId=null;
+  let currentMode='browser';
   function setConnected(connected){
     [back,forward,reload,home,newTabButton].forEach(button=>{if(button)button.disabled=!connected;});
     if(liveDot)liveDot.classList.toggle('connected',connected);
     if(statusDot)statusDot.classList.toggle('connected',connected);
     if(launch)launch.textContent=connected?'Go':'Start';
-    if(restart)restart.hidden=!connected;
+    if(restart)restart.hidden=!(connected&&currentMode==='browser');
+  }
+  function clearSessionView(){
+    if(hb&&typeof hb.destroy==='function'){try{hb.destroy();}catch(e){}}
+    hb=null;
+    screen.replaceChildren();
+    if(empty)empty.hidden=false;
+    setConnected(false);
+  }
+  function selectMode(mode){
+    currentMode=mode;
+    document.querySelectorAll('[data-hb-mode]').forEach(button=>{
+      const active=button.dataset.hbMode===mode;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-pressed',active?'true':'false');
+    });
+    if(browserShell)browserShell.classList.toggle('hb-mode-hidden',mode!=='browser');
+    if(consolePanel)consolePanel.classList.toggle('hb-mode-hidden',mode!=='console');
+    if(androidPanel)androidPanel.classList.toggle('hb-mode-hidden',mode!=='android');
+    if(linuxPanel)linuxPanel.classList.toggle('hb-mode-hidden',mode!=='linux');
+    if(mode!=='browser')clearSessionView();
+    if(mode==='linux'){
+      status.textContent='Linux desktop requires Hyperbeam to enable a Linux session endpoint for this account.';
+    }else if(mode==='console'){
+      status.textContent='Choose a console system and provide a direct ROM URL you are allowed to use.';
+    }else if(mode==='android'){
+      status.textContent='Start the Android home screen or enter a Google Play app ID.';
+    }else{
+      status.textContent='Enter a website or search term to start Chromium.';
+    }
   }
   function normaliseAddress(raw){
     let value=String(raw||'').trim();
@@ -2382,8 +2397,151 @@ window.initBrowserView=function(){
     return sdkPromise;
   }
   async function refreshTabs(){
-    if(!hb||!tabList)return;
+    if(!hb||currentMode!=='browser'||!hb.tabs||!tabList)return;
     try{
+      const tabs=await hb.tabs.query({});
+      if(!Array.isArray(tabs))return;
+      tabList.replaceChildren();
+      const sorted=tabs.slice().sort((a,b)=>(a.index??0)-(b.index??0));
+      const active=sorted.find(tab=>tab.active)||sorted[0];
+      if(active){
+        activeTabId=active.id;
+        if(active.url&&/^https?:/i.test(active.url))input.value=active.url;
+      }
+      sorted.forEach(tab=>{
+        const item=document.createElement('div');
+        item.className='hb-tab-item'+(tab.id===activeTabId?' active':'');
+        const activate=document.createElement('button');
+        activate.type='button';
+        activate.className='hb-tab';
+        activate.title=tab.title||tab.url||'New Tab';
+        const icon=document.createElement('i');
+        icon.className='fas fa-globe';
+        icon.setAttribute('aria-hidden','true');
+        const label=document.createElement('span');
+        label.textContent=tab.title||'New Tab';
+        activate.append(icon,label);
+        activate.addEventListener('click',async()=>{
+          try{await hb.tabs.update(tab.id,{active:true});activeTabId=tab.id;await refreshTabs();}catch(error){status.textContent='Could not switch tab: '+(error.message||'try again');}
+        });
+        const close=document.createElement('button');
+        close.type='button';
+        close.className='hb-tab-close';
+        close.title='Close tab';
+        close.setAttribute('aria-label','Close '+(tab.title||'tab'));
+        close.innerHTML='&times;';
+        close.disabled=sorted.length===1;
+        close.addEventListener('click',async event=>{
+          event.stopPropagation();
+          if(sorted.length===1)return;
+          try{await hb.tabs.remove(tab.id);await refreshTabs();}catch(error){status.textContent='Could not close tab: '+(error.message||'try again');}
+        });
+        item.append(activate,close);
+        tabList.appendChild(item);
+      });
+    }catch(error){console.warn('[Hyperbeam tabs]',error);}
+  }
+  async function startSession(){
+    if(currentMode==='linux'){
+      status.textContent='Linux is not yet available through the public Hyperbeam REST API for this account.';
+      return;
+    }
+    const requestBody={
+      action:'hyperbeam-session',
+      token:sessionStorage.getItem('cs_dev_mode_token')||'',
+      mode:currentMode
+    };
+    if(currentMode==='browser'){
+      try{requestBody.start_url=normaliseAddress(input.value);}catch(error){status.textContent=error.message;return;}
+    }else if(currentMode==='android'){
+      requestBody.app_id=(androidApp?.value||'').trim();
+      if(requestBody.app_id&&!/^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+$/.test(requestBody.app_id)){
+        status.textContent='Enter a valid Android package ID, or leave it empty for the home screen.';
+        return;
+      }
+    }else if(currentMode==='console'){
+      requestBody.console_type=consoleType.value;
+      requestBody.rom_url=(consoleRom.value||'').trim();
+      if(!requestBody.rom_url){status.textContent='Enter a direct ROM URL you are legally allowed to use.';return;}
+      try{
+        const rom=new URL(requestBody.rom_url);
+        if(rom.protocol!=='https:')throw new Error();
+      }catch(e){status.textContent='The ROM URL must be a valid HTTPS link.';return;}
+    }
+    [launch,startConsole,startAndroid].forEach(button=>{if(button)button.disabled=true;});
+    if(restart)restart.disabled=true;
+    status.textContent='Starting '+(currentMode==='browser'?'Chromium':currentMode==='android'?'Android emulator':'console emulator')+'…';
+    setConnected(false);
+    try{
+      const response=await fetch(worker,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(requestBody)
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.embed_url)throw new Error(data.error||('Worker returned HTTP '+response.status));
+      clearSessionView();
+      if(currentMode==='browser'){
+        if(!data.admin_token)throw new Error('Gatekeeper did not return the Hyperbeam admin token. Update the Worker code.');
+        const Hyperbeam=await loadHyperbeam();
+        hb=await Hyperbeam(screen,data.embed_url,{adminToken:data.admin_token});
+        if(!hb||!hb.tabs)throw new Error('Hyperbeam browser controls could not be initialised.');
+        await refreshTabs();
+        hb.tabs.onUpdated.addListener(async(tabId,changeInfo)=>{
+          if(tabId===activeTabId&&changeInfo.url&&/^https?:/i.test(changeInfo.url))input.value=changeInfo.url;
+          await refreshTabs();
+        });
+        hb.tabs.onActivated.addListener(async(info)=>{activeTabId=info.tabId;await refreshTabs();});
+        hb.tabs.onCreated.addListener(refreshTabs);
+        hb.tabs.onRemoved.addListener(refreshTabs);
+        status.textContent='Connected · Remote Chromium is ready.';
+      }else{
+        const frame=document.createElement('iframe');
+        frame.title=currentMode==='android'?'Hyperbeam Android emulator':'Hyperbeam console emulator';
+        frame.allow='autoplay; fullscreen; clipboard-read; clipboard-write; gamepad';
+        frame.allowFullscreen=true;
+        frame.referrerPolicy='no-referrer';
+        frame.src=data.embed_url;
+        frame.style.cssText='width:100%;height:100%;border:0;display:block;background:#08090d';
+        screen.appendChild(frame);
+        status.textContent=currentMode==='android'?'Connected · Android emulator is ready.':'Connected · Console emulator is ready.';
+      }
+      if(empty)empty.hidden=true;
+      setConnected(true);
+    }catch(error){
+      clearSessionView();
+      status.textContent='Could not start '+currentMode+': '+(error.message||'check the Gatekeeper Worker and HYPERBEAM_API_KEY secret');
+    }finally{
+      [launch,startConsole,startAndroid].forEach(button=>{if(button)button.disabled=false;});
+      if(restart)restart.disabled=false;
+    }
+  }
+  async function navigate(){
+    let target;
+    try{target=normaliseAddress(input.value);}catch(error){status.textContent=error.message;return;}
+    if(!hb){await startSession();return;}
+    try{status.textContent='Loading '+target+'…';await hb.tabs.update({url:target});input.value=target;}
+    catch(error){status.textContent='Could not navigate: '+(error.message||'try again');}
+  }
+  document.querySelectorAll('[data-hb-mode]').forEach(button=>button.addEventListener('click',()=>selectMode(button.dataset.hbMode)));
+  form.addEventListener('submit',event=>{event.preventDefault();navigate();});
+  if(startConsole)startConsole.addEventListener('click',startSession);
+  if(startAndroid)startAndroid.addEventListener('click',startSession);
+  if(back)back.addEventListener('click',()=>{if(hb)hb.tabs.goBack();});
+  if(forward)forward.addEventListener('click',()=>{if(hb)hb.tabs.goForward();});
+  if(reload)reload.addEventListener('click',()=>{if(hb)hb.tabs.reload();});
+  if(home)home.addEventListener('click',()=>{input.value='https://www.google.com';navigate();});
+  if(newTabButton)newTabButton.addEventListener('click',async()=>{
+    if(!hb)return;
+    try{await hb.tabs.create({url:'https://www.google.com',active:true});await refreshTabs();}
+    catch(error){status.textContent='Could not open a new tab: '+(error.message||'try again');}
+  });
+  if(restart)restart.addEventListener('click',startSession);
+  if(input)input.addEventListener('keydown',event=>{
+    if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='l'){event.preventDefault();input.select();}
+  });
+  selectMode('browser');
+};
       const tabs=await hb.tabs.query({});
       if(!Array.isArray(tabs))return;
       tabList.replaceChildren();
