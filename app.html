@@ -2431,7 +2431,8 @@ window.initBrowserView=function(){
   const startAndroid=document.getElementById('hb-start-android');
   if(!form||!launch||!screen||!tabList)return;
 
-  const worker=DEV_GATEKEEPER_URL;
+  // This initializer is outside the home-page IIFE, so use the endpoint directly.
+  const worker='https://gatekeeper.sapktaayush.workers.dev/';
   let hb=null;
   let sdkPromise=null;
   let activeTabId=null;
