@@ -933,24 +933,59 @@ button { line-height: 1.25; }
   #view-chat.friends-mode .person-row{transition:none}
 }
 
-/* Hyperbeam cloud browser */
-#view-browser{min-height:100vh;padding:clamp(20px,4vw,42px);padding-bottom:120px;color:var(--text)}
-#view-browser.active{display:flex;flex-direction:column;gap:18px}
-.hb-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.hb-heading h1{font-size:clamp(25px,4vw,38px);margin:0 0 7px;letter-spacing:-.04em}
-.hb-heading p{color:var(--muted);margin:0;max-width:680px;line-height:1.5}
-.hb-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px;background:rgba(16,16,20,.82);border:1px solid var(--border);border-radius:16px}
-.hb-controls input{flex:1;min-width:220px;background:#09090d;border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px 14px;font:inherit;outline:none}
-.hb-controls input:focus{border-color:var(--accent)}
-.hb-controls button{border:0;border-radius:10px;padding:12px 18px;background:var(--accent);color:#080910;font-weight:800;cursor:pointer}
-.hb-controls button:disabled{opacity:.55;cursor:wait}
-.hb-status{font-size:13px;color:var(--muted);min-height:18px}
-.hb-frame-wrap{position:relative;width:100%;height:min(68vh,760px);min-height:420px;background:#08080b;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 18px 55px rgba(0,0,0,.24)}
-.hb-frame-wrap iframe{width:100%;height:100%;border:0;background:#08080b}
-.hb-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:28px;color:var(--muted);pointer-events:none}
-.hb-empty strong{display:block;color:var(--text);font-size:18px;margin-bottom:8px}
-.hb-note{font-size:12px;color:var(--muted);line-height:1.5}
-@media(max-width:640px){#view-browser{padding:16px 12px 110px}.hb-frame-wrap{min-height:360px;height:62vh}.hb-controls input{min-width:100%}.hb-controls button{flex:1}}
+/* Hyperbeam full browser */
+#view-browser{min-height:100vh;padding:clamp(12px,2.2vw,28px);padding-bottom:112px;color:var(--text)}
+#view-browser.active{display:flex;flex-direction:column;gap:12px}
+.hb-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.hb-heading h1{font-size:clamp(23px,3vw,32px);margin:0 0 4px;letter-spacing:-.04em}
+.hb-heading p{color:var(--muted);margin:0;line-height:1.45;font-size:13px}
+.hb-brand{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:rgba(16,16,20,.65)}
+.hb-browser{overflow:hidden;border:1px solid var(--border);border-radius:17px;background:#111217;box-shadow:0 22px 65px rgba(0,0,0,.3)}
+.hb-tabstrip{height:42px;display:flex;align-items:flex-end;gap:8px;padding:7px 10px 0;background:#171920;border-bottom:1px solid #292c36}
+.hb-tab{height:34px;min-width:150px;max-width:260px;display:flex;align-items:center;gap:9px;padding:0 13px;border:1px solid #30333e;border-bottom-color:#111217;border-radius:10px 10px 0 0;background:#111217;color:#e8e9ef;font-size:12px}
+.hb-tab i{color:#91a6ff}
+.hb-tab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb-tabstrip .hb-live{margin:0 5px 8px auto;color:#8c92a2;font-size:11px;display:flex;align-items:center;gap:7px}
+.hb-live-dot{width:7px;height:7px;border-radius:50%;background:#777d8e;box-shadow:0 0 0 3px rgba(130,140,160,.12)}
+.hb-live-dot.connected{background:#35d49a;box-shadow:0 0 0 3px rgba(53,212,154,.13)}
+.hb-toolbar{display:flex;align-items:center;gap:7px;padding:10px;background:#111217;border-bottom:1px solid #292c36}
+.hb-navbtn{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;border:1px solid #30333e;border-radius:10px;background:#1b1e27;color:#c5c9d4;cursor:pointer;transition:background .15s,border-color .15s}
+.hb-navbtn:hover:not(:disabled){background:#282d3a;border-color:#56617f;color:#fff}
+.hb-navbtn:disabled{opacity:.35;cursor:not-allowed}
+.hb-address-form{height:38px;min-width:0;flex:1;display:flex;align-items:center;gap:9px;padding:0 6px 0 12px;border:1px solid #343846;border-radius:11px;background:#090b10}
+.hb-address-form:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,140,255,.12)}
+.hb-address-form>i{color:#7f8799;font-size:12px}
+.hb-address-form input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:#f1f2f7;font:13px/1.2 inherit}
+.hb-address-form input::placeholder{color:#767d8e}
+.hb-go{height:28px;padding:0 13px;border:0;border-radius:8px;background:var(--accent);color:#080910;font-size:12px;font-weight:850;cursor:pointer}
+.hb-go:disabled{opacity:.55;cursor:wait}
+.hb-new-session{height:36px;padding:0 11px;border:1px solid #30333e;border-radius:10px;background:#1b1e27;color:#d9dce5;font-size:12px;font-weight:700;cursor:pointer}
+.hb-statusline{display:flex;align-items:center;gap:9px;min-height:29px;padding:5px 12px;color:#969daf;background:#171920;font-size:11px}
+.hb-status{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb-frame-wrap{position:relative;width:100%;height:min(72vh,840px);min-height:500px;background:#08090d;overflow:hidden}
+.hb-screen{position:absolute;inset:0;width:100%;height:100%}
+.hb-screen iframe{display:block;width:100%;height:100%;border:0;background:#08090d}
+.hb-empty{position:absolute;inset:0;z-index:2;display:grid;place-items:center;text-align:center;padding:28px;color:#9299aa;background:radial-gradient(ellipse at center,rgba(45,53,75,.35),transparent 65%),#0b0d13;pointer-events:none}
+.hb-empty[hidden]{display:none}
+.hb-empty strong{display:block;color:#eef0f7;font-size:19px;margin-bottom:8px}
+.hb-empty i{display:block;margin-bottom:13px;color:#91a6ff;font-size:30px}
+.hb-note{font-size:11px;color:var(--muted);line-height:1.5}
+@media(max-width:700px){
+ #view-browser{padding:12px 9px 105px}
+ .hb-toolbar{gap:5px;padding:7px}
+ .hb-navbtn{width:32px;height:34px;flex-basis:32px}
+ .hb-new-session{width:35px;padding:0;font-size:0}
+ .hb-new-session i{font-size:13px}
+ .hb-address-form{height:36px;padding-left:9px}
+ .hb-go{padding:0 9px}
+ .hb-tabstrip{height:38px}
+ .hb-frame-wrap{height:65vh;min-height:380px}
+}
+@media(max-width:420px){
+ .hb-tab{min-width:120px}
+ .hb-heading p{font-size:12px}
+ .hb-live{font-size:0!important}
+}
 
 /* Cloud Browser is a Developer Mode-only tool */
 .dock a[data-page="browser"][hidden]{display:none!important}
@@ -1080,18 +1115,33 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <!-- CHAT -->
 <section class="page-view" id="view-browser">
   <div class="hb-heading">
-    <div><h1><i class="fas fa-globe" aria-hidden="true"></i> Cloud Browser</h1><p>Browse the web in a remote Chromium session powered by Hyperbeam.</p></div>
+    <div><h1><i class="fas fa-globe" aria-hidden="true"></i> Cloud Browser</h1><p>A full Chromium browser running on a Hyperbeam cloud computer.</p></div>
+    <div class="hb-brand"><i class="fas fa-cloud"></i> Remote Chromium</div>
   </div>
-  <div class="hb-controls">
-    <input id="hb-url" type="url" inputmode="url" autocomplete="url" placeholder="Enter a website, e.g. https://example.com" aria-label="Website address">
-    <button id="hb-launch" type="button"><i class="fas fa-play"></i> Start browser</button>
-    <button id="hb-restart" type="button" hidden>New session</button>
-    <div class="hb-status" id="hb-status" role="status" aria-live="polite">Ready when you are.</div>
+  <div class="hb-browser">
+    <div class="hb-tabstrip">
+      <div class="hb-tab"><i class="fab fa-chrome" aria-hidden="true"></i><span id="hb-tab-title">New Tab</span></div>
+      <div class="hb-live"><span class="hb-live-dot" id="hb-live-dot"></span><span>HYPERBEAM</span></div>
+    </div>
+    <div class="hb-toolbar">
+      <button class="hb-navbtn" id="hb-back" type="button" title="Back" aria-label="Back" disabled><i class="fas fa-arrow-left"></i></button>
+      <button class="hb-navbtn" id="hb-forward" type="button" title="Forward" aria-label="Forward" disabled><i class="fas fa-arrow-right"></i></button>
+      <button class="hb-navbtn" id="hb-reload" type="button" title="Reload" aria-label="Reload" disabled><i class="fas fa-rotate-right"></i></button>
+      <button class="hb-navbtn" id="hb-home" type="button" title="Home" aria-label="Home" disabled><i class="fas fa-house"></i></button>
+      <form class="hb-address-form" id="hb-nav-form">
+        <i class="fas fa-lock" id="hb-address-icon" aria-hidden="true"></i>
+        <input id="hb-url" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="Search Google or enter a website address" aria-label="Search or enter website address">
+        <button class="hb-go" id="hb-launch" type="submit">Start</button>
+      </form>
+      <button class="hb-new-session" id="hb-restart" type="button" title="Start a new cloud session" aria-label="Start a new cloud session" hidden><i class="fas fa-plus"></i> New</button>
+    </div>
+    <div class="hb-statusline" role="status" aria-live="polite"><span class="hb-live-dot" id="hb-status-dot"></span><span class="hb-status" id="hb-status">Enter a website or search term to start your cloud browser.</span></div>
+    <div class="hb-frame-wrap" id="hb-frame-wrap">
+      <div class="hb-screen" id="hb-screen"></div>
+      <div class="hb-empty" id="hb-empty"><div><i class="fas fa-globe"></i><strong>Your cloud browser is ready</strong>Search the web or enter a website above to launch your remote Chromium session.</div></div>
+    </div>
   </div>
-  <div class="hb-frame-wrap" id="hb-frame-wrap">
-    <div class="hb-empty" id="hb-empty"><div><strong>Your cloud browser is waiting</strong>Enter a website above and start a session.</div></div>
-  </div>
-  <div class="hb-note">Sessions run on Hyperbeam's cloud computers. Availability and access still depend on Hyperbeam and each website's own rules. Don't enter passwords on shared or untrusted devices.</div>
+  <div class="hb-note">Your browser runs on Hyperbeam's cloud computers, not your device. Website availability and access still depend on the destination website.</div>
 </section>
 <section class="page-view" id="view-chat">
 <div id="nameModal" class="hidden">
@@ -2274,34 +2324,116 @@ window.initBrowserView=function(){
   if(!sessionStorage.getItem('cs_dev_mode_token'))return;
   if(window.__hbBrowserInit)return;
   window.__hbBrowserInit=true;
-  const input=document.getElementById('hb-url'),launch=document.getElementById('hb-launch');
-  const restart=document.getElementById('hb-restart'),status=document.getElementById('hb-status');
-  const wrap=document.getElementById('hb-frame-wrap'),empty=document.getElementById('hb-empty');
-  if(!input||!launch||!wrap)return;
+  const input=document.getElementById('hb-url');
+  const form=document.getElementById('hb-nav-form');
+  const launch=document.getElementById('hb-launch');
+  const restart=document.getElementById('hb-restart');
+  const status=document.getElementById('hb-status');
+  const statusDot=document.getElementById('hb-status-dot');
+  const liveDot=document.getElementById('hb-live-dot');
+  const title=document.getElementById('hb-tab-title');
+  const screen=document.getElementById('hb-screen');
+  const empty=document.getElementById('hb-empty');
+  const back=document.getElementById('hb-back');
+  const forward=document.getElementById('hb-forward');
+  const reload=document.getElementById('hb-reload');
+  const home=document.getElementById('hb-home');
+  if(!input||!form||!launch||!screen)return;
   const worker=DEV_GATEKEEPER_URL;
-  async function startSession(){
-    let raw=input.value.trim();
-    if(!raw)raw='https://www.google.com';
-    if(!/^https?:\/\//i.test(raw))raw='https://'+raw;
-    let url;try{url=new URL(raw);}catch(e){status.textContent='Enter a valid website address.';return;}
-    if(!['http:','https:'].includes(url.protocol)){status.textContent='Only HTTP and HTTPS websites are supported.';return;}
-    launch.disabled=true;restart.disabled=true;status.textContent='Starting your cloud browser…';
+  let hb=null;
+  let sdkPromise=null;
+  function setConnected(connected){
+    [back,forward,reload,home].forEach(button=>{if(button)button.disabled=!connected;});
+    if(liveDot)liveDot.classList.toggle('connected',connected);
+    if(statusDot)statusDot.classList.toggle('connected',connected);
+    if(launch)launch.textContent=connected?'Go':'Start';
+    if(restart)restart.hidden=!connected;
+  }
+  function normaliseAddress(raw){
+    let value=String(raw||'').trim();
+    if(!value)return 'https://www.google.com';
+    if(!/^[a-z][a-z0-9+.-]*:/i.test(value)){
+      if(value.includes(' ')||!value.includes('.'))return 'https://www.google.com/search?q='+encodeURIComponent(value);
+      value='https://'+value;
+    }
+    let url;
+    try{url=new URL(value);}catch(e){throw new Error('Enter a valid website address or search term.');}
+    if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw new Error('Only HTTP and HTTPS addresses are supported.');
+    return url.href;
+  }
+  async function loadHyperbeam(){
+    if(!sdkPromise){
+      sdkPromise=import('https://unpkg.com/@hyperbeam/iframe@latest/dist/index.js').then(module=>{
+        const Hyperbeam=module.default||module;
+        if(typeof Hyperbeam!=='function')throw new Error('Could not load the Hyperbeam browser controls.');
+        return Hyperbeam;
+      });
+    }
+    return sdkPromise;
+  }
+  async function startSession(target){
+    let startUrl;
+    try{startUrl=normaliseAddress(target||input.value);}catch(error){status.textContent=error.message;return;}
+    launch.disabled=true;
+    restart.disabled=true;
+    status.textContent='Starting your remote Chromium computer…';
+    setConnected(false);
     try{
-      const response=await fetch(worker,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hyperbeam-session',token:sessionStorage.getItem('cs_dev_mode_token')||'',start_url:url.href})});
+      const response=await fetch(worker,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          action:'hyperbeam-session',
+          token:sessionStorage.getItem('cs_dev_mode_token')||'',
+          start_url:startUrl
+        })
+      });
       const data=await response.json().catch(()=>({}));
       if(!response.ok||!data.embed_url)throw new Error(data.error||('Worker returned HTTP '+response.status));
-      const old=wrap.querySelector('iframe');if(old)old.remove();
-      const frame=document.createElement('iframe');
-      frame.title='Hyperbeam cloud browser';frame.allow='autoplay; fullscreen; clipboard-read; clipboard-write';frame.referrerPolicy='no-referrer';frame.src=data.embed_url;
-      wrap.appendChild(frame);if(empty)empty.hidden=true;
-      status.textContent='Connected · Hyperbeam cloud browser is ready.';
-      restart.hidden=false;
-    }catch(error){status.textContent='Could not start browser: '+(error.message||'check the Gatekeeper Worker and HYPERBEAM_API_KEY secret');}
-    finally{launch.disabled=false;restart.disabled=false;}
+      const Hyperbeam=await loadHyperbeam();
+      if(hb&&typeof hb.destroy==='function'){try{await hb.destroy();}catch(e){}}
+      screen.replaceChildren();
+      hb=await Hyperbeam(screen,data.embed_url);
+      if(!hb||!hb.tabs)throw new Error('Hyperbeam connected, but its browser controls were unavailable.');
+      if(empty)empty.hidden=true;
+      input.value=startUrl;
+      title.textContent='New Tab';
+      setConnected(true);
+      status.textContent='Connected · Remote Chromium is ready.';
+      hb.tabs.onUpdated.addListener((tabId,changeInfo)=>{
+        if(changeInfo.url){
+          try{input.value=changeInfo.url;}catch(e){}
+          const addressIcon=document.getElementById('hb-address-icon');
+          if(addressIcon)addressIcon.className=changeInfo.url.startsWith('https:')?'fas fa-lock':'fas fa-globe';
+        }
+        if(changeInfo.title)title.textContent=changeInfo.title.slice(0,90);
+      });
+    }catch(error){
+      hb=null;
+      setConnected(false);
+      status.textContent='Could not start browser: '+(error.message||'check the Gatekeeper Worker and HYPERBEAM_API_KEY secret');
+    }finally{
+      launch.disabled=false;
+      restart.disabled=false;
+    }
   }
-  launch.addEventListener('click',startSession);
-  restart.addEventListener('click',startSession);
-  input.addEventListener('keydown',e=>{if(e.key==='Enter')startSession();});
+  async function navigate(){
+    let target;
+    try{target=normaliseAddress(input.value);}catch(error){status.textContent=error.message;return;}
+    if(!hb){await startSession(target);return;}
+    try{
+      status.textContent='Loading '+target+'…';
+      await hb.tabs.update({url:target});
+      input.value=target;
+    }catch(error){status.textContent='Could not navigate: '+(error.message||'try again');}
+  }
+  form.addEventListener('submit',event=>{event.preventDefault();navigate();});
+  back.addEventListener('click',()=>{if(hb)hb.tabs.goBack();});
+  forward.addEventListener('click',()=>{if(hb)hb.tabs.goForward();});
+  reload.addEventListener('click',()=>{if(hb)hb.tabs.reload();});
+  home.addEventListener('click',()=>{input.value='https://www.google.com';navigate();});
+  restart.addEventListener('click',()=>startSession(input.value));
+  input.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='l'){event.preventDefault();input.select();}});
 };
 /* ===== MOVIES & TV (TMDB metadata + rotating embed providers) ===== */
 try{window.initMoviesView=(function(){var done=false;
