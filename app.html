@@ -1147,30 +1147,12 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <section class="page-view" id="view-browser">
   <div class="hb-heading">
     <div><h1><i class="fas fa-cloud" aria-hidden="true"></i> Cloud Computer</h1><p>Choose a remote environment to launch inside your website.</p></div>
-    <div class="hb-brand"><i class="fas fa-cloud"></i> HYPERBEAM TEST</div>
+    <div class="hb-brand"><i class="fas fa-cloud"></i> HYPERBEAM PRODUCTION</div>
   </div>
 
   <div class="hb-mode-picker" role="group" aria-label="Choose cloud environment">
     <button class="hb-mode-card active" type="button" data-hb-mode="browser" aria-pressed="true"><i class="fab fa-chrome"></i><span class="hb-mode-copy"><strong>Browser</strong><small>Remote Chromium</small></span></button>
-    <button class="hb-mode-card" type="button" data-hb-mode="console" aria-pressed="false"><i class="fas fa-gamepad"></i><span class="hb-mode-copy"><strong>Console</strong><small>NES · SNES · N64 · PS1</small></span></button>
-    <button class="hb-mode-card" type="button" data-hb-mode="linux" aria-pressed="false"><i class="fab fa-linux"></i><span class="hb-mode-copy"><strong>Linux</strong><small>Full desktop environment</small><span class="hb-mode-tag">Needs activation</span></span></button>
     <button class="hb-mode-card" type="button" data-hb-mode="android" aria-pressed="false"><i class="fab fa-android"></i><span class="hb-mode-copy"><strong>Android</strong><small>Remote Android emulator</small></span></button>
-  </div>
-
-  <div class="hb-mode-panel hb-mode-hidden" id="hb-console-options">
-    <label class="hb-mode-field">Console system
-      <select id="hb-console-type">
-        <option value="nes">Nintendo Entertainment System (NES)</option>
-        <option value="snes">Super Nintendo (SNES)</option>
-        <option value="n64">Nintendo 64 (N64)</option>
-        <option value="ps1">PlayStation 1 (PS1)</option>
-      </select>
-    </label>
-    <label class="hb-mode-field">ROM file URL
-      <input id="hb-console-rom" type="url" inputmode="url" placeholder="https://example.com/your-owned-game.rom">
-    </label>
-    <p class="hb-mode-help">Use a direct link to a ROM you own or are legally allowed to use.</p>
-    <button class="hb-mode-start" id="hb-start-console" type="button">Start Console</button>
   </div>
 
   <div class="hb-mode-panel hb-mode-hidden" id="hb-android-options">
@@ -1179,11 +1161,6 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
       <small>Leave empty to open the Android home screen.</small>
     </label>
     <button class="hb-mode-start" id="hb-start-android" type="button">Start Android</button>
-  </div>
-
-  <div class="hb-linux-notice hb-mode-hidden" id="hb-linux-notice">
-    <strong><i class="fab fa-linux"></i> Linux desktop needs Hyperbeam account activation</strong>
-    Hyperbeam's public REST API does not document a Linux launch endpoint. This option is visible, but cannot start until Hyperbeam enables Linux sessions for your account.
   </div>
 
   <div class="hb-browser" id="hb-browser-shell">
@@ -1204,13 +1181,13 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
       </form>
       <button class="hb-new-session" id="hb-restart" type="button" title="New session" hidden><i class="fas fa-plus"></i> New</button>
     </div>
-    <div class="hb-statusline" role="status" aria-live="polite"><span class="hb-live-dot" id="hb-status-dot"></span><span class="hb-status" id="hb-status">Choose an environment and start a session.</span></div>
+    <div class="hb-statusline" role="status" aria-live="polite"><span class="hb-live-dot" id="hb-status-dot"></span><span class="hb-status" id="hb-status">Enter a website or search term to start Chromium.</span></div>
     <div class="hb-frame-wrap" id="hb-frame-wrap">
       <div class="hb-screen" id="hb-screen"></div>
-      <div class="hb-empty" id="hb-empty"><div><i class="fas fa-cloud"></i><strong>Your cloud computer is ready</strong>Select Browser, Console or Android to start a remote session.</div></div>
+      <div class="hb-empty" id="hb-empty"><div><i class="fas fa-cloud"></i><strong>Your cloud computer is ready</strong>Select Browser or Android to start a remote session.</div></div>
     </div>
   </div>
-  <div class="hb-note">Sessions run on Hyperbeam's test environment. Availability depends on your account and the selected environment.</div>
+  <div class="hb-note">Sessions run on Hyperbeam's production environment. Availability depends on your account and the selected environment.</div>
 </section>
 <section class="page-view" id="view-chat">
 <div id="nameModal" class="hidden">
@@ -2418,20 +2395,14 @@ window.initBrowserView=function(){
   const forward=document.getElementById('hb-forward');
   const reload=document.getElementById('hb-reload');
   const home=document.getElementById('hb-home');
-  const browserShell=document.getElementById('hb-browser-shell');
   const browserTabs=document.getElementById('hb-browser-tabs');
   const browserToolbar=document.getElementById('hb-browser-toolbar');
-  const consolePanel=document.getElementById('hb-console-options');
   const androidPanel=document.getElementById('hb-android-options');
-  const linuxPanel=document.getElementById('hb-linux-notice');
-  const consoleType=document.getElementById('hb-console-type');
-  const consoleRom=document.getElementById('hb-console-rom');
   const androidApp=document.getElementById('hb-android-app');
-  const startConsole=document.getElementById('hb-start-console');
   const startAndroid=document.getElementById('hb-start-android');
+
   if(!form||!launch||!screen||!tabList)return;
 
-  // This initializer is outside the home-page IIFE, so use the endpoint directly.
   const worker='https://gatekeeper.sapktaayush.workers.dev/';
   let hb=null;
   let sdkPromise=null;
@@ -2443,6 +2414,7 @@ window.initBrowserView=function(){
     if(statusDot)statusDot.classList.toggle('connected',!!connected);
     if(liveDot)liveDot.classList.toggle('connected',!!connected);
   }
+
   function setBrowserControls(connected){
     [back,forward,reload,home,newTabButton].forEach(button=>{
       if(button)button.disabled=!connected;
@@ -2450,6 +2422,7 @@ window.initBrowserView=function(){
     if(restart)restart.hidden=!(connected&&currentMode==='browser');
     if(launch)launch.textContent=connected?'Go':'Start';
   }
+
   function destroyCurrentSession(){
     if(hb&&typeof hb.destroy==='function'){
       try{hb.destroy();}catch(e){}
@@ -2461,46 +2434,51 @@ window.initBrowserView=function(){
     setBrowserControls(false);
     setStatus('Choose an environment and start a session.',false);
   }
+
   function selectMode(mode){
+    if(mode!=='browser'&&mode!=='android')mode='browser';
+    if(mode!==currentMode)destroyCurrentSession();
     currentMode=mode;
+
     document.querySelectorAll('[data-hb-mode]').forEach(button=>{
       const active=button.dataset.hbMode===mode;
       button.classList.toggle('active',active);
       button.setAttribute('aria-pressed',active?'true':'false');
     });
-    if(browserShell)browserShell.classList.remove('hb-mode-hidden');
+
     if(browserTabs)browserTabs.hidden=mode!=='browser';
     if(browserToolbar)browserToolbar.hidden=mode!=='browser';
-    if(consolePanel)consolePanel.classList.toggle('hb-mode-hidden',mode!=='console');
     if(androidPanel)androidPanel.classList.toggle('hb-mode-hidden',mode!=='android');
-    if(linuxPanel)linuxPanel.classList.toggle('hb-mode-hidden',mode!=='linux');
-    if(mode!=='browser')destroyCurrentSession();
-    if(mode==='linux'){
-      setStatus('Linux requires Hyperbeam to enable a Linux session for your account.',false);
-    }else if(mode==='console'){
-      setStatus('Choose a console and provide a direct ROM URL you are allowed to use.',false);
-    }else if(mode==='android'){
+
+    if(mode==='android'){
       setStatus('Start the Android home screen or enter an app ID.',false);
     }else{
       setStatus('Enter a website or search term to start Chromium.',false);
     }
   }
+
   function normaliseAddress(raw){
     let value=String(raw||'').trim();
     if(!value)return 'https://www.google.com';
+
     if(!/^[a-z][a-z0-9+.-]*:/i.test(value)){
       if(value.includes(' ')||!value.includes('.')){
         return 'https://www.google.com/search?q='+encodeURIComponent(value);
       }
       value='https://'+value;
     }
+
     let url;
-    try{url=new URL(value);}catch(e){throw new Error('Enter a valid website address or search term.');}
+    try{url=new URL(value);}
+    catch(e){throw new Error('Enter a valid website address or search term.');}
+
     if(!['http:','https:'].includes(url.protocol)||url.username||url.password){
       throw new Error('Only HTTP and HTTPS addresses are supported.');
     }
+
     return url.href;
   }
+
   async function loadHyperbeam(){
     if(!sdkPromise){
       sdkPromise=import('https://unpkg.com/@hyperbeam/web@latest/dist/index.js').then(module=>{
@@ -2511,29 +2489,38 @@ window.initBrowserView=function(){
     }
     return sdkPromise;
   }
+
   async function refreshTabs(){
     if(!hb||currentMode!=='browser'||!hb.tabs||!tabList)return;
+
     try{
       const tabs=await hb.tabs.query({});
       if(!Array.isArray(tabs))return;
+
       tabList.replaceChildren();
       const sorted=tabs.slice().sort((a,b)=>(a.index??0)-(b.index??0));
       const active=sorted.find(tab=>tab.active)||sorted[0];
+
       if(active){
         activeTabId=active.id;
         if(active.url&&/^https?:/i.test(active.url))input.value=active.url;
       }
+
       sorted.forEach(tab=>{
         const item=document.createElement('div');
         item.className='hb-tab-item'+(tab.id===activeTabId?' active':'');
+
         const activate=document.createElement('button');
         activate.type='button';
         activate.className='hb-tab';
         activate.title=tab.title||tab.url||'New Tab';
+
         const icon=document.createElement('i');
         icon.className='fas fa-globe';
+
         const label=document.createElement('span');
         label.textContent=tab.title||'New Tab';
+
         activate.append(icon,label);
         activate.addEventListener('click',async()=>{
           try{
@@ -2541,9 +2528,10 @@ window.initBrowserView=function(){
             activeTabId=tab.id;
             await refreshTabs();
           }catch(error){
-            setStatus('Could not switch tab: '+(error.message||'try again'),true);
+            setStatus('Could not switch tab: '+(error.message||'try again'),false);
           }
         });
+
         const close=document.createElement('button');
         close.type='button';
         close.className='hb-tab-close';
@@ -2551,16 +2539,19 @@ window.initBrowserView=function(){
         close.setAttribute('aria-label','Close '+(tab.title||'tab'));
         close.innerHTML='&times;';
         close.disabled=sorted.length===1;
+
         close.addEventListener('click',async event=>{
           event.stopPropagation();
           if(sorted.length===1)return;
+
           try{
             await hb.tabs.remove(tab.id);
             await refreshTabs();
           }catch(error){
-            setStatus('Could not close tab: '+(error.message||'try again'),true);
+            setStatus('Could not close tab: '+(error.message||'try again'),false);
           }
         });
+
         item.append(activate,close);
         tabList.appendChild(item);
       });
@@ -2568,45 +2559,35 @@ window.initBrowserView=function(){
       console.warn('[Hyperbeam tabs]',error);
     }
   }
-  function makeConsoleRomUrl(){
-    const value=String(consoleRom?.value||'').trim();
-    if(!value)throw new Error('Enter a direct ROM URL you are allowed to use.');
-    if(value.length>4096)throw new Error('ROM URL is too long.');
-    let url;
-    try{url=new URL(value);}catch(e){throw new Error('Enter a valid ROM URL.');}
-    if(url.protocol!=='https:'||url.username||url.password){
-      throw new Error('ROM URL must use HTTPS and cannot contain credentials.');
-    }
-    return url.href;
-  }
+
   async function startSession(){
-    if(currentMode==='linux'){
-      setStatus('Linux cannot start until Hyperbeam enables a Linux endpoint for your account.',false);
-      return;
-    }
     const requestBody={
       action:'hyperbeam-session',
       token:sessionStorage.getItem('cs_dev_mode_token')||'',
       mode:currentMode
     };
+
     if(currentMode==='browser'){
       try{requestBody.start_url=normaliseAddress(input.value);}
       catch(error){setStatus(error.message,false);return;}
     }else if(currentMode==='android'){
       requestBody.app_id=String(androidApp?.value||'').trim();
+
       if(requestBody.app_id&&!/^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$/.test(requestBody.app_id)){
         setStatus('Enter a valid Android package ID, or leave empty for the home screen.',false);
         return;
       }
-    }else if(currentMode==='console'){
-      requestBody.console_type=String(consoleType?.value||'nes').toLowerCase();
-      try{requestBody.rom_url=makeConsoleRomUrl();}
-      catch(error){setStatus(error.message,false);return;}
     }
 
-    [launch,startConsole,startAndroid].forEach(button=>{if(button)button.disabled=true;});
+    [launch,startAndroid].forEach(button=>{
+      if(button)button.disabled=true;
+    });
     if(restart)restart.disabled=true;
-    setStatus('Starting '+(currentMode==='browser'?'Chromium':currentMode==='android'?'Android emulator':'console emulator')+'…',false);
+
+    setStatus(
+      'Starting '+(currentMode==='browser'?'Chromium':'Android emulator')+'…',
+      false
+    );
 
     try{
       const response=await fetch(worker,{
@@ -2614,98 +2595,144 @@ window.initBrowserView=function(){
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify(requestBody)
       });
+
       const data=await response.json().catch(()=>({}));
+
       if(!response.ok||!data.embed_url){
         throw new Error(data.error||('Worker returned HTTP '+response.status));
       }
-      if(hb&&typeof hb.destroy==='function'){try{await hb.destroy();}catch(e){}}
+
+      if(hb&&typeof hb.destroy==='function'){
+        try{await hb.destroy();}catch(e){}
+      }
+
       hb=null;
       screen.replaceChildren();
 
       if(currentMode==='browser'){
-        if(!data.admin_token)throw new Error('Gatekeeper did not return the Hyperbeam admin token. Update the Worker.');
+        if(!data.admin_token){
+          throw new Error('Gatekeeper did not return the Hyperbeam admin token. Update the Worker.');
+        }
+
         const Hyperbeam=await loadHyperbeam();
         hb=await Hyperbeam(screen,data.embed_url,{adminToken:data.admin_token});
-        if(!hb||!hb.tabs)throw new Error('Hyperbeam browser controls could not be initialised.');
+
+        if(!hb||!hb.tabs){
+          throw new Error('Hyperbeam browser controls could not be initialised.');
+        }
+
         await refreshTabs();
+
         hb.tabs.onUpdated.addListener(async(tabId,changeInfo)=>{
           if(tabId===activeTabId&&changeInfo.url&&/^https?:/i.test(changeInfo.url)){
             input.value=changeInfo.url;
           }
           await refreshTabs();
         });
+
         hb.tabs.onActivated.addListener(async(info)=>{
           activeTabId=info.tabId;
           await refreshTabs();
         });
+
         hb.tabs.onCreated.addListener(refreshTabs);
         hb.tabs.onRemoved.addListener(refreshTabs);
+
         setStatus('Connected · Remote Chromium is ready.',true);
       }else{
         const frame=document.createElement('iframe');
-        frame.title=currentMode==='android'?'Hyperbeam Android emulator':'Hyperbeam console emulator';
+        frame.title='Hyperbeam Android emulator';
         frame.allow='autoplay; fullscreen; clipboard-read; clipboard-write; gamepad';
         frame.allowFullscreen=true;
         frame.referrerPolicy='no-referrer';
         frame.src=data.embed_url;
         frame.style.cssText='display:block;width:100%;height:100%;border:0;background:#08090d';
         screen.appendChild(frame);
+
         if(empty)empty.hidden=true;
-        setStatus(currentMode==='android'?'Connected · Android emulator is ready.':'Connected · Console emulator is ready.',true);
+        setStatus('Connected · Android emulator is ready.',true);
       }
+
       if(empty)empty.hidden=true;
       setBrowserControls(currentMode==='browser');
     }catch(error){
-      if(hb&&typeof hb.destroy==='function'){try{await hb.destroy();}catch(e){}}
+      if(hb&&typeof hb.destroy==='function'){
+        try{await hb.destroy();}catch(e){}
+      }
+
       hb=null;
       if(empty)empty.hidden=false;
       setBrowserControls(false);
-      setStatus('Could not start '+currentMode+': '+(error.message||'check the Gatekeeper Worker and HYPERBEAM_API_KEY secret'),false);
+      setStatus(
+        'Could not start '+currentMode+': '+
+        (error.message||'check the Gatekeeper Worker and HYPERBEAM_API_KEY secret'),
+        false
+      );
     }finally{
-      [launch,startConsole,startAndroid].forEach(button=>{if(button)button.disabled=false;});
+      [launch,startAndroid].forEach(button=>{
+        if(button)button.disabled=false;
+      });
       if(restart)restart.disabled=false;
     }
   }
+
   async function navigate(){
     let target;
     try{target=normaliseAddress(input.value);}
     catch(error){setStatus(error.message,false);return;}
-    if(!hb){await startSession();return;}
+
+    if(!hb){
+      await startSession();
+      return;
+    }
+
     try{
       setStatus('Loading '+target+'…',true);
       await hb.tabs.update({url:target});
       input.value=target;
     }catch(error){
-      setStatus('Could not navigate: '+(error.message||'try again'),true);
+      setStatus('Could not navigate: '+(error.message||'try again'),false);
     }
   }
 
   document.querySelectorAll('[data-hb-mode]').forEach(button=>{
     button.addEventListener('click',()=>selectMode(button.dataset.hbMode));
   });
-  form.addEventListener('submit',event=>{event.preventDefault();navigate();});
-  if(startConsole)startConsole.addEventListener('click',startSession);
+
+  form.addEventListener('submit',event=>{
+    event.preventDefault();
+    navigate();
+  });
+
   if(startAndroid)startAndroid.addEventListener('click',startSession);
   if(back)back.addEventListener('click',()=>{if(hb)hb.tabs.goBack();});
   if(forward)forward.addEventListener('click',()=>{if(hb)hb.tabs.goForward();});
   if(reload)reload.addEventListener('click',()=>{if(hb)hb.tabs.reload();});
-  if(home)home.addEventListener('click',()=>{input.value='https://www.google.com';navigate();});
+  if(home)home.addEventListener('click',()=>{
+    input.value='https://www.google.com';
+    navigate();
+  });
+
   if(newTabButton)newTabButton.addEventListener('click',async()=>{
     if(!hb)return;
+
     try{
       await hb.tabs.create({url:'https://www.google.com',active:true});
       await refreshTabs();
     }catch(error){
-      setStatus('Could not open a new tab: '+(error.message||'try again'),true);
+      setStatus('Could not open a new tab: '+(error.message||'try again'),false);
     }
   });
+
   if(restart)restart.addEventListener('click',startSession);
+
   if(input)input.addEventListener('keydown',event=>{
     if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='l'){
       event.preventDefault();
       input.select();
     }
   });
+
   selectMode('browser');
 };
 /* ===== MOVIES & TV (TMDB metadata + rotating embed providers) ===== */
