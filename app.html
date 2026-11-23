@@ -2379,7 +2379,9 @@ window.initBrowserView=function(){
       button.classList.toggle('active',active);
       button.setAttribute('aria-pressed',active?'true':'false');
     });
-    if(browserShell)browserShell.classList.toggle('hb-mode-hidden',mode!=='browser');
+    if(browserShell)browserShell.classList.remove('hb-mode-hidden');
+    if(browserTabs)browserTabs.hidden=mode!=='browser';
+    if(browserToolbar)browserToolbar.hidden=mode!=='browser';
     if(consolePanel)consolePanel.classList.toggle('hb-mode-hidden',mode!=='console');
     if(androidPanel)androidPanel.classList.toggle('hb-mode-hidden',mode!=='android');
     if(linuxPanel)linuxPanel.classList.toggle('hb-mode-hidden',mode!=='linux');
