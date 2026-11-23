@@ -941,10 +941,17 @@ button { line-height: 1.25; }
 .hb-heading p{color:var(--muted);margin:0;line-height:1.45;font-size:13px}
 .hb-brand{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:rgba(16,16,20,.65)}
 .hb-browser{overflow:hidden;border:1px solid var(--border);border-radius:17px;background:#111217;box-shadow:0 22px 65px rgba(0,0,0,.3)}
-.hb-tabstrip{height:42px;display:flex;align-items:flex-end;gap:8px;padding:7px 10px 0;background:#171920;border-bottom:1px solid #292c36}
-.hb-tab{height:34px;min-width:150px;max-width:260px;display:flex;align-items:center;gap:9px;padding:0 13px;border:1px solid #30333e;border-bottom-color:#111217;border-radius:10px 10px 0 0;background:#111217;color:#e8e9ef;font-size:12px}
-.hb-tab i{color:#91a6ff}
+.hb-tabstrip{height:42px;display:flex;align-items:flex-end;gap:7px;padding:7px 10px 0;background:#171920;border-bottom:1px solid #292c36}
+.hb-tab-list{display:flex;align-items:flex-end;gap:5px;min-width:0;flex:1;overflow-x:auto;scrollbar-width:thin}
+.hb-tab-item{height:34px;min-width:115px;max-width:245px;display:flex;align-items:stretch;gap:0;border:1px solid #30333e;border-bottom-color:#292c36;border-radius:10px 10px 0 0;background:#1b1e27;color:#b9bfcd}
+.hb-tab-item.active{background:#111217;border-bottom-color:#111217;color:#f2f3f8}
+.hb-tab{min-width:0;flex:1;display:flex;align-items:center;gap:8px;padding:0 9px;border:0;background:transparent;color:inherit;font-size:11px;cursor:pointer}
+.hb-tab i{color:#91a6ff;flex:0 0 auto}
 .hb-tab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb-tab-close{width:25px;flex:0 0 25px;border:0;border-radius:7px;background:transparent;color:#8991a3;cursor:pointer}
+.hb-tab-close:hover{background:#303542;color:#fff}
+.hb-tab-add{height:27px;width:27px;flex:0 0 27px;margin:0 3px 4px 0;border:0;border-radius:8px;background:#252a36;color:#dce1ef;cursor:pointer}
+.hb-tab-add:hover{background:#353d50}
 .hb-tabstrip .hb-live{margin:0 5px 8px auto;color:#8c92a2;font-size:11px;display:flex;align-items:center;gap:7px}
 .hb-live-dot{width:7px;height:7px;border-radius:50%;background:#777d8e;box-shadow:0 0 0 3px rgba(130,140,160,.12)}
 .hb-live-dot.connected{background:#35d49a;box-shadow:0 0 0 3px rgba(53,212,154,.13)}
@@ -955,7 +962,7 @@ button { line-height: 1.25; }
 .hb-address-form{height:38px;min-width:0;flex:1;display:flex;align-items:center;gap:9px;padding:0 6px 0 12px;border:1px solid #343846;border-radius:11px;background:#090b10}
 .hb-address-form:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,140,255,.12)}
 .hb-address-form>i{color:#7f8799;font-size:12px}
-.hb-address-form input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:#f1f2f7;font:13px/1.2 inherit}
+.hb-address-form input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:#f1f2f7;font:inherit;font-size:13px}
 .hb-address-form input::placeholder{color:#767d8e}
 .hb-go{height:28px;padding:0 13px;border:0;border-radius:8px;background:var(--accent);color:#080910;font-size:12px;font-weight:850;cursor:pointer}
 .hb-go:disabled{opacity:.55;cursor:wait}
@@ -982,7 +989,7 @@ button { line-height: 1.25; }
  .hb-frame-wrap{height:65vh;min-height:380px}
 }
 @media(max-width:420px){
- .hb-tab{min-width:120px}
+ .hb-tab-item{min-width:100px;max-width:180px}
  .hb-heading p{font-size:12px}
  .hb-live{font-size:0!important}
 }
@@ -1120,7 +1127,8 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
   </div>
   <div class="hb-browser">
     <div class="hb-tabstrip">
-      <div class="hb-tab"><i class="fab fa-chrome" aria-hidden="true"></i><span id="hb-tab-title">New Tab</span></div>
+      <div class="hb-tab-list" id="hb-tab-list"><div class="hb-tab-item active"><button class="hb-tab" type="button"><i class="fab fa-chrome" aria-hidden="true"></i><span>New Tab</span></button></div></div>
+      <button class="hb-tab-add" id="hb-new-tab" type="button" title="New tab" aria-label="New tab"><i class="fas fa-plus"></i></button>
       <div class="hb-live"><span class="hb-live-dot" id="hb-live-dot"></span><span>HYPERBEAM</span></div>
     </div>
     <div class="hb-toolbar">
@@ -2331,19 +2339,21 @@ window.initBrowserView=function(){
   const status=document.getElementById('hb-status');
   const statusDot=document.getElementById('hb-status-dot');
   const liveDot=document.getElementById('hb-live-dot');
-  const title=document.getElementById('hb-tab-title');
   const screen=document.getElementById('hb-screen');
   const empty=document.getElementById('hb-empty');
+  const tabList=document.getElementById('hb-tab-list');
+  const newTabButton=document.getElementById('hb-new-tab');
   const back=document.getElementById('hb-back');
   const forward=document.getElementById('hb-forward');
   const reload=document.getElementById('hb-reload');
   const home=document.getElementById('hb-home');
-  if(!input||!form||!launch||!screen)return;
+  if(!input||!form||!launch||!screen||!tabList)return;
   const worker=DEV_GATEKEEPER_URL;
   let hb=null;
   let sdkPromise=null;
+  let activeTabId=null;
   function setConnected(connected){
-    [back,forward,reload,home].forEach(button=>{if(button)button.disabled=!connected;});
+    [back,forward,reload,home,newTabButton].forEach(button=>{if(button)button.disabled=!connected;});
     if(liveDot)liveDot.classList.toggle('connected',connected);
     if(statusDot)statusDot.classList.toggle('connected',connected);
     if(launch)launch.textContent=connected?'Go':'Start';
@@ -2363,7 +2373,7 @@ window.initBrowserView=function(){
   }
   async function loadHyperbeam(){
     if(!sdkPromise){
-      sdkPromise=import('https://unpkg.com/@hyperbeam/iframe@latest/dist/index.js').then(module=>{
+      sdkPromise=import('https://unpkg.com/@hyperbeam/web@latest/dist/index.js').then(module=>{
         const Hyperbeam=module.default||module;
         if(typeof Hyperbeam!=='function')throw new Error('Could not load the Hyperbeam browser controls.');
         return Hyperbeam;
@@ -2371,11 +2381,58 @@ window.initBrowserView=function(){
     }
     return sdkPromise;
   }
+  async function refreshTabs(){
+    if(!hb||!tabList)return;
+    try{
+      const tabs=await hb.tabs.query({});
+      if(!Array.isArray(tabs))return;
+      tabList.replaceChildren();
+      const sorted=tabs.slice().sort((a,b)=>(a.index??0)-(b.index??0));
+      const active=sorted.find(tab=>tab.active)||sorted[0];
+      if(active){
+        activeTabId=active.id;
+        if(active.url&&/^https?:/i.test(active.url))input.value=active.url;
+      }
+      sorted.forEach(tab=>{
+        const item=document.createElement('div');
+        item.className='hb-tab-item'+(tab.id===activeTabId?' active':'');
+        const activate=document.createElement('button');
+        activate.type='button';
+        activate.className='hb-tab';
+        activate.title=tab.title||tab.url||'New Tab';
+        const icon=document.createElement('i');
+        icon.className='fas fa-globe';
+        icon.setAttribute('aria-hidden','true');
+        const label=document.createElement('span');
+        label.textContent=tab.title||'New Tab';
+        activate.append(icon,label);
+        activate.addEventListener('click',async()=>{
+          try{await hb.tabs.update(tab.id,{active:true});activeTabId=tab.id;await refreshTabs();}catch(error){status.textContent='Could not switch tab: '+(error.message||'try again');}
+        });
+        const close=document.createElement('button');
+        close.type='button';
+        close.className='hb-tab-close';
+        close.title='Close tab';
+        close.setAttribute('aria-label','Close '+(tab.title||'tab'));
+        close.innerHTML='&times;';
+        close.disabled=sorted.length===1;
+        close.addEventListener('click',async event=>{
+          event.stopPropagation();
+          if(sorted.length===1)return;
+          try{await hb.tabs.remove(tab.id);await refreshTabs();}catch(error){status.textContent='Could not close tab: '+(error.message||'try again');}
+        });
+        item.append(activate,close);
+        tabList.appendChild(item);
+      });
+    }catch(error){
+      console.warn('[Hyperbeam tabs]',error);
+    }
+  }
   async function startSession(target){
     let startUrl;
     try{startUrl=normaliseAddress(target||input.value);}catch(error){status.textContent=error.message;return;}
     launch.disabled=true;
-    restart.disabled=true;
+    if(restart)restart.disabled=true;
     status.textContent='Starting your remote Chromium computer…';
     setConnected(false);
     try{
@@ -2390,31 +2447,35 @@ window.initBrowserView=function(){
       });
       const data=await response.json().catch(()=>({}));
       if(!response.ok||!data.embed_url)throw new Error(data.error||('Worker returned HTTP '+response.status));
+      if(!data.admin_token)throw new Error('The Gatekeeper Worker needs to return Hyperbeam admin_token. See the two Worker changes below.');
       const Hyperbeam=await loadHyperbeam();
       if(hb&&typeof hb.destroy==='function'){try{await hb.destroy();}catch(e){}}
       screen.replaceChildren();
-      hb=await Hyperbeam(screen,data.embed_url);
+      hb=await Hyperbeam(screen,data.embed_url,{adminToken:data.admin_token});
       if(!hb||!hb.tabs)throw new Error('Hyperbeam connected, but its browser controls were unavailable.');
       if(empty)empty.hidden=true;
       input.value=startUrl;
-      title.textContent='New Tab';
       setConnected(true);
       status.textContent='Connected · Remote Chromium is ready.';
-      hb.tabs.onUpdated.addListener((tabId,changeInfo)=>{
-        if(changeInfo.url){
-          try{input.value=changeInfo.url;}catch(e){}
-          const addressIcon=document.getElementById('hb-address-icon');
-          if(addressIcon)addressIcon.className=changeInfo.url.startsWith('https:')?'fas fa-lock':'fas fa-globe';
-        }
-        if(changeInfo.title)title.textContent=changeInfo.title.slice(0,90);
+      await refreshTabs();
+      hb.tabs.onUpdated.addListener(async(tabId,changeInfo)=>{
+        if(tabId===activeTabId&&changeInfo.url&&/^https?:/i.test(changeInfo.url))input.value=changeInfo.url;
+        await refreshTabs();
       });
+      hb.tabs.onActivated.addListener(async(info)=>{
+        activeTabId=info.tabId;
+        await refreshTabs();
+      });
+      hb.tabs.onCreated.addListener(refreshTabs);
+      hb.tabs.onRemoved.addListener(refreshTabs);
     }catch(error){
+      if(hb&&typeof hb.destroy==='function'){try{await hb.destroy();}catch(e){}}
       hb=null;
       setConnected(false);
       status.textContent='Could not start browser: '+(error.message||'check the Gatekeeper Worker and HYPERBEAM_API_KEY secret');
     }finally{
       launch.disabled=false;
-      restart.disabled=false;
+      if(restart)restart.disabled=false;
     }
   }
   async function navigate(){
@@ -2432,8 +2493,14 @@ window.initBrowserView=function(){
   forward.addEventListener('click',()=>{if(hb)hb.tabs.goForward();});
   reload.addEventListener('click',()=>{if(hb)hb.tabs.reload();});
   home.addEventListener('click',()=>{input.value='https://www.google.com';navigate();});
+  newTabButton.addEventListener('click',async()=>{
+    if(!hb)return;
+    try{await hb.tabs.create({url:'https://www.google.com',active:true});await refreshTabs();}catch(error){status.textContent='Could not open a new tab: '+(error.message||'try again');}
+  });
   restart.addEventListener('click',()=>startSession(input.value));
-  input.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='l'){event.preventDefault();input.select();}});
+  input.addEventListener('keydown',event=>{
+    if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='l'){event.preventDefault();input.select();}
+  });
 };
 /* ===== MOVIES & TV (TMDB metadata + rotating embed providers) ===== */
 try{window.initMoviesView=(function(){var done=false;
