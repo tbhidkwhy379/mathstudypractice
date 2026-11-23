@@ -952,6 +952,10 @@ button { line-height: 1.25; }
 .hb-note{font-size:12px;color:var(--muted);line-height:1.5}
 @media(max-width:640px){#view-browser{padding:16px 12px 110px}.hb-frame-wrap{min-height:360px;height:62vh}.hb-controls input{min-width:100%}.hb-controls button{flex:1}}
 
+/* Cloud Browser is a Developer Mode-only tool */
+.dock a[data-page="browser"][hidden]{display:none!important}
+#view-browser[hidden]{display:none!important}
+
 </style>
 </head>
 <body>
@@ -1239,6 +1243,13 @@ const devDashboard=document.getElementById('devDashboard');
 function setDeveloperUiEnabled(enabled){
   const active=enabled===true;
   if(devDashboardLauncher)devDashboardLauncher.hidden=!active;
+  const browserTab=document.querySelector('.dock a[data-page="browser"]');
+  const browserView=document.getElementById('view-browser');
+  if(browserTab)browserTab.hidden=!active;
+  if(browserView)browserView.hidden=!active;
+  if(!active&&browserView&&browserView.classList.contains('active')){
+    if(typeof showPage==='function')showPage('home');
+  }
   if(!active&&devDashboard){devDashboard.hidden=true;document.body.style.overflow='';}
   if(devModeToggle)devModeToggle.checked=active;
 }
@@ -2260,6 +2271,7 @@ var a=document.querySelector('.dock a[data-page="music"]');if(a)a.classList.remo
 })();
 })();}catch(e){console.error("[init:music]",e&&e.message);}
 window.initBrowserView=function(){
+  if(!sessionStorage.getItem('cs_dev_mode_token'))return;
   if(window.__hbBrowserInit)return;
   window.__hbBrowserInit=true;
   const input=document.getElementById('hb-url'),launch=document.getElementById('hb-launch');
@@ -2275,7 +2287,7 @@ window.initBrowserView=function(){
     if(!['http:','https:'].includes(url.protocol)){status.textContent='Only HTTP and HTTPS websites are supported.';return;}
     launch.disabled=true;restart.disabled=true;status.textContent='Starting your cloud browser…';
     try{
-      const response=await fetch(worker,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start_url:url.href})});
+      const response=await fetch(worker,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start_url:url.href,developer_token:sessionStorage.getItem('cs_dev_mode_token')||''})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok||!data.embed_url)throw new Error(data.error||('Worker returned HTTP '+response.status));
       const old=wrap.querySelector('iframe');if(old)old.remove();
@@ -2472,7 +2484,9 @@ var c=String(el.className&&el.className.baseVal!==undefined?el.className.baseVal
 if(/pag/i.test(c))el.style.display="none";});};
 setTimeout(stripPages,400);setTimeout(stripPages,1500);
 try{new MutationObserver(stripPages).observe(document.getElementById("games"),{childList:true,subtree:true});}catch(e){}}
-function showPage(name){if(!pageViews[name])return;
+function showPage(name){
+if(name==="browser"&&!sessionStorage.getItem("cs_dev_mode_token"))return;
+if(!pageViews[name])return;
 if(name==="chat"){var unreadDot=document.querySelector(".dock .chat-unread-dot");if(unreadDot)unreadDot.classList.remove("visible");}
 Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active");});
 pageViews[name].classList.add("active");
