@@ -933,6 +933,25 @@ button { line-height: 1.25; }
   #view-chat.friends-mode .person-row{transition:none}
 }
 
+/* Hyperbeam cloud browser */
+#view-browser{min-height:100vh;padding:clamp(20px,4vw,42px);padding-bottom:120px;color:var(--text)}
+#view-browser.active{display:flex;flex-direction:column;gap:18px}
+.hb-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hb-heading h1{font-size:clamp(25px,4vw,38px);margin:0 0 7px;letter-spacing:-.04em}
+.hb-heading p{color:var(--muted);margin:0;max-width:680px;line-height:1.5}
+.hb-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px;background:rgba(16,16,20,.82);border:1px solid var(--border);border-radius:16px}
+.hb-controls input{flex:1;min-width:220px;background:#09090d;border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px 14px;font:inherit;outline:none}
+.hb-controls input:focus{border-color:var(--accent)}
+.hb-controls button{border:0;border-radius:10px;padding:12px 18px;background:var(--accent);color:#080910;font-weight:800;cursor:pointer}
+.hb-controls button:disabled{opacity:.55;cursor:wait}
+.hb-status{font-size:13px;color:var(--muted);min-height:18px}
+.hb-frame-wrap{position:relative;width:100%;height:min(68vh,760px);min-height:420px;background:#08080b;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 18px 55px rgba(0,0,0,.24)}
+.hb-frame-wrap iframe{width:100%;height:100%;border:0;background:#08080b}
+.hb-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:28px;color:var(--muted);pointer-events:none}
+.hb-empty strong{display:block;color:var(--text);font-size:18px;margin-bottom:8px}
+.hb-note{font-size:12px;color:var(--muted);line-height:1.5}
+@media(max-width:640px){#view-browser{padding:16px 12px 110px}.hb-frame-wrap{min-height:360px;height:62vh}.hb-controls input{min-width:100%}.hb-controls button{flex:1}}
+
 </style>
 </head>
 <body>
@@ -1055,6 +1074,21 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 </div>
 </section>
 <!-- CHAT -->
+<section class="page-view" id="view-browser">
+  <div class="hb-heading">
+    <div><h1><i class="fas fa-globe" aria-hidden="true"></i> Cloud Browser</h1><p>Browse the web in a remote Chromium session powered by Hyperbeam.</p></div>
+  </div>
+  <div class="hb-controls">
+    <input id="hb-url" type="url" inputmode="url" autocomplete="url" placeholder="Enter a website, e.g. https://example.com" aria-label="Website address">
+    <button id="hb-launch" type="button"><i class="fas fa-play"></i> Start browser</button>
+    <button id="hb-restart" type="button" hidden>New session</button>
+    <div class="hb-status" id="hb-status" role="status" aria-live="polite">Ready when you are.</div>
+  </div>
+  <div class="hb-frame-wrap" id="hb-frame-wrap">
+    <div class="hb-empty" id="hb-empty"><div><strong>Your cloud browser is waiting</strong>Enter a website above and start a session.</div></div>
+  </div>
+  <div class="hb-note">Sessions run on Hyperbeam's cloud computers. Availability and access still depend on Hyperbeam and each website's own rules. Don't enter passwords on shared or untrusted devices.</div>
+</section>
 <section class="page-view" id="view-chat">
 <div id="nameModal" class="hidden">
 <div class="card">
@@ -1175,6 +1209,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <a data-page="movies" aria-label="Movies & TV"><svg viewBox="0 0 24 24"><path d="M20,4H4A2,2,0,0,0,2,6V18a2,2,0,0,0,2,2H20a2,2,0,0,0,2-2V6A2,2,0,0,0,20,4Zm0,14H4V6H20Z"/><path d="M10,9l5,3-5,3Z"/></svg></a>
 <a data-page="chat" aria-label="Chat"><svg viewBox="0 0 24 24"><path d="M4,4H20a1,1,0,0,1,1,1V17a1,1,0,0,1-1,1H8l-4,4V5A1,1,0,0,1,4,4Z"/></svg><span class="chat-unread-dot" aria-label="Unread messages"></span></a>
 <a data-page="music" aria-label="Music"><svg viewBox="0 0 24 24"><path d="M12,3V13.55A4,4,0,1,0,14,17V7H18V3Z"/></svg></a>
+<a data-page="browser" aria-label="Cloud Browser" title="Cloud Browser"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.92 9h-3.05a15.7 15.7 0 0 0-1.2-5.1A8.03 8.03 0 0 1 18.92 11ZM12 4.05c.92 1.28 1.63 3.73 1.83 6.95h-3.66c.2-3.22.91-5.67 1.83-6.95ZM9.33 5.9A15.7 15.7 0 0 0 8.13 11H5.08a8.03 8.03 0 0 1 4.25-5.1ZM5.08 13h3.05c.14 1.88.55 3.66 1.2 5.1A8.03 8.03 0 0 1 5.08 13ZM12 19.95c-.92-1.28-1.63-3.73-1.83-6.95h3.66c-.2 3.22-.91 5.67-1.83 6.95Zm2.67-1.85a15.7 15.7 0 0 0 1.2-5.1h3.05a8.03 8.03 0 0 1-4.25 5.1Z"/></svg></a>
 </div>
 <script>
 try{(function(){
@@ -2224,7 +2259,38 @@ document.getElementById('musicClose').addEventListener('click',function(){mw.cla
 var a=document.querySelector('.dock a[data-page="music"]');if(a)a.classList.remove('active');});
 })();
 })();}catch(e){console.error("[init:music]",e&&e.message);}
-window.initBrowserView=function(){};
+window.initBrowserView=function(){
+  if(window.__hbBrowserInit)return;
+  window.__hbBrowserInit=true;
+  const input=document.getElementById('hb-url'),launch=document.getElementById('hb-launch');
+  const restart=document.getElementById('hb-restart'),status=document.getElementById('hb-status');
+  const wrap=document.getElementById('hb-frame-wrap'),empty=document.getElementById('hb-empty');
+  if(!input||!launch||!wrap)return;
+  const worker='https://hyperbeam.sapktaayush.workers.dev/session';
+  async function startSession(){
+    let raw=input.value.trim();
+    if(!raw)raw='https://www.google.com';
+    if(!/^https?:\/\//i.test(raw))raw='https://'+raw;
+    let url;try{url=new URL(raw);}catch(e){status.textContent='Enter a valid website address.';return;}
+    if(!['http:','https:'].includes(url.protocol)){status.textContent='Only HTTP and HTTPS websites are supported.';return;}
+    launch.disabled=true;restart.disabled=true;status.textContent='Starting your cloud browser…';
+    try{
+      const response=await fetch(worker,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start_url:url.href})});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.embed_url)throw new Error(data.error||('Worker returned HTTP '+response.status));
+      const old=wrap.querySelector('iframe');if(old)old.remove();
+      const frame=document.createElement('iframe');
+      frame.title='Hyperbeam cloud browser';frame.allow='autoplay; fullscreen; clipboard-read; clipboard-write';frame.referrerPolicy='no-referrer';frame.src=data.embed_url;
+      wrap.appendChild(frame);if(empty)empty.hidden=true;
+      status.textContent='Connected · Hyperbeam cloud browser is ready.';
+      restart.hidden=false;
+    }catch(error){status.textContent='Could not start browser: '+(error.message||'check the Hyperbeam Worker deployment');}
+    finally{launch.disabled=false;restart.disabled=false;}
+  }
+  launch.addEventListener('click',startSession);
+  restart.addEventListener('click',startSession);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')startSession();});
+};
 /* ===== MOVIES & TV (TMDB metadata + rotating embed providers) ===== */
 try{window.initMoviesView=(function(){var done=false;
 /* Both keys below are widely-published public demo keys meant for educational projects.
