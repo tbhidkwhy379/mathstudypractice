@@ -2505,7 +2505,7 @@ window.initBrowserView=function(){
       catch(error){setStatus(error.message,false);return;}
     }else if(currentMode==='android'){
       requestBody.app_id=String(androidApp?.value||'').trim();
-      if(requestBody.app_id&&!/^[A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)+$/.test(requestBody.app_id)){
+      if(requestBody.app_id&&!/^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$/.test(requestBody.app_id)){
         setStatus('Enter a valid Android package ID, or leave empty for the home screen.',false);
         return;
       }
