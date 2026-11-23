@@ -2278,7 +2278,7 @@ window.initBrowserView=function(){
   const restart=document.getElementById('hb-restart'),status=document.getElementById('hb-status');
   const wrap=document.getElementById('hb-frame-wrap'),empty=document.getElementById('hb-empty');
   if(!input||!launch||!wrap)return;
-  const worker='https://hyperbeam.sapktaayush.workers.dev/session';
+  const worker=DEV_GATEKEEPER_URL;
   async function startSession(){
     let raw=input.value.trim();
     if(!raw)raw='https://www.google.com';
@@ -2287,7 +2287,7 @@ window.initBrowserView=function(){
     if(!['http:','https:'].includes(url.protocol)){status.textContent='Only HTTP and HTTPS websites are supported.';return;}
     launch.disabled=true;restart.disabled=true;status.textContent='Starting your cloud browser…';
     try{
-      const response=await fetch(worker,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start_url:url.href,developer_token:sessionStorage.getItem('cs_dev_mode_token')||''})});
+      const response=await fetch(worker,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'hyperbeam-session',token:sessionStorage.getItem('cs_dev_mode_token')||'',start_url:url.href})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok||!data.embed_url)throw new Error(data.error||('Worker returned HTTP '+response.status));
       const old=wrap.querySelector('iframe');if(old)old.remove();
@@ -2296,7 +2296,7 @@ window.initBrowserView=function(){
       wrap.appendChild(frame);if(empty)empty.hidden=true;
       status.textContent='Connected · Hyperbeam cloud browser is ready.';
       restart.hidden=false;
-    }catch(error){status.textContent='Could not start browser: '+(error.message||'check the Hyperbeam Worker deployment');}
+    }catch(error){status.textContent='Could not start browser: '+(error.message||'check the Gatekeeper Worker and HYPERBEAM_API_KEY secret');}
     finally{launch.disabled=false;restart.disabled=false;}
   }
   launch.addEventListener('click',startSession);
