@@ -994,7 +994,6 @@ button { line-height: 1.25; }
  .hb-live{font-size:0!important}
 }
 
-
 /* Hyperbeam environment selection */
 .hb-mode-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
 .hb-mode-card{min-width:0;display:flex;align-items:center;gap:11px;padding:12px 14px;text-align:left;border:1px solid var(--border);border-radius:13px;background:rgba(16,18,26,.82);color:var(--text);cursor:pointer;transition:border-color .15s,background .15s}
@@ -1017,6 +1016,7 @@ button { line-height: 1.25; }
 .hb-mode-hidden{display:none!important}
 @media(max-width:760px){.hb-mode-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.hb-mode-card{padding:10px}.hb-mode-card>i{width:31px;height:31px;flex-basis:31px}}
 @media(max-width:420px){.hb-mode-card{gap:8px}.hb-mode-copy small{font-size:9px}.hb-mode-copy strong{font-size:12px}}
+
 
 /* Cloud Browser is a Developer Mode-only tool */
 .dock a[data-page="browser"][hidden]{display:none!important}
@@ -1098,7 +1098,53 @@ button { line-height: 1.25; }
 <section class="page-view" id="view-games">
 <div class="game-tabs">
 <button class="game-tab active" data-gpanel="lumin">Lumin</button>
-<button class="game-tab" data-gpanel="gn">GN-Ma<section class="page-view" id="view-browser">
+<button class="game-tab" data-gpanel="gn">GN-Math</button>
+<button class="game-tab" data-gpanel="ugs">UGS</button>
+<button class="game-tab" data-gpanel="minecraft">Minecraft</button>
+</div>
+<div class="gpanel active" id="gpanel-lumin"><div id="games"></div></div>
+<div class="gpanel" id="gpanel-gn">
+<div class="gn-head"><h2>GN-Math Games</h2><span id="gn-count"></span><input type="text" id="gn-search" placeholder="Search GN games..." autocomplete="off"></div>
+<div id="gn-grid"></div>
+</div>
+<div class="gpanel" id="gpanel-ugs">
+<div class="gn-head"><h2>Ultimate Game Stash</h2><span id="ugs-count"></span><input type="text" id="ugs-search" placeholder="Search UGS games..." autocomplete="off"></div>
+<div id="ugs-grid"></div>
+</div>
+<div id="gn-player" hidden><div class="gn-player-bar"><span id="gn-player-title"></span><button id="gn-player-close">✕ Close</button></div><iframe id="gn-player-frame" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe></div>
+</section>
+<!-- MOVIES & TV -->
+<section class="page-view" id="view-movies">
+<div class="mv-wrap">
+<h1 class="mv-title">movies &amp; tv</h1>
+<p class="mv-sub">search anything, press play, and if a server spins forever hit <b>next server</b> — posters &amp; search come from TMDB.</p>
+<div class="mv-bar">
+<input id="mvSearch" type="text" placeholder="search movies or shows..." autocomplete="off">
+<button id="mvGo" class="mv-btn">Search</button>
+<button id="mvTrend" class="mv-btn ghost">Trending</button>
+<select id="mvProv" class="mv-sel" title="streaming server"></select>
+</div>
+<div class="mv-keyrow"><a id="mvKeyToggle">set your own tmdb key</a><span id="mvKeyPane" hidden><input id="mvKeyInput" type="text" placeholder="tmdb v3 api key" autocomplete="off"><button id="mvKeySave">save</button></span></div>
+<div id="mvMsg" class="mv-msg"></div>
+<div class="mv-grid" id="mvGrid"></div>
+</div>
+<div id="mvPlayer" hidden>
+<div class="mv-player-bar">
+<span id="mvPlayerTitle"></span>
+<select id="mvServ" class="mv-sel" title="streaming server"></select>
+<button id="mvNextSrv" class="mv-btn ghost">next server ›</button>
+<div class="mv-epctl" id="mvEpCtl" hidden>
+Season <input id="mvSeason" type="number" min="1" value="1">
+Episode <input id="mvEpisode" type="number" min="1" value="1">
+<button id="mvEpGo">▶</button>
+</div>
+<button id="mvPlayerClose">✕ Close</button>
+</div>
+<iframe id="mvFrame" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="border:0"></iframe>
+</div>
+</section>
+<!-- CHAT -->
+<section class="page-view" id="view-browser">
   <div class="hb-heading">
     <div><h1><i class="fas fa-cloud" aria-hidden="true"></i> Cloud Computer</h1><p>Choose a remote environment to launch inside your website.</p></div>
     <div class="hb-brand"><i class="fas fa-cloud"></i> HYPERBEAM TEST</div>
@@ -1165,31 +1211,6 @@ button { line-height: 1.25; }
     </div>
   </div>
   <div class="hb-note">Sessions run on Hyperbeam's test environment. Availability depends on your account and the selected environment.</div>
-</section>
-    <div class="hb-tabstrip">
-      <div class="hb-tab-list" id="hb-tab-list"><div class="hb-tab-item active"><button class="hb-tab" type="button"><i class="fab fa-chrome" aria-hidden="true"></i><span>New Tab</span></button></div></div>
-      <button class="hb-tab-add" id="hb-new-tab" type="button" title="New tab" aria-label="New tab"><i class="fas fa-plus"></i></button>
-      <div class="hb-live"><span class="hb-live-dot" id="hb-live-dot"></span><span>HYPERBEAM</span></div>
-    </div>
-    <div class="hb-toolbar">
-      <button class="hb-navbtn" id="hb-back" type="button" title="Back" aria-label="Back" disabled><i class="fas fa-arrow-left"></i></button>
-      <button class="hb-navbtn" id="hb-forward" type="button" title="Forward" aria-label="Forward" disabled><i class="fas fa-arrow-right"></i></button>
-      <button class="hb-navbtn" id="hb-reload" type="button" title="Reload" aria-label="Reload" disabled><i class="fas fa-rotate-right"></i></button>
-      <button class="hb-navbtn" id="hb-home" type="button" title="Home" aria-label="Home" disabled><i class="fas fa-house"></i></button>
-      <form class="hb-address-form" id="hb-nav-form">
-        <i class="fas fa-lock" id="hb-address-icon" aria-hidden="true"></i>
-        <input id="hb-url" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="Search Google or enter a website address" aria-label="Search or enter website address">
-        <button class="hb-go" id="hb-launch" type="submit">Start</button>
-      </form>
-      <button class="hb-new-session" id="hb-restart" type="button" title="Start a new cloud session" aria-label="Start a new cloud session" hidden><i class="fas fa-plus"></i> New</button>
-    </div>
-    <div class="hb-statusline" role="status" aria-live="polite"><span class="hb-live-dot" id="hb-status-dot"></span><span class="hb-status" id="hb-status">Enter a website or search term to start your cloud browser.</span></div>
-    <div class="hb-frame-wrap" id="hb-frame-wrap">
-      <div class="hb-screen" id="hb-screen"></div>
-      <div class="hb-empty" id="hb-empty"><div><i class="fas fa-globe"></i><strong>Your cloud browser is ready</strong>Search the web or enter a website above to launch your remote Chromium session.</div></div>
-    </div>
-  </div>
-  <div class="hb-note">Your browser runs on Hyperbeam's cloud computers, not your device. Website availability and access still depend on the destination website.</div>
 </section>
 <section class="page-view" id="view-chat">
 <div id="nameModal" class="hidden">
@@ -1574,7 +1595,7 @@ bgInput.addEventListener('change',()=>{const f=bgInput.files[0];if(!f)return;con
 r.onload=()=>{applyBackgroundImage(r.result);try{localStorage.setItem('csp-bg',r.result);}catch(e){}};r.readAsDataURL(f);});
 bgResetBtn.addEventListener('click',clearBackgroundImage);
 try{const savedBg=localStorage.getItem('csp-bg');if(savedBg)applyBackgroundImage(savedBg);}catch(e){}
-/* Home clock is updated by the standalone clock script above. */
+/* Home clock is handled by the standalone clock script above. */
 /* intro: show "welcome to Aayush's PREMIUM UBG + MOVIES" for 5 seconds, then just clock + date */
 setTimeout(()=>{const hi=document.getElementById('homeIntro');if(!hi)return;
 hi.classList.add('bye');setTimeout(()=>{hi.style.display='none';},900);},5000);
@@ -2308,8 +2329,75 @@ document.getElementById('pb-artist').innerText=song.artist;
 document.getElementById('pb-art').style.backgroundImage='url("'+song.cover+'")';
 const h=document.getElementById('pb-heart');
 h.className=state.likedIds.includes(song.id)?'fas fa-heart':'far fa-heart';
-h.style.color=state.likedIds.includes(song.id)?'#1db954':'#b3b3
-
+h.style.color=state.likedIds.includes(song.id)?'#1db954':'#b3b3b3';
+const stdCtrl=document.getElementById('standard-controls'),drvCtrl=document.getElementById('drive-player-container');
+if(song.isDrive){stdCtrl.style.display='none';drvCtrl.style.display='flex';
+drvCtrl.innerHTML='<iframe src="'+song.url+'" allow="autoplay" style="width:100%;height:100%;border:none;"></iframe>';
+audio.pause();state.isPlaying=false;}
+else{drvCtrl.style.display='none';drvCtrl.innerHTML='';stdCtrl.style.display='block';
+audio.src=song.url;
+if(autoPlay){audio.play().catch(()=>{});state.isPlaying=true;player.updatePlayIcon();}}},
+playSingle:song=>{const idx=state.queue.findIndex(s=>s.id===song.id);
+if(idx!==-1)player.loadSong(idx);else{state.queue.splice(state.currentIndex+1,0,song);player.loadSong(state.currentIndex+1);}},
+playContext:songList=>{if(!songList||!songList.length)return;state.queue=[...songList];player.loadSong(0);},
+togglePlay:()=>{if(state.queue[state.currentIndex]&&state.queue[state.currentIndex].isDrive)return;
+if(state.isPlaying)audio.pause();else audio.play();state.isPlaying=!state.isPlaying;player.updatePlayIcon();},
+updatePlayIcon:()=>{document.getElementById('main-play-icon').className=state.isPlaying?'fas fa-pause':'fas fa-play';},
+next:()=>{if(state.shuffle)player.loadSong(Math.floor(Math.random()*state.queue.length));else player.loadSong(state.currentIndex+1);},
+prev:()=>{if(audio.currentTime>3)audio.currentTime=0;else player.loadSong(state.currentIndex-1);},
+toggleShuffle:()=>{state.shuffle=!state.shuffle;document.getElementById('btn-shuffle').classList.toggle('active');},
+toggleLoop:()=>{state.loop=!state.loop;document.getElementById('btn-loop').classList.toggle('active');},
+onEnded:()=>{if(state.loop){audio.currentTime=0;audio.play();}else player.next();},
+toggleLikeCurrent:()=>{const s=state.queue[state.currentIndex];if(s)data.toggleLike(s.id,s);},
+toggleMute:()=>{audio.muted=!audio.muted;player.updateVolIcon();},
+updateVolIcon:()=>{const v=document.getElementById('vol-icon');
+v.className=(audio.muted||audio.volume===0)?'fas fa-volume-mute ctrl-btn':(audio.volume<.5?'fas fa-volume-down ctrl-btn':'fas fa-volume-up ctrl-btn');}};
+window.app=app;window.data=data;window.player=player;
+app.init();
+/* draggable + resizable window behaviour */
+(function(){var mw=document.getElementById('view-music'),bar=document.getElementById('musicDrag');
+if(!mw||!bar)return;
+var MINW=420,MINH=360;
+function maxW(){return Math.max(MINW,innerWidth-16);}function maxH(){return Math.max(MINH,innerHeight-16);}
+function saveSize(w,h){try{localStorage.setItem('csp-music-size',JSON.stringify({w:Math.round(w),h:Math.round(h)}));}catch(e){}}
+/* restore last size */
+try{var sz=JSON.parse(localStorage.getItem('csp-music-size')||'null');
+if(sz&&sz.w&&sz.h){mw.style.width=Math.min(Math.max(MINW,sz.w),maxW())+'px';mw.style.height=Math.min(Math.max(MINH,sz.h),maxH())+'px';}}catch(e){}
+/* move */
+var drag=false,dx=0,dy=0;
+bar.addEventListener('pointerdown',function(e){if(e.target.closest('button'))return;drag=true;
+var r=mw.getBoundingClientRect();dx=e.clientX-r.left;dy=e.clientY-r.top;
+mw.style.left=r.left+'px';mw.style.top=r.top+'px';mw.style.right='auto';mw.style.bottom='auto';
+try{bar.setPointerCapture(e.pointerId);}catch(_){}});
+bar.addEventListener('pointermove',function(e){if(!drag)return;
+mw.style.left=Math.max(-mw.offsetWidth+140,Math.min(e.clientX-dx,innerWidth-140))+'px';
+mw.style.top=Math.max(0,Math.min(e.clientY-dy,innerHeight-46))+'px';});
+['pointerup','pointercancel'].forEach(function(ev){bar.addEventListener(ev,function(){drag=false;});});
+/* resize (bottom-right grip) — double-click the grip to reset */
+var grip=document.getElementById('musicResize');
+if(grip){var rs=false,rw=0,rh=0,rx=0,ry=0;
+grip.addEventListener('pointerdown',function(e){e.stopPropagation();rs=true;
+var r=mw.getBoundingClientRect();rw=r.width;rh=r.height;rx=e.clientX;ry=e.clientY;
+try{grip.setPointerCapture(e.pointerId);}catch(_){}});
+grip.addEventListener('pointermove',function(e){if(!rs)return;
+var w=Math.min(Math.max(MINW,rw+(e.clientX-rx)),maxW());
+var h=Math.min(Math.max(MINH,rh+(e.clientY-ry)),maxH());
+mw.style.width=w+'px';mw.style.height=h+'px';
+/* keep the titlebar reachable if we grow off the top/left */
+var r2=mw.getBoundingClientRect();
+if(r2.top<0){mw.style.top='0px';} if(r2.left<0){mw.style.left='0px';}
+});
+['pointerup','pointercancel'].forEach(function(ev){grip.addEventListener(ev,function(){
+if(!rs)return;rs=false;var r=mw.getBoundingClientRect();saveSize(r.width,r.height);});});
+grip.addEventListener('dblclick',function(){mw.style.width='';mw.style.height='';
+mw.style.left='';mw.style.top='';mw.style.right='16px';mw.style.bottom='86px';saveSize(900,620);});}
+addEventListener('resize',function(){var r=mw.getBoundingClientRect();
+if(r.width>maxW())mw.style.width=maxW()+'px';
+if(r.height>maxH())mw.style.height=maxH()+'px';});
+document.getElementById('musicClose').addEventListener('click',function(){mw.classList.remove('open');
+var a=document.querySelector('.dock a[data-page="music"]');if(a)a.classList.remove('active');});
+})();
+})();}catch(e){console.error("[init:music]",e&&e.message);}
 window.initBrowserView=function(){
   if(!sessionStorage.getItem('cs_dev_mode_token'))return;
   if(window.__hbBrowserInit)return;
