@@ -25,23 +25,47 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
-      - name: Prepare static site
+      - name: Install site dependencies and build Ultraviolet assets
         run: |
-          mkdir -p _site
+          npm install --no-audit --no-fund
+          npm run build:unblocker
+
+      - name: Prepare static site and proxy fallback
+        run: |
+          mkdir -p _site/uv
           cp -a *.html *.js *.css *.svg *.webp *.json *.png *.ico CNAME _site/ 2>/dev/null || true
+          cp -a public _site/public
+          cp uv/uv.config.js _site/uv/uv.config.js
+          cp sw.js _site/sw.js
+          cp _redirects _site/_redirects
+          # GitHub Pages ignores _redirects, so use the app shell as its 404 fallback.
+          cp app.html _site/404.html
           test -f _site/index.html
           test -f _site/proxy.html
+          test -f _site/app.html
+          test -f _site/404.html
+          test -f _site/sw.js
+          test -f _site/uv/uv.config.js
+          test -f _site/_redirects
+          test -f _site/public/uv/uv.bundle.js
+          test -f _site/public/uv/uv.handler.js
+          test -f _site/public/uv/uv.sw.js
+          test -f _site/public/baremux/index.js
+          test -f _site/public/baremux/worker.js
+          test -f _site/public/libcurl/index.mjs
+          test -f _site/public/epoxy/index.mjs
 
-      - name: Install Scramjet v1 runtime packages
+      - name: Install Scramjet v1 runtime packages for the legacy proxy page
         working-directory: /tmp
         run: |
           mkdir -p scramjet-pages-build
           cd scramjet-pages-build
           npm init -y
-          npm install --no-audit --no-fund @mercuryworkshop/scramjet@1.1.0 @mercuryworkshop/bare-mux@^2.1.9 @mercuryworkshop/libcurl-transport@^1.5.2
+          npm install --no-audit --no-fund @mercuryworkshop/scramjet@1.1.0 @mercuryworkshop/bare-mux@2.1.9 @mercuryworkshop/libcurl-transport@1.5.2
 
-      - name: Copy browser runtime assets
+      - name: Copy legacy Scramjet browser assets
         run: |
           BUILD=/tmp/scramjet-pages-build
           mkdir -p _site/scram _site/baremux _site/libcurl
@@ -51,12 +75,14 @@ jobs:
           import { scramjetPath } from "@mercuryworkshop/scramjet/path";
           import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
           import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
-          await mkdir("${process.env.GITHUB_WORKSPACE}/_site/scram", { recursive: true });
-          await mkdir("${process.env.GITHUB_WORKSPACE}/_site/baremux", { recursive: true });
-          await mkdir("${process.env.GITHUB_WORKSPACE}/_site/libcurl", { recursive: true });
-          await cp(scramjetPath, "${process.env.GITHUB_WORKSPACE}/_site/scram", { recursive: true });
-          await cp(baremuxPath, "${process.env.GITHUB_WORKSPACE}/_site/baremux", { recursive: true });
-          await cp(libcurlPath, "${process.env.GITHUB_WORKSPACE}/_site/libcurl", { recursive: true });
+
+          const outputDir = process.env.GITHUB_WORKSPACE + "/_site";
+          await mkdir(outputDir + "/scram", { recursive: true });
+          await mkdir(outputDir + "/baremux", { recursive: true });
+          await mkdir(outputDir + "/libcurl", { recursive: true });
+          await cp(scramjetPath, outputDir + "/scram", { recursive: true });
+          await cp(baremuxPath, outputDir + "/baremux", { recursive: true });
+          await cp(libcurlPath, outputDir + "/libcurl", { recursive: true });
           NODE
           cd "$GITHUB_WORKSPACE"
           test -f _site/scram/scramjet.all.js
