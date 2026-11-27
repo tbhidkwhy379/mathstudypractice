@@ -3404,7 +3404,10 @@ showPage(p);});});
       let finished=false;
       const timeout=setTimeout(()=>{
         cleanup();
-        reject(new Error("The /uv/ service worker activated but did not take control of this proxy page."));
+        const controller=navigator.serviceWorker.controller;
+        let controllerUrl="none";
+        try{controllerUrl=controller?controller.scriptURL:"none";}catch(e){}
+        reject(new Error("The /uv/ service worker activated but did not take control of this proxy page. Current controller: "+controllerUrl));
       },10000);
 
       function cleanup(){
@@ -3534,10 +3537,64 @@ showPage(p);});});
 
   window.NeuralUnblocker={initialize:initializeUnblocker,launch:launchProxy,defaultUrl:UV_TIKTOK,wisp:WISP_URL};
 
+  // Older visits to proxy.html may have left Scramjet's worker registered
+  // at the origin root. A page controlled by that worker keeps using it for
+  // its navigation, so the narrower /uv/ worker cannot take over this tab.
+  // Remove only that known legacy root registration and reload this fallback
+  // document so the /uv/ registration can become its controller.
+  async function releaseLegacyScramjetRootWorker(){
+    const registrations=await navigator.serviceWorker.getRegistrations();
+    const isLegacyScript=worker=>{
+      if(!worker)return false;
+      try{return new URL(worker.scriptURL).pathname==="/scramjet-sw.js";}
+      catch(e){return false;}
+    };
+    const rootRegistration=registrations.find(reg=>{
+      try{
+        const scope=new URL(reg.scope);
+        return scope.origin===location.origin &&
+          scope.pathname==="/" &&
+          [reg.active,reg.waiting,reg.installing].some(isLegacyScript);
+      }catch(e){return false;}
+    });
+    const controller=navigator.serviceWorker.controller;
+    const controllerIsLegacy=isLegacyScript(controller);
+
+    if(!rootRegistration&&!controllerIsLegacy){
+      try{sessionStorage.removeItem("neural-uv-scramjet-reset-count");}catch(e){}
+      return false;
+    }
+
+    let attempts=0;
+    try{
+      attempts=Number(sessionStorage.getItem("neural-uv-scramjet-reset-count")||"0");
+    }catch(e){}
+
+    if(attempts>=2){
+      const controllerUrl=controller?controller.scriptURL:"none";
+      throw new Error(
+        "The old Scramjet worker still controls this tab after two reloads. " +
+        "Close any old proxy.html tabs, then clear site data for neural.qzz.io. " +
+        "Current controller: "+controllerUrl
+      );
+    }
+
+    if(rootRegistration){
+      await rootRegistration.unregister();
+    }
+
+    try{
+      sessionStorage.setItem("neural-uv-scramjet-reset-count",String(attempts+1));
+    }catch(e){}
+
+    setState("Removing the old Scramjet service worker and retrying…");
+    window.location.reload();
+    return true;
+  }
+
   // GitHub Pages may serve 404.html for a direct /uv/service/* request
-  // if the UV worker was not controlling that navigation yet. The fallback
-  // document is itself under /uv/, so wait for the UV-scoped worker to claim it,
-  // then retry once. The legacy Scramjet worker remains scoped to "/".
+  // if the UV worker did not control the first navigation. After removing
+  // any stale root Scramjet controller, reload this URL once so /uv/ can own it.
   if(location.pathname.startsWith("/uv/service/")){
     window.neuralChatAuthReady.then(async user=>{
       if(!user||!user.emailVerified){
@@ -3546,9 +3603,11 @@ showPage(p);});});
         return;
       }
       try{
+        if(await releaseLegacyScramjetRootWorker())return;
         showPage("unblocker");
         await initializeUnblocker();
         await waitForUvController();
+        try{sessionStorage.removeItem("neural-uv-scramjet-reset-count");}catch(e){}
 
         let alreadyRetried=false;
         try{alreadyRetried=sessionStorage.getItem("neural-uv-fallback-reload")==="1";}catch(e){}
