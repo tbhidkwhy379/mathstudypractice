@@ -1,9 +1,15 @@
-importScripts('./uv/uv.sw.js');
+importScripts("/public/uv/uv.bundle.js");
+importScripts("/uv/uv.config.js");
+importScripts(__uv$config.sw || "/public/uv/uv.sw.js");
 
-const sw = new UVServiceWorker();
+const uv = new UVServiceWorker();
 
-self.addEventListener('fetch', event =>
-    event.respondWith(
-        sw.fetch(event)
-    )
-);
+self.addEventListener("activate", event => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener("fetch", event => {
+  if (uv.route(event)) {
+    event.respondWith(uv.fetch(event));
+  }
+});
