@@ -36,7 +36,14 @@ jobs:
           mkdir -p _site/uv
           cp -a *.html *.js *.css *.svg *.webp *.json *.png *.ico CNAME _site/ 2>/dev/null || true
           cp -a public _site/public
+          # Mirror critical vendor assets at clean root paths as well as /public/.
+          # Some custom-domain/CDN configurations may handle the /public prefix differently.
+          mkdir -p _site/uv _site/baremux _site/libcurl _site/epoxy
+          cp -a public/uv/. _site/uv/
           cp uv/uv.config.js _site/uv/uv.config.js
+          cp -a public/baremux/. _site/baremux/
+          cp -a public/libcurl/. _site/libcurl/
+          cp -a public/epoxy/. _site/epoxy/
           cp sw.js _site/sw.js
           cp _redirects _site/_redirects
           # GitHub Pages ignores _redirects, so use the app shell as its 404 fallback.
@@ -55,6 +62,13 @@ jobs:
           test -f _site/public/baremux/worker.js
           test -f _site/public/libcurl/index.mjs
           test -f _site/public/epoxy/index.mjs
+          test -f _site/uv/uv.bundle.js
+          test -f _site/uv/uv.handler.js
+          test -f _site/uv/uv.sw.js
+          test -f _site/baremux/index.js
+          test -f _site/baremux/worker.js
+          test -f _site/libcurl/index.mjs
+          test -f _site/epoxy/index.mjs
 
       - name: Install Scramjet v1 runtime packages for the legacy proxy page
         working-directory: /tmp
