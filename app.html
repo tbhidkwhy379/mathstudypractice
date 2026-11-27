@@ -3461,6 +3461,35 @@ showPage(p);});});
   });
 
   window.NeuralUnblocker={initialize:initializeUnblocker,launch:launchProxy,defaultUrl:UV_TIKTOK,wisp:WISP_URL};
+
+  // GitHub Pages serves 404.html for unknown /uv/service/* paths.
+  // If a user opens or refreshes a proxy URL before the service worker controls it,
+  // initialise the authenticated transport, then reload once so the SW can serve it.
+  if(location.pathname.startsWith("/uv/service/")){
+    window.neuralChatAuthReady.then(async user=>{
+      if(!user||!user.emailVerified){
+        try{sessionStorage.removeItem("neural-uv-fallback-reload");}catch(e){}
+        window.location.replace("/app.html");
+        return;
+      }
+      try{
+        await initializeUnblocker();
+        let alreadyRetried=false;
+        try{alreadyRetried=sessionStorage.getItem("neural-uv-fallback-reload")==="1";}catch(e){}
+        if(alreadyRetried){
+          try{sessionStorage.removeItem("neural-uv-fallback-reload");}catch(e){}
+          setState("The proxy route still returned the site fallback. Check the GitHub Pages deploy and root service worker.","error");
+          return;
+        }
+        try{sessionStorage.setItem("neural-uv-fallback-reload","1");}catch(e){}
+        window.location.reload();
+      }catch(error){
+        setState(error.message||"Could not initialise the proxy route.","error");
+      }
+    }).catch(error=>{
+      setState(error.message||"Could not restore your chat sign-in.","error");
+    });
+  }
 })();
 </script>
 
