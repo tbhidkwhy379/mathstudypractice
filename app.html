@@ -198,6 +198,28 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-chat #nameModal p{margin:0 0 14px;font-size:13px;color:var(--muted2)}
 #view-chat #nameModal input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:14.5px;outline:none;margin-bottom:12px}
 #view-chat #nameModal button{width:100%;background:var(--acc2);color:#fff;border:none;border-radius:10px;padding:11px;font-size:14.5px;font-weight:600;cursor:pointer}
+/* Chat-only Firebase email/password account gate */
+#view-chat #chatAuthGate{position:absolute;inset:0 0 100px;z-index:40;display:flex;align-items:center;justify-content:center;overflow:auto;padding:22px;background:rgba(5,9,16,.97);backdrop-filter:blur(14px)}
+#view-chat #chatAuthGate[hidden],#view-chat #chatAuthFormPanel[hidden],#view-chat #chatVerifyPanel[hidden]{display:none!important}
+#view-chat .chat-auth-card{width:min(100%,420px);padding:28px;background:linear-gradient(145deg,rgba(24,31,45,.98),rgba(13,18,28,.99));border:1px solid rgba(160,177,207,.2);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.48);color:#f4f6fb}
+#view-chat .chat-auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:24px;color:#aebbd2;font-size:11px;font-weight:800;letter-spacing:.2em}
+#view-chat .chat-auth-mark{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--acc2);color:white;font-size:14px;letter-spacing:0}
+#view-chat .chat-auth-card h2{margin:0 0 8px;font-size:25px;letter-spacing:-.03em}
+#view-chat .chat-auth-card p{margin:0 0 18px;color:#aeb8c9;font-size:13px;line-height:1.6}
+#view-chat .chat-auth-card label{display:block;margin:13px 0 0;color:#d9e0ec;font-size:12px;font-weight:650}
+#view-chat .chat-auth-card input{display:block;width:100%;height:46px;margin-top:7px;padding:0 13px;border:1px solid rgba(160,177,207,.22);border-radius:11px;outline:none;background:rgba(5,9,16,.65);color:#f4f6fb;font:inherit;font-size:14px}
+#view-chat .chat-auth-card input:focus{border-color:var(--acc2);box-shadow:0 0 0 3px rgba(86,132,255,.14)}
+#view-chat .chat-auth-card>div>button:not(.chat-auth-text-button){width:100%;min-height:45px;margin-top:17px;border:0;border-radius:11px;background:var(--acc2);color:#fff;font:inherit;font-weight:750;cursor:pointer}
+#view-chat .chat-auth-card button:disabled{opacity:.6;cursor:wait}
+#view-chat .chat-auth-text-button{display:block;margin:12px auto 0;padding:5px;border:0;background:none;color:#aebfff;font:inherit;font-size:12px;cursor:pointer}
+#view-chat .chat-auth-secondary{display:block;width:100%;min-height:42px;margin-top:9px;border:1px solid rgba(160,177,207,.25);border-radius:10px;background:rgba(255,255,255,.04);color:#e4eaf4;font:inherit;cursor:pointer}
+#view-chat .chat-auth-switch{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid rgba(160,177,207,.13);color:#9eaabd;font-size:12px}
+#view-chat .chat-auth-switch button{border:0;background:none;color:#b8c9ff;font:inherit;font-weight:750;cursor:pointer}
+#view-chat #chatAuthMessage,#view-chat #chatVerifyMessage{min-height:18px;margin:12px 0 0;color:#f4c7a5;font-size:12px}
+#view-chat #chatVerifyMessage{color:#b9c8e6}
+#view-chat .chat-auth-mail{display:grid;place-items:center;width:58px;height:58px;margin:0 0 18px;border-radius:18px;background:rgba(86,132,255,.16);color:#b7c9ff;font-size:28px}
+#view-chat #chatVerifyPanel>button:first-of-type{width:100%;min-height:45px;margin-top:12px;border:0;border-radius:11px;background:var(--acc2);color:#fff;font:inherit;font-weight:750;cursor:pointer}
+@media(max-width:480px){#view-chat #chatAuthGate{padding:14px}#view-chat .chat-auth-card{padding:22px;border-radius:16px}}
 /* Social chat UI */
 #view-chat #chatSocial{padding:10px 12px 0;background:rgba(22,24,28,.72);border-bottom:1px solid var(--border2)}
 #view-chat .chat-tabs{display:flex;gap:7px;flex-wrap:wrap}
@@ -1190,6 +1212,40 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
   <div class="hb-note">Sessions run on Hyperbeam's production environment. Availability depends on your account and the selected environment.</div>
 </section>
 <section class="page-view" id="view-chat">
+<div id="chatAuthGate" role="dialog" aria-modal="true" aria-labelledby="chatAuthTitle">
+  <div class="chat-auth-card">
+    <div class="chat-auth-brand"><span class="chat-auth-mark">AP</span><span>NEURAL CHAT</span></div>
+    <div id="chatAuthFormPanel">
+      <h2 id="chatAuthTitle">Welcome back</h2>
+      <p id="chatAuthDescription">Sign in to use global chat, friends, DMs and AI chat. The rest of the website stays available without an account.</p>
+      <label id="chatAuthNameWrap" hidden>Display name
+        <input id="chatAuthName" type="text" maxlength="24" placeholder="Your chat name" autocomplete="nickname">
+      </label>
+      <label>Email address
+        <input id="chatAuthEmail" type="email" maxlength="254" placeholder="you@example.com" autocomplete="email" required>
+      </label>
+      <label>Password
+        <input id="chatAuthPassword" type="password" placeholder="Password" autocomplete="current-password" required>
+      </label>
+      <label id="chatAuthConfirmWrap" hidden>Confirm password
+        <input id="chatAuthConfirm" type="password" placeholder="Enter your password again" autocomplete="new-password">
+      </label>
+      <button id="chatAuthSubmit" type="button">Sign in</button>
+      <button id="chatAuthReset" class="chat-auth-text-button" type="button">Forgot password?</button>
+      <p id="chatAuthMessage" role="status" aria-live="polite"></p>
+      <div class="chat-auth-switch"><span id="chatAuthSwitchPrompt">New to chat?</span><button id="chatAuthSwitch" type="button">Create an account</button></div>
+    </div>
+    <div id="chatVerifyPanel" hidden>
+      <div class="chat-auth-mail">✉</div>
+      <h2>Verify your email</h2>
+      <p>We sent a verification link to <strong id="chatVerifyEmail"></strong>. Open that email, verify your address, then come back here.</p>
+      <button id="chatAuthVerifyNow" type="button">I've verified my email</button>
+      <button id="chatAuthResend" class="chat-auth-secondary" type="button">Resend verification email</button>
+      <button id="chatAuthVerifySignOut" class="chat-auth-text-button" type="button">Use another account</button>
+      <p id="chatVerifyMessage" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+</div>
 <div id="nameModal" class="hidden">
 <div class="card">
 <h2>Join Aayush's PREMIUM UBG + MOVIES Chat</h2>
@@ -1595,6 +1651,25 @@ nameModal=document.getElementById('nameModal'),nameInput=document.getElementById
 const MAX=300,MAX_IMAGE_BYTES=5*1024*1024;let myName=null,myId=null,liveRef=null,liveReady=false,pendingText=null,pendingImage=null,pendingImageUrl=null;
 let viewMode='global',globalMessages=[],friendsMap={},requestsMap={},dmPartner=null,dmRef=null,dmListener=null,usersRef=null,friendsRef=null,requestsRef=null,outgoingRequests={};
 const socialRoot='classroomspot-chat';
+const chatAuthGate=document.getElementById('chatAuthGate');
+const chatAuthFormPanel=document.getElementById('chatAuthFormPanel');
+const chatVerifyPanel=document.getElementById('chatVerifyPanel');
+const chatAuthTitle=document.getElementById('chatAuthTitle');
+const chatAuthDescription=document.getElementById('chatAuthDescription');
+const chatAuthNameWrap=document.getElementById('chatAuthNameWrap');
+const chatAuthName=document.getElementById('chatAuthName');
+const chatAuthEmail=document.getElementById('chatAuthEmail');
+const chatAuthPassword=document.getElementById('chatAuthPassword');
+const chatAuthConfirmWrap=document.getElementById('chatAuthConfirmWrap');
+const chatAuthConfirm=document.getElementById('chatAuthConfirm');
+const chatAuthSubmit=document.getElementById('chatAuthSubmit');
+const chatAuthReset=document.getElementById('chatAuthReset');
+const chatAuthSwitch=document.getElementById('chatAuthSwitch');
+const chatAuthSwitchPrompt=document.getElementById('chatAuthSwitchPrompt');
+const chatAuthMessage=document.getElementById('chatAuthMessage');
+const chatVerifyEmail=document.getElementById('chatVerifyEmail');
+const chatVerifyMessage=document.getElementById('chatVerifyMessage');
+let chatAuthMode='login',chatAuthBusy=false,chatStartedUid=null,chatAuthUiBound=false;
 const CHAT_GATEKEEPER_URL='https://gatekeeper.sapktaayush.workers.dev/';
 const CHAT_DEV_TOKEN_KEY='cs_dev_mode_token';
 let chatDeveloperVerified=false;
@@ -1656,7 +1731,7 @@ mainEl.addEventListener('scroll',()=>{if(mainEl.scrollHeight-mainEl.scrollTop-ma
 const loadLocal=()=>{try{return JSON.parse(localStorage.getItem('cs_chat_local'))||[];}catch(e){return[];}};
 const saveLocal=l=>{try{localStorage.setItem('cs_chat_local',JSON.stringify(l));}catch(e){}};
 let localMsgs=loadLocal();
-try{myName=localStorage.getItem('cs_chat_name');}catch(e){}
+/* The display name is loaded from the signed-in Firebase profile. */
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=ts=>{try{return new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}catch(e){return '';}};
 const setStatus=s=>{statusEl.textContent=s;};
@@ -1665,47 +1740,258 @@ function render(list){const wasAtBottom=mainEl.scrollHeight-mainEl.scrollTop-mai
 function mergeLocal(list){const ids={};(list||[]).forEach(m=>ids[m.id]=true);
 return [...(list||[]),...localMsgs.filter(m=>!ids[m.id])].sort((a,b)=>(a.ts||0)-(b.ts||0)).slice(-MAX);}
 const loadScript=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load Firebase SDK: '+src));document.head.appendChild(s);});
+function setChatAuthMessage(message,isError=true){
+  if(!chatAuthMessage)return;
+  chatAuthMessage.textContent=message||'';
+  chatAuthMessage.style.color=isError?'#f4c7a5':'#a9d8b5';
+}
+function setChatVerifyMessage(message,isError=false){
+  if(!chatVerifyMessage)return;
+  chatVerifyMessage.textContent=message||'';
+  chatVerifyMessage.style.color=isError?'#f4c7a5':'#a9d8b5';
+}
+function setChatAuthMode(mode){
+  chatAuthMode=mode==='signup'?'signup':'login';
+  const signup=chatAuthMode==='signup';
+  chatAuthTitle.textContent=signup?'Create your chat account':'Welcome back';
+  chatAuthDescription.textContent=signup
+    ?'Create an account to use global chat, friends, DMs and AI chat. The rest of the website stays available without signing in.'
+    :'Sign in to use global chat, friends, DMs and AI chat. The rest of the website stays available without an account.';
+  chatAuthNameWrap.hidden=!signup;
+  chatAuthConfirmWrap.hidden=!signup;
+  chatAuthPassword.autocomplete=signup?'new-password':'current-password';
+  chatAuthSubmit.textContent=signup?'Create account':'Sign in';
+  chatAuthReset.hidden=signup;
+  chatAuthSwitchPrompt.textContent=signup?'Already have an account?':'New to chat?';
+  chatAuthSwitch.textContent=signup?'Sign in':'Create an account';
+  setChatAuthMessage('');
+}
+function showChatAuth(){
+  chatAuthGate.hidden=false;
+  chatAuthFormPanel.hidden=false;
+  chatVerifyPanel.hidden=true;
+  setChatAuthMode(chatAuthMode);
+}
+function showChatVerification(user){
+  chatAuthGate.hidden=false;
+  chatAuthFormPanel.hidden=true;
+  chatVerifyPanel.hidden=false;
+  chatVerifyEmail.textContent=user.email||'your email address';
+  setChatVerifyMessage('Verify your email before entering chat. You can resend the link below.');
+}
+function getChatAuthError(error){
+  const code=error&&error.code||'';
+  const messages={
+    'auth/invalid-email':'That email address does not look valid.',
+    'auth/user-disabled':'This account has been disabled.',
+    'auth/user-not-found':'No account was found for that email.',
+    'auth/wrong-password':'That password is incorrect.',
+    'auth/invalid-credential':'Email or password is incorrect.',
+    'auth/email-already-in-use':'An account already uses that email. Try signing in.',
+    'auth/weak-password':'Choose a stronger password (at least 6 characters).',
+    'auth/too-many-requests':'Too many attempts. Please try again later.',
+    'auth/network-request-failed':'Network error. Check your connection and try again.',
+    'auth/operation-not-allowed':'Email/password sign-in is not enabled in Firebase yet.',
+    'auth/credential-already-in-use':'That email already belongs to another account. Sign in to that account instead.'
+  };
+  return messages[code]||((error&&error.message)||'Authentication failed. Please try again.');
+}
+function stopChatForAuth(){
+  if(liveRef)liveRef.off();
+  if(friendsRef)friendsRef.off();
+  if(requestsRef)requestsRef.off();
+  if(dmRef&&dmListener)dmRef.off('value',dmListener);
+  liveRef=null;friendsRef=null;requestsRef=null;dmRef=null;dmListener=null;
+  usersRef=null;liveReady=false;chatStartedUid=null;
+  myId=null;myName=null;dmPartner=null;friendsMap={};requestsMap={};globalMessages=[];
+  if(whoamiEl)whoamiEl.textContent='';
+  if(nameModal)nameModal.classList.add('hidden');
+}
+async function startChatForUser(user){
+  if(!user||!user.uid||!user.emailVerified)return;
+  if(chatStartedUid===user.uid&&liveRef)return;
+  stopChatForAuth();
+  chatStartedUid=user.uid;
+  myId=user.uid;
+  setStatus('Connecting to shared chat…');
+  usersRef=firebase.database().ref(socialRoot+'/users');
+  const profileSnap=await usersRef.child(myId).once('value');
+  if(!firebase.auth().currentUser||firebase.auth().currentUser.uid!==user.uid)return;
+  const profile=profileSnap.val()||{};
+  let savedName='';
+  try{savedName=localStorage.getItem('cs_chat_name_'+myId)||'';}catch(e){}
+  myName=String(profile.name||user.displayName||savedName||'').trim().slice(0,30)||null;
+  if(myName){
+    nameModal.classList.add('hidden');
+    try{localStorage.setItem('cs_chat_name_'+myId,myName);}catch(e){}
+    showWhoami();
+  }else{
+    nameModal.classList.remove('hidden');
+    nameInput.value='';
+    setTimeout(()=>nameInput.focus(),50);
+  }
+  await usersRef.child(myId).update({uid:myId,name:myName||user.displayName||'New user',email:user.email||null,updatedAt:Date.now()});
+  if(!firebase.auth().currentUser||firebase.auth().currentUser.uid!==user.uid)return;
+  liveRef=firebase.database().ref(socialRoot+'/messages');
+  installSocialListeners();
+  installAiChatList();
+  Object.keys(outgoingRequests).forEach(uid=>{
+    firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).on('value',snap=>{
+      const q=snap.val();
+      if(q&&q.accepted===true)syncAcceptedOutgoing();
+    });
+  });
+  liveRef.limitToLast(MAX).on('value',snap=>{
+    const v=snap.val()||{};
+    const list=Object.keys(v).map(k=>Object.assign({id:k},v[k]));
+    list.sort((a,b)=>(a.ts||0)-(b.ts||0));
+    if(seenInitialChatSnapshot){
+      if(list.some(m=>!knownMessageIds.has(m.id))&&!document.getElementById('view-chat').classList.contains('active'))showChatUnread();
+      list.forEach(m=>knownMessageIds.add(m.id));
+    }else{
+      knownMessageIds=new Set(list.map(m=>m.id));
+      seenInitialChatSnapshot=true;
+    }
+    liveReady=true;
+    setStatus('Connected — messages sync live.');
+    if(list.length)showMessageBall();
+    globalMessages=mergeLocal(list);
+    if(viewMode==='global')render(globalMessages);
+  },err=>{
+    liveReady=false;
+    setStatus('Chat sync error: '+(err&&err.message||'check Firebase rules'));
+  });
+}
+async function handleChatAuthState(user){
+  if(!user||user.isAnonymous){
+    stopChatForAuth();
+    showChatAuth();
+    if(user&&user.isAnonymous){
+      setChatAuthMessage('Your old guest session can be kept when you create an account. Use Create an account to link it.');
+      setChatAuthMode('signup');
+      try{chatAuthName.value=localStorage.getItem('cs_chat_name')||'';}catch(e){}
+    }
+    return;
+  }
+  try{await user.reload();}catch(e){}
+  const current=firebase.auth().currentUser;
+  if(!current||current.uid!==user.uid)return;
+  if(!current.emailVerified){
+    stopChatForAuth();
+    showChatVerification(current);
+    return;
+  }
+  chatAuthGate.hidden=true;
+  chatAuthFormPanel.hidden=true;
+  chatVerifyPanel.hidden=true;
+  try{
+    await current.getIdToken(true);
+    await startChatForUser(current);
+  }catch(e){
+    setStatus('Firebase connection failed: '+(e&&e.message||'check setup'));
+    console.error('[chat firebase]',e);
+  }
+}
+function bindChatAuthUi(){
+  if(chatAuthUiBound)return;
+  chatAuthUiBound=true;
+  chatAuthSwitch.addEventListener('click',()=>{
+    setChatAuthMode(chatAuthMode==='login'?'signup':'login');
+  });
+  chatAuthSubmit.addEventListener('click',async()=>{
+    if(chatAuthBusy)return;
+    const email=(chatAuthEmail.value||'').trim().toLowerCase();
+    const password=chatAuthPassword.value||'';
+    const signup=chatAuthMode==='signup';
+    if(!email){setChatAuthMessage('Enter your email address.');chatAuthEmail.focus();return;}
+    if(!password){setChatAuthMessage('Enter your password.');chatAuthPassword.focus();return;}
+    if(signup){
+      const displayName=(chatAuthName.value||'').trim().slice(0,24);
+      if(displayName.length<2){setChatAuthMessage('Choose a display name with at least 2 characters.');chatAuthName.focus();return;}
+      if(password.length<6){setChatAuthMessage('Your password must be at least 6 characters.');chatAuthPassword.focus();return;}
+      if(password!==chatAuthConfirm.value){setChatAuthMessage('The passwords do not match.');chatAuthConfirm.focus();return;}
+    }
+    chatAuthBusy=true;chatAuthSubmit.disabled=true;
+    try{
+      const auth=firebase.auth();
+      let result;
+      if(signup){
+        const credential=firebase.auth.EmailAuthProvider.credential(email,password);
+        const current=auth.currentUser;
+        if(current&&current.isAnonymous){
+          result=await current.linkWithCredential(credential);
+        }else{
+          result=await auth.createUserWithEmailAndPassword(email,password);
+        }
+        await result.user.updateProfile({displayName:(chatAuthName.value||'').trim().slice(0,24)});
+        try{localStorage.setItem('cs_chat_name_'+result.user.uid,(chatAuthName.value||'').trim().slice(0,24));}catch(e){}
+        await result.user.sendEmailVerification();
+        chatAuthFormPanel.hidden=true;
+        chatVerifyPanel.hidden=false;
+        chatVerifyEmail.textContent=email;
+        setChatVerifyMessage('Verification email sent. Open the link in your inbox, then return and press “I’ve verified my email”.');
+      }else{
+        await auth.signInWithEmailAndPassword(email,password);
+        setChatAuthMessage('Signing in…',false);
+      }
+    }catch(error){
+      setChatAuthMessage(getChatAuthError(error));
+    }finally{
+      chatAuthBusy=false;chatAuthSubmit.disabled=false;
+    }
+  });
+  chatAuthReset.addEventListener('click',async()=>{
+    const email=(chatAuthEmail.value||'').trim().toLowerCase();
+    if(!email){setChatAuthMessage('Enter your email address first, then choose Forgot password.');chatAuthEmail.focus();return;}
+    try{
+      await firebase.auth().sendPasswordResetEmail(email);
+      setChatAuthMessage('If an account exists for that address, a password reset email has been sent.',false);
+    }catch(error){setChatAuthMessage(getChatAuthError(error));}
+  });
+  document.getElementById('chatAuthResend').addEventListener('click',async()=>{
+    const user=firebase.auth().currentUser;
+    if(!user||user.isAnonymous){setChatVerifyMessage('Sign in again to resend the verification email.',true);return;}
+    try{
+      await user.sendEmailVerification();
+      setChatVerifyMessage('Another verification email has been sent.');
+    }catch(error){setChatVerifyMessage(getChatAuthError(error),true);}
+  });
+  document.getElementById('chatAuthVerifyNow').addEventListener('click',async()=>{
+    const user=firebase.auth().currentUser;
+    if(!user||user.isAnonymous){showChatAuth();return;}
+    try{
+      await user.reload();
+      const refreshed=firebase.auth().currentUser;
+      if(!refreshed.emailVerified){setChatVerifyMessage('Firebase has not detected verification yet. Open the email link, then try again.',true);return;}
+      await refreshed.getIdToken(true);
+      await handleChatAuthState(refreshed);
+    }catch(error){setChatVerifyMessage(getChatAuthError(error),true);}
+  });
+  document.getElementById('chatAuthVerifySignOut').addEventListener('click',async()=>{
+    try{await firebase.auth().signOut();}catch(error){setChatVerifyMessage(getChatAuthError(error),true);}
+  });
+}
 async function init(){
   render(localMsgs);
-  installAiChatList();
-  setStatus('Connecting to shared chat…');
+  showChatAuth();
+  setStatus('Sign in to connect to chat.');
   try{
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
-    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
-    myId=firebase.auth().currentUser.uid;
-    if(myName)showWhoami();
-    liveRef=firebase.database().ref(socialRoot+'/messages');
-    usersRef=firebase.database().ref(socialRoot+'/users');
-    await usersRef.child(myId).update({uid:myId,name:myName||'Guest',updatedAt:Date.now()});
-    installSocialListeners();installAiChatList();
-    Object.keys(outgoingRequests).forEach(uid=>{firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).on('value',snap=>{const q=snap.val();if(q&&q.accepted===true)syncAcceptedOutgoing();});});
-    liveRef.limitToLast(MAX).on('value',snap=>{
-      const v=snap.val()||{};
-      const list=Object.keys(v).map(k=>Object.assign({id:k},v[k]));
-      list.sort((a,b)=>(a.ts||0)-(b.ts||0));
-      if(seenInitialChatSnapshot){
-        if(list.some(m=>!knownMessageIds.has(m.id))&&!document.getElementById('view-chat').classList.contains('active'))showChatUnread();
-        list.forEach(m=>knownMessageIds.add(m.id));
-      }else{
-        knownMessageIds=new Set(list.map(m=>m.id));
-        seenInitialChatSnapshot=true;
-      }
-      liveReady=true;
-      setStatus('Connected — messages sync live.');
-      if(list.length)showMessageBall();
-      globalMessages=mergeLocal(list);
-      if(viewMode==='global')render(globalMessages);
-    },err=>{
-      liveReady=false;
-      setStatus('Chat sync error: '+(err&&err.message||'check Firebase rules'));
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    bindChatAuthUi();
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    firebase.auth().onAuthStateChanged(user=>{
+      handleChatAuthState(user).catch(error=>{
+        showChatAuth();
+        setChatAuthMessage(getChatAuthError(error));
+      });
     });
-  }catch(e){
-    liveReady=false;
-    setStatus('Firebase connection failed: '+(e&&e.message||'check setup'));
-    console.error('[chat firebase]',e);
+  }catch(error){
+    setStatus('Firebase authentication failed: '+(error&&error.message||'check setup'));
+    setChatAuthMessage('Could not connect to Firebase. Check the project configuration and network connection.');
+    console.error('[chat firebase]',error);
   }
 }
 function setPendingImage(file){if(!file)return;if(!file.type||file.type.indexOf('image/')!==0){setStatus('Please choose an image file.');return;}if(file.size>MAX_IMAGE_BYTES){setStatus('Images must be 5 MB or smaller.');return;}if(pendingImageUrl)URL.revokeObjectURL(pendingImageUrl);pendingImage=file;pendingImageUrl=URL.createObjectURL(file);imagePreviewThumb.src=pendingImageUrl;imagePreviewName.textContent=file.name||'Pasted image';imagePreview.classList.add('visible');setStatus('Image ready to send.');}
@@ -1726,10 +2012,11 @@ const grow=()=>{textEl.style.height='auto';textEl.style.height=Math.min(textEl.s
 textEl.addEventListener('input',grow);
 textEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=textEl.value;if((v||'').trim()||pendingImage){sendMessage(v);textEl.value='';grow();}}});
 sendBtn.addEventListener('click',()=>{const v=textEl.value;if((v||'').trim()||pendingImage){sendMessage(v);textEl.value='';grow();}});
-function showWhoami(){whoamiEl.innerHTML='Signed in as <strong>'+esc(myName)+'</strong><br><span class="user-id-label">User ID: <code>'+esc(myId||'Connecting…')+'</code></span><br><button id="copyUserId">Copy ID</button> <button id="switchName">Change name</button>';
+function showWhoami(){const currentUser=firebase.auth().currentUser;whoamiEl.innerHTML='Signed in as <strong>'+esc(myName)+'</strong><br><span class="user-id-label">'+esc(currentUser&&currentUser.email||'')+' · User ID: <code>'+esc(myId||'Connecting…')+'</code></span><br><button id="copyUserId">Copy ID</button> <button id="switchName">Change name</button> <button id="chatLogout">Sign out</button>';
 const copyIdBtn=document.getElementById('copyUserId');copyIdBtn.addEventListener('click',()=>{if(myId&&navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(myId).then(()=>setStatus('User ID copied.')).catch(()=>setStatus('Your User ID is '+myId));else setStatus('Your User ID is '+(myId||'not ready'));});
-document.getElementById('switchName').addEventListener('click',()=>{nameInput.value=myName;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);});}
-function joinWithName(n){n=(n||'').trim().slice(0,30);if(!n)return;myName=n;try{localStorage.setItem('cs_chat_name',myName);}catch(e){}
+document.getElementById('switchName').addEventListener('click',()=>{nameInput.value=myName;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);});
+document.getElementById('chatLogout').addEventListener('click',async()=>{try{await firebase.auth().signOut();setStatus('Signed out of chat.');}catch(error){setStatus('Could not sign out: '+(error.message||'try again'));}});}
+function joinWithName(n){n=(n||'').trim().slice(0,24);if(!n)return;myName=n;try{if(myId)localStorage.setItem('cs_chat_name_'+myId,myName);}catch(e){}const signedInUser=firebase&&firebase.auth&&firebase.auth().currentUser;if(signedInUser&&signedInUser.uid===myId)signedInUser.updateProfile({displayName:myName}).catch(e=>setStatus('Could not update account display name: '+(e.message||'')));
 nameModal.classList.add('hidden');showWhoami();
 if(myId&&usersRef)usersRef.child(myId).update({uid:myId,name:myName,updatedAt:Date.now()}).catch(e=>setStatus('Could not update profile: '+(e.message||'')));
 if(pendingText!==null){const t=pendingText;pendingText=null;sendMessage(t);}}
@@ -2167,7 +2454,6 @@ mainEl.addEventListener('click',async e=>{
   const addFriend=e.target.closest('[data-add-friend]');
   if(addFriend)sendFriendRequest(addFriend.getAttribute('data-add-friend'));
 });
-if(myName){showWhoami();}else if(document.getElementById('view-chat').classList.contains('active')){nameModal.classList.remove('hidden');nameInput.focus();}
 verifyChatDeveloperSession();
 init();
 })();}catch(e){console.error("[init:chat]",e&&e.message);}
@@ -2927,8 +3213,7 @@ document.querySelectorAll(".dock a[data-page]").forEach(function(a){
 var p=a.getAttribute("data-page");if(p==="music")return; /* music dock state tracks the floating window, not the page */
 a.classList.toggle("active",p===name);});
 var nm=document.getElementById("nameModal");
-if(nm){if(name==="chat"){try{if(!localStorage.getItem("cs_chat_name"))nm.classList.remove("hidden");}catch(e){nm.classList.remove("hidden");}}
-else nm.classList.add("hidden");}
+if(nm)nm.classList.add("hidden");
 if(name==="games"){initLuminView();try{window.initGNView();}catch(e){console.error("[init:gn]",e&&e.message);}}
 if(name==="movies"&&typeof window.initMoviesView==="function"){try{window.initMoviesView();}catch(e){console.error("[init:movies]",e&&e.message);}}
 if(name==="browser"&&typeof window.initBrowserView==="function"){try{window.initBrowserView();}catch(e){console.error("[init:browser]",e&&e.message);}}
