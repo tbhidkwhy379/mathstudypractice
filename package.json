@@ -3,12 +3,18 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "build": "npm run build:unblocker",
+    "build:unblocker": "node scripts/build-unblocker-assets.mjs"
   },
   "dependencies": {
     "altcha-lib": "^2.2.0",
     "chalk": "^4.1.2",
     "express": "^4.19.2",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "@titaniumnetwork-dev/ultraviolet": "3.2.10",
+    "@mercuryworkshop/bare-mux": "2.1.9",
+    "@mercuryworkshop/libcurl-transport": "1.5.2",
+    "@mercuryworkshop/epoxy-transport": "2.1.28"
   }
 }
