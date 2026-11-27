@@ -3338,24 +3338,92 @@ showPage(p);});});
     });
   }
 
-  async function waitForServiceWorkerControl(){
-    await navigator.serviceWorker.ready;
-    if(navigator.serviceWorker.controller)return;
+  // Wait for the specific UV registration to activate. Do not use
+  // navigator.serviceWorker.ready here: app.html may be controlled by
+  // the legacy Scramjet worker registered at scope "/".
+  async function waitForUvRegistration(registration){
+    const isActive=()=>Boolean(
+      registration.active && registration.active.state==="activated"
+    );
+
+    if(isActive())return registration.active;
+
+    const worker=
+      registration.installing ||
+      registration.waiting ||
+      registration.active;
+
+    if(!worker){
+      throw new Error("The Ultraviolet service worker did not start installing.");
+    }
+
     await new Promise((resolve,reject)=>{
+      let finished=false;
       const timeout=setTimeout(()=>{
-        navigator.serviceWorker.removeEventListener("controllerchange",onChange);
-        reject(new Error("The proxy service worker did not take control. Reload Neural UBG and try again."));
+        cleanup();
+        reject(new Error("Ultraviolet's service worker did not activate in time."));
+      },15000);
+
+      function cleanup(){
+        if(finished)return;
+        finished=true;
+        clearTimeout(timeout);
+        worker.removeEventListener("statechange",checkState);
+      }
+
+      function checkState(){
+        if(isActive()){
+          cleanup();
+          resolve();
+        }else if(worker.state==="redundant"){
+          cleanup();
+          reject(new Error("Ultraviolet's service worker installation was replaced or failed."));
+        }
+      }
+
+      worker.addEventListener("statechange",checkState);
+      checkState();
+    });
+
+    return registration.active;
+  }
+
+  async function waitForUvController(){
+    const isUvController=()=>{
+      const controller=navigator.serviceWorker.controller;
+      if(!controller)return false;
+      try{
+        return new URL(controller.scriptURL).pathname==="/sw.js";
+      }catch(e){
+        return false;
+      }
+    };
+
+    if(isUvController())return;
+
+    await new Promise((resolve,reject)=>{
+      let finished=false;
+      const timeout=setTimeout(()=>{
+        cleanup();
+        reject(new Error("The /uv/ service worker activated but did not take control of this proxy page."));
       },10000);
-      function onChange(){
+
+      function cleanup(){
+        if(finished)return;
+        finished=true;
         clearTimeout(timeout);
-        resolve();
+        navigator.serviceWorker.removeEventListener("controllerchange",checkController);
       }
-      navigator.serviceWorker.addEventListener("controllerchange",onChange,{once:true});
-      if(navigator.serviceWorker.controller){
-        clearTimeout(timeout);
-        navigator.serviceWorker.removeEventListener("controllerchange",onChange);
-        resolve();
+
+      function checkController(){
+        if(isUvController()){
+          cleanup();
+          resolve();
+        }
       }
+
+      navigator.serviceWorker.addEventListener("controllerchange",checkController);
+      checkController();
     });
   }
 
@@ -3388,8 +3456,13 @@ showPage(p);});});
         setState("Epoxy fallback selected. Registering the proxy service worker…");
       }
 
-      await navigator.serviceWorker.register("/sw.js",{scope:"/"});
-      await waitForServiceWorkerControl();
+      // Keep UV isolated from the legacy Scramjet root-scope worker.
+      // The UV route lives under /uv/service/, so /uv/ is the correct scope.
+      const uvRegistration=await navigator.serviceWorker.register("/sw.js",{scope:"/uv/"});
+      if(!uvRegistration.scope.endsWith("/uv/")){
+        throw new Error("Ultraviolet registered with an unexpected service-worker scope: "+uvRegistration.scope);
+      }
+      await waitForUvRegistration(uvRegistration);
       setState("Ready. TikTok is prefilled — enter a site or press Open TikTok.", "ready");
       return true;
     })().catch(error=>{
@@ -3462,9 +3535,10 @@ showPage(p);});});
 
   window.NeuralUnblocker={initialize:initializeUnblocker,launch:launchProxy,defaultUrl:UV_TIKTOK,wisp:WISP_URL};
 
-  // GitHub Pages serves 404.html for unknown /uv/service/* paths.
-  // If a user opens or refreshes a proxy URL before the service worker controls it,
-  // initialise the authenticated transport, then reload once so the SW can serve it.
+  // GitHub Pages may serve 404.html for a direct /uv/service/* request
+  // if the UV worker was not controlling that navigation yet. The fallback
+  // document is itself under /uv/, so wait for the UV-scoped worker to claim it,
+  // then retry once. The legacy Scramjet worker remains scoped to "/".
   if(location.pathname.startsWith("/uv/service/")){
     window.neuralChatAuthReady.then(async user=>{
       if(!user||!user.emailVerified){
@@ -3473,14 +3547,18 @@ showPage(p);});});
         return;
       }
       try{
+        showPage("unblocker");
         await initializeUnblocker();
+        await waitForUvController();
+
         let alreadyRetried=false;
         try{alreadyRetried=sessionStorage.getItem("neural-uv-fallback-reload")==="1";}catch(e){}
         if(alreadyRetried){
           try{sessionStorage.removeItem("neural-uv-fallback-reload");}catch(e){}
-          setState("The proxy route still returned the site fallback. Check the GitHub Pages deploy and root service worker.","error");
+          setState("GitHub Pages still served its fallback after the /uv/ worker took control. Check the proxy URL and service-worker console for errors.","error");
           return;
         }
+
         try{sessionStorage.setItem("neural-uv-fallback-reload","1");}catch(e){}
         window.location.reload();
       }catch(error){
