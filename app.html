@@ -1830,7 +1830,7 @@ async function startChatForUser(user){
     nameInput.value='';
     setTimeout(()=>nameInput.focus(),50);
   }
-  await usersRef.child(myId).update({uid:myId,name:myName||user.displayName||'New user',email:user.email||null,updatedAt:Date.now()});
+  await usersRef.child(myId).update({uid:myId,name:myName||user.displayName||'New user',updatedAt:Date.now()});
   if(!firebase.auth().currentUser||firebase.auth().currentUser.uid!==user.uid)return;
   liveRef=firebase.database().ref(socialRoot+'/messages');
   installSocialListeners();
@@ -1867,8 +1867,8 @@ async function handleChatAuthState(user){
     stopChatForAuth();
     showChatAuth();
     if(user&&user.isAnonymous){
-      setChatAuthMessage('Your old guest session can be kept when you create an account. Use Create an account to link it.');
       setChatAuthMode('signup');
+      setChatAuthMessage('Your old guest session can be kept when you create an account. Use Create an account to link it.',false);
       try{chatAuthName.value=localStorage.getItem('cs_chat_name')||'';}catch(e){}
     }
     return;
