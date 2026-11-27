@@ -4,6 +4,10 @@ importScripts(__uv$config.sw || "/public/uv/uv.sw.js");
 
 const uv = new UVServiceWorker();
 
+self.addEventListener("install", event => {
+  event.waitUntil(self.skipWaiting());
+});
+
 self.addEventListener("activate", event => {
   event.waitUntil(self.clients.claim());
 });
