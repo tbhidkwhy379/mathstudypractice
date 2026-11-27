@@ -19,8 +19,6 @@ Aayush's PREMIUM UBG + MOVIES <!DOCTYPE html>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js"></script>
-<script src="./uv.bundle.js"></script>
-<script src="./uv.config.js"></script>
 
 <style>
 :root{--accent:#6C8CFF;--bg:#050507;--panel:#101014;--border:#232329;--text:#F2F2F5;--muted:#8A8A93}
@@ -955,6 +953,34 @@ button { line-height: 1.25; }
   #view-chat.friends-mode .person-row{transition:none}
 }
 
+/* Neural UBG Unblocker — direct same-tab Ultraviolet navigation */
+#view-unblocker{min-height:100vh;padding:clamp(16px,3vw,34px);padding-bottom:120px;color:var(--text)}
+#view-unblocker.active{display:flex;flex-direction:column;gap:18px}
+.uv-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.uv-heading h1{margin:0 0 5px;font-size:clamp(26px,4vw,36px);letter-spacing:-.045em}
+.uv-heading p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.uv-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:rgba(16,16,20,.72);color:#9fb3ff;font-size:11px;font-weight:800;letter-spacing:.07em}
+.uv-card{width:min(100%,850px);margin:clamp(20px,7vh,70px) auto 0;padding:clamp(20px,4vw,34px);border:1px solid rgba(145,166,255,.2);border-radius:22px;background:radial-gradient(ellipse at 80% 0,rgba(108,140,255,.12),transparent 42%),linear-gradient(145deg,rgba(20,24,36,.96),rgba(11,13,20,.96));box-shadow:0 24px 75px rgba(0,0,0,.28)}
+.uv-card h2{margin:0 0 8px;font-size:clamp(21px,3vw,27px);letter-spacing:-.035em}
+.uv-card>p{margin:0 0 22px;color:#9da7bb;font-size:13px;line-height:1.6}
+.uv-address-form{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.uv-address{display:flex;align-items:center;gap:10px;min-width:200px;flex:1;height:48px;padding:0 14px;border:1px solid #343b50;border-radius:13px;background:rgba(5,7,12,.78);color:#9ca9c1}
+.uv-address:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,140,255,.13)}
+.uv-address input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#f3f5fb;font:inherit;font-size:14px}
+.uv-address input::placeholder{color:#68738a}
+.uv-launch{min-height:48px;padding:0 20px;border:0;border-radius:13px;background:var(--accent);color:#080b13;font:inherit;font-size:13px;font-weight:850;cursor:pointer}
+.uv-launch:disabled{opacity:.6;cursor:wait}
+.uv-quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.uv-quick button{min-height:35px;padding:0 12px;border:1px solid #30364a;border-radius:10px;background:rgba(255,255,255,.035);color:#cad2e2;font:inherit;font-size:12px;cursor:pointer}
+.uv-quick button:hover{border-color:#667fc7;background:rgba(108,140,255,.09)}
+.uv-state{display:flex;align-items:center;gap:9px;min-height:24px;margin-top:18px;color:#98a5bb;font-size:11px}
+.uv-state-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#778197}
+.uv-state-dot.ready{background:#37d79b;box-shadow:0 0 0 4px rgba(55,215,155,.1)}
+.uv-state-dot.error{background:#ff7373;box-shadow:0 0 0 4px rgba(255,115,115,.1)}
+.uv-footnote{width:min(100%,850px);margin:0 auto;color:#778196;font-size:11px;line-height:1.6}
+.dock a[data-page="unblocker"] i{font-size:20px}
+@media(max-width:600px){#view-unblocker{padding:12px 10px 110px}.uv-card{margin-top:20px;padding:20px 16px}.uv-address-form{align-items:stretch}.uv-address{flex-basis:100%}.uv-launch{width:100%}}
+
 /* Hyperbeam full browser */
 #view-browser{min-height:100vh;padding:clamp(12px,2.2vw,28px);padding-bottom:112px;color:var(--text)}
 #view-browser.active{display:flex;flex-direction:column;gap:12px}
@@ -1211,6 +1237,30 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
   </div>
   <div class="hb-note">Sessions run on Hyperbeam's production environment. Availability depends on your account and the selected environment.</div>
 </section>
+<section class="page-view" id="view-unblocker">
+  <div class="uv-heading">
+    <div>
+      <h1><i class="fas fa-shield-halved" aria-hidden="true"></i> Web Unblocker</h1>
+      <p>Ultraviolet · Wisp transport · Opens in this tab, not an iframe.</p>
+    </div>
+    <div class="uv-badge"><i class="fas fa-bolt"></i> UV + LIBCURL</div>
+  </div>
+  <div class="uv-card">
+    <h2>Browse with Neural UBG</h2>
+    <p>You're using your existing Neural UBG chat account. TikTok is prefilled, or enter another website or search term.</p>
+    <form class="uv-address-form" id="uv-launch-form">
+      <label class="uv-address" for="uv-address-input"><i class="fas fa-globe"></i><input id="uv-address-input" type="text" inputmode="url" autocomplete="url" spellcheck="false" value="https://www.tiktok.com/" placeholder="Enter a website or search"></label>
+      <button class="uv-launch" id="uv-launch-button" type="submit">Open website <i class="fas fa-arrow-up-right-from-square"></i></button>
+    </form>
+    <div class="uv-quick">
+      <button type="button" data-uv-quick="https://www.tiktok.com/"><i class="fab fa-tiktok"></i> Open TikTok</button>
+      <button type="button" data-uv-quick="https://www.youtube.com/"><i class="fab fa-youtube"></i> YouTube</button>
+      <button type="button" data-uv-quick="https://www.google.com/"><i class="fab fa-google"></i> Google</button>
+    </div>
+    <div class="uv-state" role="status" aria-live="polite"><span class="uv-state-dot" id="uv-state-dot"></span><span id="uv-state-text">Checking your chat account and preparing the proxy…</span></div>
+  </div>
+  <p class="uv-footnote">Cloud Computer remains a separate Hyperbeam feature. This Unblocker uses the Wisp service at proxy-scramjet-8xz5.onrender.com and navigates directly to the proxied URL.</p>
+</section>
 <section class="page-view" id="view-chat">
 <div id="chatAuthGate" role="dialog" aria-modal="true" aria-labelledby="chatAuthTitle">
   <div class="chat-auth-card">
@@ -1364,6 +1414,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <a data-page="games" aria-label="Games"><svg viewBox="0 0 24 24"><path d="M17,6H7A5,5,0,0,0,2,11v2a5,5,0,0,0,5,5,3.87,3.87,0,0,0,2.65-1.05L11.71,15h.58l2.06,1.95A3.87,3.87,0,0,0,17,18a5,5,0,0,0,5-5V11A5,5,0,0,0,17,6ZM10,12H8.5v1.5a1,1,0,0,1-2,0V12H5a1,1,0,0,1,0-2H6.5V8.5a1,1,0,0,1,2,0V10H10a1,1,0,0,1,0,2Zm4.75-2.25a1.25,1.25,0,1,1-1.25,1.25A1.25,1.25,0,0,1,14.75,9.75Zm2.5,3.5a1.25,1.25,0,1,1,1.25-1.25A1.25,1.25,0,0,1,17.25,13.25Z"/></svg></a>
 <a data-page="movies" aria-label="Movies & TV"><svg viewBox="0 0 24 24"><path d="M20,4H4A2,2,0,0,0,2,6V18a2,2,0,0,0,2,2H20a2,2,0,0,0,2-2V6A2,2,0,0,0,20,4Zm0,14H4V6H20Z"/><path d="M10,9l5,3-5,3Z"/></svg></a>
 <a data-page="chat" aria-label="Chat"><svg viewBox="0 0 24 24"><path d="M4,4H20a1,1,0,0,1,1,1V17a1,1,0,0,1-1,1H8l-4,4V5A1,1,0,0,1,4,4Z"/></svg><span class="chat-unread-dot" aria-label="Unread messages"></span></a>
+<a data-page="unblocker" aria-label="Web Unblocker" title="Web Unblocker"><i class="fas fa-shield-halved"></i></a>
 <a data-page="music" aria-label="Music"><svg viewBox="0 0 24 24"><path d="M12,3V13.55A4,4,0,1,0,14,17V7H18V3Z"/></svg></a>
 <a data-page="browser" aria-label="Cloud Browser" title="Cloud Browser"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.92 9h-3.05a15.7 15.7 0 0 0-1.2-5.1A8.03 8.03 0 0 1 18.92 11ZM12 4.05c.92 1.28 1.63 3.73 1.83 6.95h-3.66c.2-3.22.91-5.67 1.83-6.95ZM9.33 5.9A15.7 15.7 0 0 0 8.13 11H5.08a8.03 8.03 0 0 1 4.25-5.1ZM5.08 13h3.05c.14 1.88.55 3.66 1.2 5.1A8.03 8.03 0 0 1 5.08 13ZM12 19.95c-.92-1.28-1.63-3.73-1.83-6.95h3.66c-.2 3.22-.91 5.67-1.83 6.95Zm2.67-1.85a15.7 15.7 0 0 0 1.2-5.1h3.05a8.03 8.03 0 0 1-4.25 5.1Z"/></svg></a>
 </div>
@@ -1676,6 +1727,9 @@ const CHAT_EMAIL_ACTION_SETTINGS={
 };
 const CHAT_GATEKEEPER_URL='https://gatekeeper.sapktaayush.workers.dev/';
 const CHAT_DEV_TOKEN_KEY='cs_dev_mode_token';
+let resolveInitialChatAuth=null,initialChatAuthResolved=false;
+window.neuralChatAuthUser=null;
+window.neuralChatAuthReady=new Promise(resolve=>{resolveInitialChatAuth=resolve;});
 let chatDeveloperVerified=false;
 async function verifyChatDeveloperSession(){
   let token='';
@@ -1985,8 +2039,18 @@ async function init(){
     await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
     if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
     bindChatAuthUi();
-    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    firebase.auth().onAuthStateChanged(user=>{
+    const auth=firebase.auth();
+    window.neuralChatAuth=auth;
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    auth.onAuthStateChanged(user=>{
+      window.neuralChatAuthUser=user||null;
+      if(!initialChatAuthResolved){
+        initialChatAuthResolved=true;
+        resolveInitialChatAuth(user||null);
+      }
+      if(!user&&document.getElementById('view-unblocker')?.classList.contains('active')&&typeof showPage==='function'){
+        showPage('chat');
+      }
       handleChatAuthState(user).catch(error=>{
         showChatAuth();
         setChatAuthMessage(getChatAuthError(error));
@@ -1995,6 +2059,10 @@ async function init(){
   }catch(error){
     setStatus('Firebase authentication failed: '+(error&&error.message||'check setup'));
     setChatAuthMessage('Could not connect to Firebase. Check the project configuration and network connection.');
+    if(typeof resolveInitialChatAuth==='function'&&!initialChatAuthResolved){
+      initialChatAuthResolved=true;
+      resolveInitialChatAuth(null);
+    }
     console.error('[chat firebase]',error);
   }
 }
@@ -3208,6 +3276,10 @@ setTimeout(stripPages,400);setTimeout(stripPages,1500);
 try{new MutationObserver(stripPages).observe(document.getElementById("games"),{childList:true,subtree:true});}catch(e){}}
 function showPage(name){
 if(name==="browser"&&!sessionStorage.getItem("cs_dev_mode_token"))return;
+if(name==="unblocker"&&(!window.neuralChatAuthUser||!window.neuralChatAuthUser.emailVerified)){
+  showPage("chat");
+  return;
+}
 if(!pageViews[name])return;
 if(name==="chat"){var unreadDot=document.querySelector(".dock .chat-unread-dot");if(unreadDot)unreadDot.classList.remove("visible");}
 Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active");});
@@ -3227,7 +3299,169 @@ a.addEventListener("click",function(e){e.preventDefault();
 var p=a.getAttribute("data-page");
 if(p==="music"){var mw=document.getElementById("view-music");
 mw.classList.toggle("open");a.classList.toggle("active",mw.classList.contains("open"));return;}
+if(p==="unblocker"&&typeof window.openNeuralUnblocker==="function"){window.openNeuralUnblocker();return;}
 showPage(p);});});
+</script>
+<script>
+(function(){
+  const WISP_URL="wss://proxy-scramjet-8xz5.onrender.com/wisp/";
+  const UV_TIKTOK="https://www.tiktok.com/";
+  let stackPromise=null;
+  let bareMuxConnection=null;
+
+  const byId=id=>document.getElementById(id);
+  const stateText=byId("uv-state-text");
+  const stateDot=byId("uv-state-dot");
+  const launchButton=byId("uv-launch-button");
+
+  function setState(message,kind){
+    if(stateText)stateText.textContent=message;
+    if(stateDot)stateDot.className="uv-state-dot"+(kind==="ready"?" ready":kind==="error"?" error":"");
+  }
+
+  function loadProxyScript(src){
+    return new Promise((resolve,reject)=>{
+      const absolute=new URL(src,location.href).href;
+      const existing=Array.from(document.scripts).find(script=>script.src===absolute);
+      if(existing){
+        if(existing.dataset.loaded==="true"){resolve();return;}
+        existing.addEventListener("load",resolve,{once:true});
+        existing.addEventListener("error",()=>reject(new Error("Could not load "+src)),{once:true});
+        return;
+      }
+      const script=document.createElement("script");
+      script.src=src;
+      script.async=true;
+      script.onload=()=>{script.dataset.loaded="true";resolve();};
+      script.onerror=()=>reject(new Error("Could not load proxy asset: "+src));
+      document.head.appendChild(script);
+    });
+  }
+
+  async function waitForServiceWorkerControl(){
+    await navigator.serviceWorker.ready;
+    if(navigator.serviceWorker.controller)return;
+    await new Promise((resolve,reject)=>{
+      const timeout=setTimeout(()=>{
+        navigator.serviceWorker.removeEventListener("controllerchange",onChange);
+        reject(new Error("The proxy service worker did not take control. Reload Neural UBG and try again."));
+      },10000);
+      function onChange(){
+        clearTimeout(timeout);
+        resolve();
+      }
+      navigator.serviceWorker.addEventListener("controllerchange",onChange,{once:true});
+      if(navigator.serviceWorker.controller){
+        clearTimeout(timeout);
+        navigator.serviceWorker.removeEventListener("controllerchange",onChange);
+        resolve();
+      }
+    });
+  }
+
+  async function initializeUnblocker(){
+    if(stackPromise)return stackPromise;
+    stackPromise=(async()=>{
+      const user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
+      if(!user||!user.emailVerified){
+        throw new Error("Sign in to Chat with your verified email before using Unblocker.");
+      }
+      if(!("serviceWorker" in navigator))throw new Error("This browser does not support service workers.");
+      if(!("SharedWorker" in window))throw new Error("This browser does not support SharedWorker, which BareMux requires.");
+
+      setState("Loading Ultraviolet and BareMux files…");
+      await loadProxyScript("/public/uv/uv.bundle.js");
+      await loadProxyScript("/uv/uv.config.js");
+      await loadProxyScript("/public/baremux/index.js");
+
+      if(!window.__uv$config||!window.Ultraviolet)throw new Error("Ultraviolet did not initialise. Run the Unblocker asset build.");
+      if(!window.BareMux||typeof window.BareMux.BareMuxConnection!=="function")throw new Error("BareMux did not load. Check /public/baremux/index.js.");
+
+      setState("Connecting to the Wisp transport…");
+      bareMuxConnection=new window.BareMux.BareMuxConnection("/public/baremux/worker.js");
+      try{
+        await bareMuxConnection.setTransport("/public/libcurl/index.mjs",[{wisp:WISP_URL}]);
+        setState("Libcurl transport selected. Registering the proxy service worker…");
+      }catch(libcurlError){
+        console.warn("[Neural Unblocker] Libcurl setup failed; trying Epoxy fallback.",libcurlError);
+        await bareMuxConnection.setTransport("/public/epoxy/index.mjs",[{wisp:WISP_URL}]);
+        setState("Epoxy fallback selected. Registering the proxy service worker…");
+      }
+
+      await navigator.serviceWorker.register("/sw.js",{scope:"/"});
+      await waitForServiceWorkerControl();
+      setState("Ready. TikTok is prefilled — enter a site or press Open TikTok.", "ready");
+      return true;
+    })().catch(error=>{
+      stackPromise=null;
+      setState(error.message||"Could not initialise the Unblocker.","error");
+      throw error;
+    });
+    return stackPromise;
+  }
+
+  function resolveAddress(raw){
+    const value=String(raw||"").trim();
+    if(!value)throw new Error("Enter a website or search term.");
+    if(/\s/.test(value)||!value.includes(".")){
+      return "https://www.google.com/search?q="+encodeURIComponent(value);
+    }
+    const withProtocol=/^[a-z][a-z0-9+.-]*:\/\//i.test(value)?value:"https://"+value;
+    const url=new URL(withProtocol);
+    if(!["http:","https:"].includes(url.protocol)||url.username||url.password){
+      throw new Error("Only normal HTTP and HTTPS website addresses can be opened.");
+    }
+    return url.href;
+  }
+
+  async function launchProxy(raw){
+    const user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
+    if(!user||!user.emailVerified){
+      setState("Sign in to Chat with your verified email first.","error");
+      if(typeof showPage==="function")showPage("chat");
+      return;
+    }
+    if(launchButton)launchButton.disabled=true;
+    try{
+      await initializeUnblocker();
+      const destination=resolveAddress(raw);
+      const config=window.__uv$config;
+      if(!config||typeof config.encodeUrl!=="function")throw new Error("Ultraviolet URL encoder is unavailable.");
+      setState("Opening "+destination+"…","ready");
+      const proxiedPath=config.prefix+config.encodeUrl(destination);
+      // Same-tab navigation by design: no iframe/embedder is used.
+      window.location.replace(proxiedPath);
+    }catch(error){
+      setState(error.message||"Could not launch the website.","error");
+      if(launchButton)launchButton.disabled=false;
+    }
+  }
+
+  window.openNeuralUnblocker=async function(){
+    let user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
+    if(!user&&window.neuralChatAuthReady){
+      try{user=await window.neuralChatAuthReady;}catch(e){user=null;}
+    }
+    if(!user||!user.emailVerified){
+      if(typeof showPage==="function")showPage("chat");
+      return;
+    }
+    showPage("unblocker");
+    try{await initializeUnblocker();}
+    catch(error){console.warn("[Neural Unblocker]",error);}
+  };
+
+  const form=byId("uv-launch-form");
+  if(form)form.addEventListener("submit",event=>{
+    event.preventDefault();
+    launchProxy(byId("uv-address-input").value);
+  });
+  document.querySelectorAll("[data-uv-quick]").forEach(button=>{
+    button.addEventListener("click",()=>launchProxy(button.getAttribute("data-uv-quick")));
+  });
+
+  window.NeuralUnblocker={initialize:initializeUnblocker,launch:launchProxy,defaultUrl:UV_TIKTOK,wisp:WISP_URL};
+})();
 </script>
 
 </body>
