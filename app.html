@@ -3439,6 +3439,10 @@ showPage(p);});});
       if(!("serviceWorker" in navigator))throw new Error("This browser does not support service workers.");
       if(!("SharedWorker" in window))throw new Error("This browser does not support SharedWorker, which BareMux requires.");
 
+      // Update the legacy root worker before navigating into /uv/. Its fetch
+      // handler now deliberately leaves /uv/ requests to Ultraviolet.
+      await refreshLegacyScramjetWorker();
+
       setState("Loading Ultraviolet and BareMux files…");
       await loadProxyScript("/uv/uv.bundle.js");
       await loadProxyScript("/uv/uv.config.js");
@@ -3537,59 +3541,90 @@ showPage(p);});});
 
   window.NeuralUnblocker={initialize:initializeUnblocker,launch:launchProxy,defaultUrl:UV_TIKTOK,wisp:WISP_URL};
 
-  // Older visits to proxy.html may have left Scramjet's worker registered
-  // at the origin root. A page controlled by that worker keeps using it for
-  // its navigation, so the narrower /uv/ worker cannot take over this tab.
-  // Remove only that known legacy root registration and reload this fallback
-  // document so the /uv/ registration can become its controller.
-  async function releaseLegacyScramjetRootWorker(){
+  // Refresh the existing root Scramjet worker so its updated fetch handler
+  // can pass /uv/ navigations through to the more-specific UV registration.
+  async function refreshLegacyScramjetWorker(){
     const registrations=await navigator.serviceWorker.getRegistrations();
-    const isLegacyScript=worker=>{
+    const isScramjetWorker=worker=>{
       if(!worker)return false;
       try{return new URL(worker.scriptURL).pathname==="/scramjet-sw.js";}
       catch(e){return false;}
     };
+
     const rootRegistration=registrations.find(reg=>{
       try{
         const scope=new URL(reg.scope);
         return scope.origin===location.origin &&
           scope.pathname==="/" &&
-          [reg.active,reg.waiting,reg.installing].some(isLegacyScript);
+          [reg.active,reg.waiting,reg.installing].some(isScramjetWorker);
       }catch(e){return false;}
     });
-    const controller=navigator.serviceWorker.controller;
-    const controllerIsLegacy=isLegacyScript(controller);
 
-    if(!rootRegistration&&!controllerIsLegacy){
-      try{sessionStorage.removeItem("neural-uv-scramjet-reset-count");}catch(e){}
-      return false;
+    if(!rootRegistration)return;
+
+    const previousActive=rootRegistration.active;
+    const previousController=navigator.serviceWorker.controller;
+
+    await rootRegistration.update();
+
+    const installing=rootRegistration.installing;
+    if(installing){
+      await new Promise((resolve,reject)=>{
+        let finished=false;
+        const timeout=setTimeout(()=>{
+          cleanup();
+          reject(new Error("The updated Scramjet worker did not activate in time."));
+        },15000);
+        function cleanup(){
+          if(finished)return;
+          finished=true;
+          clearTimeout(timeout);
+          installing.removeEventListener("statechange",checkState);
+        }
+        function checkState(){
+          if(installing.state==="activated"){
+            cleanup();
+            resolve();
+          }else if(installing.state==="redundant"){
+            cleanup();
+            reject(new Error("The updated Scramjet worker installation failed."));
+          }
+        }
+        installing.addEventListener("statechange",checkState);
+        checkState();
+      });
     }
 
-    let attempts=0;
-    try{
-      attempts=Number(sessionStorage.getItem("neural-uv-scramjet-reset-count")||"0");
-    }catch(e){}
-
-    if(attempts>=2){
-      const controllerUrl=controller?controller.scriptURL:"none";
-      throw new Error(
-        "The old Scramjet worker still controls this tab after two reloads. " +
-        "Close any old proxy.html tabs, then clear site data for neural.qzz.io. " +
-        "Current controller: "+controllerUrl
-      );
+    const activeNow=rootRegistration.active;
+    if(
+      previousController &&
+      previousController===navigator.serviceWorker.controller &&
+      previousActive &&
+      activeNow &&
+      activeNow!==previousActive
+    ){
+      await new Promise((resolve,reject)=>{
+        let finished=false;
+        const timeout=setTimeout(()=>{
+          cleanup();
+          reject(new Error("The updated Scramjet worker did not take over this tab. Close old Neural UBG tabs and reopen the site."));
+        },10000);
+        function cleanup(){
+          if(finished)return;
+          finished=true;
+          clearTimeout(timeout);
+          navigator.serviceWorker.removeEventListener("controllerchange",checkController);
+        }
+        function checkController(){
+          if(navigator.serviceWorker.controller!==previousController){
+            cleanup();
+            resolve();
+          }
+        }
+        navigator.serviceWorker.addEventListener("controllerchange",checkController);
+        checkController();
+      });
     }
-
-    if(rootRegistration){
-      await rootRegistration.unregister();
-    }
-
-    try{
-      sessionStorage.setItem("neural-uv-scramjet-reset-count",String(attempts+1));
-    }catch(e){}
-
-    setState("Removing the old Scramjet service worker and retrying…");
-    window.location.reload();
-    return true;
   }
 
   // GitHub Pages may serve 404.html for a direct /uv/service/* request
@@ -3603,21 +3638,36 @@ showPage(p);});});
         return;
       }
       try{
-        if(await releaseLegacyScramjetRootWorker())return;
         showPage("unblocker");
         await initializeUnblocker();
-        await waitForUvController();
-        try{sessionStorage.removeItem("neural-uv-scramjet-reset-count");}catch(e){}
 
-        let alreadyRetried=false;
-        try{alreadyRetried=sessionStorage.getItem("neural-uv-fallback-reload")==="1";}catch(e){}
-        if(alreadyRetried){
-          try{sessionStorage.removeItem("neural-uv-fallback-reload");}catch(e){}
-          setState("GitHub Pages still served its fallback after the /uv/ worker took control. Check the proxy URL and service-worker console for errors.","error");
+        const controller=navigator.serviceWorker.controller;
+        let controllerPath="none";
+        try{controllerPath=controller?new URL(controller.scriptURL).pathname:"none";}catch(e){}
+        const isUvControlled=controllerPath==="/sw.js";
+        let routePhase="";
+        try{routePhase=sessionStorage.getItem("neural-uv-fallback-phase")||"";}catch(e){}
+
+        if(!isUvControlled){
+          if(routePhase==="root-worker-retried"){
+            throw new Error(
+              "The /uv/ route is still controlled by "+controllerPath+
+              ". Close old Neural UBG proxy tabs, then reopen app.html so the updated Scramjet worker can load."
+            );
+          }
+          try{sessionStorage.setItem("neural-uv-fallback-phase","root-worker-retried");}catch(e){}
+          setState("Refreshing the old proxy worker so Ultraviolet can take over…");
+          window.location.reload();
           return;
         }
 
-        try{sessionStorage.setItem("neural-uv-fallback-reload","1");}catch(e){}
+        if(routePhase==="uv-worker-retried"){
+          try{sessionStorage.removeItem("neural-uv-fallback-phase");}catch(e){}
+          throw new Error("GitHub Pages still returned its fallback after the Ultraviolet worker controlled the page. Check the /uv/service route and worker fetch errors.");
+        }
+
+        try{sessionStorage.setItem("neural-uv-fallback-phase","uv-worker-retried");}catch(e){}
+        setState("Ultraviolet is controlling this route. Retrying the requested website…");
         window.location.reload();
       }catch(error){
         setState(error.message||"Could not initialise the proxy route.","error");
