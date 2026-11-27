@@ -1,19 +1,14 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { uvPath } from "@titaniumnetwork-dev/ultraviolet";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
-
-const require = createRequire(import.meta.url);
+import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
+import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(scriptDir, "..");
 const publicDir = path.join(rootDir, "public");
 
-function packageDist(packageName) {
-  const entry = require.resolve(packageName);
-  return path.dirname(entry);
-}
 
 function copyPackage(sourceDir, targetDir, label) {
   if (!sourceDir || !existsSync(sourceDir)) {
@@ -40,8 +35,8 @@ const epoxyTarget = path.join(publicDir, "epoxy");
 
 copyPackage(uvPath, uvTarget, "Ultraviolet");
 copyPackage(baremuxPath, baremuxTarget, "BareMux");
-copyPackage(packageDist("@mercuryworkshop/libcurl-transport"), libcurlTarget, "Libcurl transport");
-copyPackage(packageDist("@mercuryworkshop/epoxy-transport"), epoxyTarget, "Epoxy transport");
+copyPackage(libcurlPath, libcurlTarget, "Libcurl transport");
+copyPackage(epoxyPath, epoxyTarget, "Epoxy transport");
 
 requireFiles(uvTarget, ["uv.bundle.js", "uv.handler.js", "uv.sw.js"], "Ultraviolet");
 requireFiles(baremuxTarget, ["index.js", "worker.js"], "BareMux");
