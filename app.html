@@ -198,20 +198,21 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-chat #nameModal button{width:100%;background:var(--acc2);color:#fff;border:none;border-radius:10px;padding:11px;font-size:14.5px;font-weight:600;cursor:pointer}
 /* Chat-only Firebase email/password account gate */
 #view-chat #chatAuthGate{position:absolute;inset:0 0 100px;z-index:40;display:flex;align-items:center;justify-content:center;overflow:auto;padding:22px;background:rgba(5,9,16,.97);backdrop-filter:blur(14px)}
-#view-chat #chatAuthGate[hidden],#view-chat #chatAuthFormPanel[hidden],#view-chat #chatVerifyPanel[hidden]{display:none!important}
-#view-chat .chat-auth-card{width:min(100%,420px);padding:28px;background:linear-gradient(145deg,rgba(24,31,45,.98),rgba(13,18,28,.99));border:1px solid rgba(160,177,207,.2);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.48);color:#f4f6fb}
-#view-chat .chat-auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:24px;color:#aebbd2;font-size:11px;font-weight:800;letter-spacing:.2em}
-#view-chat .chat-auth-mark{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--acc2);color:white;font-size:14px;letter-spacing:0}
-#view-chat .chat-auth-card h2{margin:0 0 8px;font-size:25px;letter-spacing:-.03em}
-#view-chat .chat-auth-card p{margin:0 0 18px;color:#aeb8c9;font-size:13px;line-height:1.6}
-#view-chat .chat-auth-card label{display:block;margin:13px 0 0;color:#d9e0ec;font-size:12px;font-weight:650}
-#view-chat .chat-auth-card input{display:block;width:100%;height:46px;margin-top:7px;padding:0 13px;border:1px solid rgba(160,177,207,.22);border-radius:11px;outline:none;background:rgba(5,9,16,.65);color:#f4f6fb;font:inherit;font-size:14px}
-#view-chat .chat-auth-card input:focus{border-color:var(--acc2);box-shadow:0 0 0 3px rgba(86,132,255,.14)}
-#view-chat .chat-auth-card>div>button:not(.chat-auth-text-button){width:100%;min-height:45px;margin-top:17px;border:0;border-radius:11px;background:var(--acc2);color:#fff;font:inherit;font-weight:750;cursor:pointer}
-#view-chat .chat-auth-card button:disabled{opacity:.6;cursor:wait}
-#view-chat .chat-auth-text-button{display:block;margin:12px auto 0;padding:5px;border:0;background:none;color:#aebfff;font:inherit;font-size:12px;cursor:pointer}
-#view-chat .chat-auth-secondary{display:block;width:100%;min-height:42px;margin-top:9px;border:1px solid rgba(160,177,207,.25);border-radius:10px;background:rgba(255,255,255,.04);color:#e4eaf4;font:inherit;cursor:pointer}
-#view-chat .chat-auth-switch{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid rgba(160,177,207,.13);color:#9eaabd;font-size:12px}
+#view-unblocker #chatAuthGate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:auto;padding:22px;background:rgba(5,9,16,.97);backdrop-filter:blur(14px)}
+#view-chat #chatAuthGate[hidden],#view-unblocker #chatAuthGate[hidden],#view-chat #chatAuthFormPanel[hidden],#view-unblocker #chatAuthFormPanel[hidden],#view-chat #chatVerifyPanel[hidden],#view-unblocker #chatVerifyPanel[hidden]{display:none!important}
+#view-chat .chat-auth-card,#view-unblocker .chat-auth-card{width:min(100%,420px);padding:28px;background:linear-gradient(145deg,rgba(24,31,45,.98),rgba(13,18,28,.99));border:1px solid rgba(160,177,207,.2);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.48);color:#f4f6fb}
+#view-chat .chat-auth-brand,#view-unblocker .chat-auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:24px;color:#aebbd2;font-size:11px;font-weight:800;letter-spacing:.2em}
+#view-chat .chat-auth-mark,#view-unblocker .chat-auth-mark{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--acc2);color:white;font-size:14px;letter-spacing:0}
+#view-chat .chat-auth-card h2,#view-unblocker .chat-auth-card h2{margin:0 0 8px;font-size:25px;letter-spacing:-.03em}
+#view-chat .chat-auth-card p,#view-unblocker .chat-auth-card p{margin:0 0 18px;color:#aeb8c9;font-size:13px;line-height:1.6}
+#view-chat .chat-auth-card label,#view-unblocker .chat-auth-card label{display:block;margin:13px 0 0;color:#d9e0ec;font-size:12px;font-weight:650}
+#view-chat .chat-auth-card input,#view-unblocker .chat-auth-card input{display:block;width:100%;height:46px;margin-top:7px;padding:0 13px;border:1px solid rgba(160,177,207,.22);border-radius:11px;outline:none;background:rgba(5,9,16,.65);color:#f4f6fb;font:inherit;font-size:14px}
+#view-chat .chat-auth-card input:focus,#view-unblocker .chat-auth-card input:focus{border-color:var(--acc2);box-shadow:0 0 0 3px rgba(86,132,255,.14)}
+#view-chat .chat-auth-card>div>button:not(.chat-auth-text-button),#view-unblocker .chat-auth-card>div>button:not(.chat-auth-text-button){width:100%;min-height:45px;margin-top:17px;border:0;border-radius:11px;background:var(--acc2);color:#fff;font:inherit;font-weight:750;cursor:pointer}
+#view-chat .chat-auth-card button:disabled,#view-unblocker .chat-auth-card button:disabled{opacity:.6;cursor:wait}
+#view-chat .chat-auth-text-button,#view-unblocker .chat-auth-text-button{display:block;margin:12px auto 0;padding:5px;border:0;background:none;color:#aebfff;font:inherit;font-size:12px;cursor:pointer}
+#view-chat .chat-auth-secondary,#view-unblocker .chat-auth-secondary{display:block;width:100%;min-height:42px;margin-top:9px;border:1px solid rgba(160,177,207,.25);border-radius:10px;background:rgba(255,255,255,.04);color:#e4eaf4;font:inherit;cursor:pointer}
+#view-chat .chat-auth-switch,#view-unblocker .chat-auth-switch{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid rgba(160,177,207,.13);color:#9eaabd;font-size:12px}
 #view-chat .chat-auth-switch button{border:0;background:none;color:#b8c9ff;font:inherit;font-weight:750;cursor:pointer}
 #view-chat #chatAuthMessage,#view-chat #chatVerifyMessage{min-height:18px;margin:12px 0 0;color:#f4c7a5;font-size:12px}
 #view-chat #chatVerifyMessage{color:#b9c8e6}
@@ -1811,9 +1812,10 @@ function setChatAuthMode(mode){
   chatAuthMode=mode==='signup'?'signup':'login';
   const signup=chatAuthMode==='signup';
   chatAuthTitle.textContent=signup?'Create your chat account':'Welcome back';
+  const inUnblocker=document.getElementById('view-unblocker')?.classList.contains('active');
   chatAuthDescription.textContent=signup
-    ?'Create an account to use global chat, friends, DMs and AI chat. The rest of the website stays available without signing in.'
-    :'Sign in to use global chat, friends, DMs and AI chat. The rest of the website stays available without an account.';
+    ?(inUnblocker?'Create your Neural UBG account to unlock Web Unblocker and Chat.':'Create an account to use global chat, friends, DMs and AI chat. The rest of the website stays available without signing in.')
+    :(inUnblocker?'Sign in with your Neural UBG Chat account to use Web Unblocker.':'Sign in to use global chat, friends, DMs and AI chat. The rest of the website stays available without an account.');
   chatAuthNameWrap.hidden=!signup;
   chatAuthConfirmWrap.hidden=!signup;
   chatAuthPassword.autocomplete=signup?'new-password':'current-password';
@@ -2046,9 +2048,6 @@ async function init(){
       if(!initialChatAuthResolved){
         initialChatAuthResolved=true;
         resolveInitialChatAuth(user||null);
-      }
-      if(!user&&document.getElementById('view-unblocker')?.classList.contains('active')&&typeof showPage==='function'){
-        showPage('chat');
       }
       handleChatAuthState(user).catch(error=>{
         showChatAuth();
@@ -3275,14 +3274,24 @@ setTimeout(stripPages,400);setTimeout(stripPages,1500);
 try{new MutationObserver(stripPages).observe(document.getElementById("games"),{childList:true,subtree:true});}catch(e){}}
 function showPage(name){
 if(name==="browser"&&!sessionStorage.getItem("cs_dev_mode_token"))return;
-if(name==="unblocker"&&(!window.neuralChatAuthUser||!window.neuralChatAuthUser.emailVerified)){
-  showPage("chat");
-  return;
-}
 if(!pageViews[name])return;
+
+// Reuse the exact same Firebase email/password + verification UI in Chat and
+// Web Unblocker. Moving the existing node preserves its event listeners/state.
+var authGate=document.getElementById("chatAuthGate");
+if(authGate){
+  if(name==="unblocker"){
+    pageViews.unblocker.insertBefore(authGate,pageViews.unblocker.firstChild);
+  }else if(name==="chat"){
+    pageViews.chat.insertBefore(authGate,pageViews.chat.firstChild);
+  }
+}
 if(name==="chat"){var unreadDot=document.querySelector(".dock .chat-unread-dot");if(unreadDot)unreadDot.classList.remove("visible");}
 Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active");});
 pageViews[name].classList.add("active");
+if(name==="unblocker"&&(!window.neuralChatAuthUser||!window.neuralChatAuthUser.emailVerified)){
+  showChatAuth();
+}
 if(typeof window.setAiChatPageVisible==="function")window.setAiChatPageVisible(name==="chat");
 document.querySelectorAll(".dock a[data-page]").forEach(function(a){
 var p=a.getAttribute("data-page");if(p==="music")return; /* music dock state tracks the floating window, not the page */
@@ -3522,7 +3531,8 @@ showPage(p);});});
       try{user=await window.neuralChatAuthReady;}catch(e){user=null;}
     }
     if(!user||!user.emailVerified){
-      if(typeof showPage==="function")showPage("chat");
+      showPage("unblocker");
+      showChatAuth();
       return;
     }
     showPage("unblocker");
