@@ -2,6 +2,9 @@ name = "neural-ai"
 main = "worker.js"
 compatibility_date = "2026-11-28"
 
+# Preserve variables configured in the Cloudflare dashboard during Git deployments.
+keep_vars = true
+
 # Basic per-IP protection for the public AI endpoint. This is approximate per
 # Cloudflare location; adjust the threshold to suit your expected traffic.
 [[ratelimits]]
