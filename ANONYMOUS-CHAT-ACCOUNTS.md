@@ -16,11 +16,19 @@ The worker deletes the guest's profile, friend list, incoming friend requests, a
 2. In Google Cloud IAM, create or select a service account for project `ubg1-363a4`. Grant it permission to list and delete Firebase Authentication users (`firebaseauth.users.get` and `firebaseauth.users.delete`) and write to the Realtime Database. Download a JSON private key for this service account.
 3. In Cloudflare, open the Worker that runs this repository's `worker.js`. Under **Settings → Variables and Secrets**, add a secret named `FIREBASE_SERVICE_ACCOUNT_JSON` and paste the complete service-account JSON as the value. Do not put the key in GitHub or browser code. Keep your existing `PASSPHRASE` / `SECRET_CODE` variables as they are.
 4. Deploy the updated `worker.js` to that same Worker.
-5. In **Settings → Triggers → Cron Triggers**, add this schedule:
+5. Configure the Cron Trigger with this schedule:
 
    ```text
    0 13,14 * * 5
    ```
+
+   - For a Worker managed in the Cloudflare dashboard, go to **Settings → Triggers → Cron Triggers** and add it there.
+   - For a Worker managed with Wrangler, add this to its existing `wrangler.toml`:
+
+     ```toml
+     [triggers]
+     crons = ["0 13,14 * * 5"]
+     ```
 
    Cloudflare schedules Cron Triggers in UTC. The Worker checks the scheduled timestamp in the Melbourne timezone, so only the trigger that corresponds to local Friday midnight performs the cleanup. This handles both daylight-saving and standard time.
 6. Check the Worker logs after the first Friday run for `Friday guest cleanup finished.` and its deletion counts.
