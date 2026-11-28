@@ -1,3 +1,2 @@
-# Keep deep proxy URLs from returning a static-host 404 on refresh.
-# When the service worker is not controlling a first navigation, serve the app shell.
-/uv/service/*  /app.html  200
+# Scramjet routes are handled by the root-scope service worker.
+/scramjet/*  /app.html  200

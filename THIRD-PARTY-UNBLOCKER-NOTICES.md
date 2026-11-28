@@ -1,14 +1,14 @@
 # Unblocker third-party notices
 
-The Unblocker builds these pinned packages into the public static asset folders:
+The Unblocker builds these pinned packages into public static asset folders:
 
-- `@titaniumnetwork-dev/ultraviolet@3.2.10` — Ultraviolet proxy engine; AGPL-3.0.
-- `@mercuryworkshop/bare-mux@2.1.9` — BareMux transport multiplexer; MIT. This release is deprecated upstream but is the BareMux generation used by Ultraviolet 3.x.
+- `@mercuryworkshop/scramjet@1.1.0` — Scramjet browser proxy engine; AGPL-3.0-only.
+- `@mercuryworkshop/bare-mux@2.1.9` — BareMux transport multiplexer; MIT. This is the BareMux generation used by the supplied Scramjet v1 browser code.
 - `@mercuryworkshop/libcurl-transport@1.5.2` — Libcurl/Wisp transport for the BareMux interface; AGPL-3.0.
 - `@mercuryworkshop/epoxy-transport@2.1.28` — Epoxy/Wisp fallback for the BareMux interface; AGPL-3.0.
 
-The versions are intentionally pinned as a compatible Ultraviolet 3.x + BareMux 2.x set. Do not upgrade libcurl to 2.x or epoxy to 3.x without also migrating away from BareMux to the newer proxy-transports interface.
+These versions are intentionally pinned as a compatible Scramjet v1 + BareMux 2.x set. Do not upgrade transport package major versions independently or mix them with the newer Scramjet controller / proxy-transports interface.
 
-Run `npm install` followed by `npm run build:unblocker` to copy the package browser assets into `public/uv`, `public/baremux`, `public/libcurl`, and `public/epoxy`.
+Run `npm install` followed by `npm run build:unblocker` to copy browser assets into `public/scram`, `public/baremux`, `public/libcurl` and `public/epoxy`.
 
 The Wisp endpoint is hosted separately at `wss://proxy-scramjet-8xz5.onrender.com/wisp/`.

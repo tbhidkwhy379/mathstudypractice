@@ -2,34 +2,35 @@ importScripts("/scram/scramjet.all.js");
 
 const { ScramjetServiceWorker } = $scramjetLoadWorker();
 const scramjet = new ScramjetServiceWorker();
+const SCRAMJET_PREFIX = "/scramjet/";
 
-async function handleRequest(event) {
+async function handleScramjetRequest(event) {
   await scramjet.loadConfig();
   if (scramjet.route(event)) return scramjet.fetch(event);
   return fetch(event.request);
 }
 
-self.addEventListener("install", (event) => {
-  // Activate the updated worker promptly so existing tabs stop using
-  // the older catch-all fetch handler.
+self.addEventListener("install", event => {
   event.waitUntil(self.skipWaiting());
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", event => {
   event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener("fetch", (event) => {
+self.addEventListener("fetch", event => {
   const requestUrl = new URL(event.request.url);
+  // Only proxy Scramjet routes; let normal app and static-asset requests pass through.
+  if (requestUrl.origin !== self.location.origin || !requestUrl.pathname.startsWith(SCRAMJET_PREFIX)) return;
 
-  // Ultraviolet owns everything under /uv/. Do not respondWith() these
-  // requests here: the browser must use the matching /uv/ registration.
-  if (
-    requestUrl.origin === self.location.origin &&
-    requestUrl.pathname.startsWith("/uv/")
-  ) {
-    return;
-  }
-
-  event.respondWith(handleRequest(event));
+  event.respondWith(
+    handleScramjetRequest(event).catch(error => {
+      console.error("[Neural Scramjet] Request failed:", error);
+      return new Response(
+        "Scramjet could not load this website. Check the Wisp transport connection and try again.\n" +
+          (error && error.message ? error.message : String(error)),
+        { status: 502, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+      );
+    })
+  );
 });

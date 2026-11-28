@@ -956,7 +956,7 @@ button { line-height: 1.25; }
   #view-chat.friends-mode .person-row{transition:none}
 }
 
-/* Neural UBG Unblocker — direct same-tab Ultraviolet navigation */
+/* Neural UBG Unblocker — Scramjet browser frame */
 #view-unblocker{min-height:100vh;padding:clamp(16px,3vw,34px);padding-bottom:120px;color:var(--text)}
 #view-unblocker.active{display:flex;flex-direction:column;gap:18px}
 .uv-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
@@ -1072,6 +1072,16 @@ button { line-height: 1.25; }
 /* Cloud Browser is a Developer Mode-only tool */
 .dock a[data-page="browser"][hidden]{display:none!important}
 #view-browser[hidden]{display:none!important}
+
+
+.sj-browser-controls{width:min(100%,1100px);margin:16px auto 0;display:flex;gap:8px;flex-wrap:wrap}
+.sj-browser-controls[hidden],.sj-frame-shell[hidden]{display:none}
+.sj-browser-controls button{min-height:36px;padding:0 13px;border:1px solid #30364a;border-radius:10px;background:rgba(255,255,255,.035);color:#cad2e2;font:inherit;font-size:12px;cursor:pointer}
+.sj-browser-controls button:hover{border-color:#667fc7;background:rgba(108,140,255,.09)}
+.sj-frame-shell{width:min(100%,1100px);margin:12px auto 0;border:1px solid rgba(145,166,255,.2);border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 18px 55px rgba(0,0,0,.28)}
+#sj-frame-mount{height:min(72vh,780px);min-height:420px;background:#fff}
+#sj-frame-mount iframe{display:block;width:100%;height:100%;border:0;background:#fff}
+@media(max-width:600px){#sj-frame-mount{height:68vh;min-height:340px}.sj-frame-shell{border-radius:12px}}
 
 </style>
 </head>
@@ -1244,9 +1254,9 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
   <div class="uv-heading">
     <div>
       <h1><i class="fas fa-shield-halved" aria-hidden="true"></i> Web Unblocker</h1>
-      <p>Ultraviolet · Wisp transport · Opens in this tab, not an iframe.</p>
+      <p>Scramjet · Wisp transport · Browse inside Neural UBG.</p>
     </div>
-    <div class="uv-badge"><i class="fas fa-bolt"></i> UV + LIBCURL</div>
+    <div class="uv-badge"><i class="fas fa-bolt"></i> SCRAMJET + LIBCURL</div>
   </div>
   <div class="uv-card">
     <h2>Browse with Neural UBG</h2>
@@ -1256,12 +1266,20 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
       <button class="uv-launch" id="uv-launch-button" type="submit">Open website <i class="fas fa-arrow-up-right-from-square"></i></button>
     </form>
     <div class="uv-quick">
-      <button type="button" data-uv-quick="https://www.tiktok.com/"><i class="fab fa-tiktok"></i> Open TikTok</button>
-      <button type="button" data-uv-quick="https://www.google.com/"><i class="fab fa-google"></i> Google</button>
+      <button type="button" data-proxy-quick="https://www.tiktok.com/"><i class="fab fa-tiktok"></i> Open TikTok</button>
+      <button type="button" data-proxy-quick="https://www.google.com/"><i class="fab fa-google"></i> Google</button>
     </div>
     <div class="uv-state" role="status" aria-live="polite"><span class="uv-state-dot" id="uv-state-dot"></span><span id="uv-state-text">Checking your chat account and preparing the proxy…</span></div>
   </div>
-  <p class="uv-footnote">Cloud Computer remains a separate Hyperbeam feature. This Unblocker uses the Wisp service at proxy-scramjet-8xz5.onrender.com and navigates directly to the proxied URL.</p>
+  <div class="sj-browser-controls" id="sj-browser-controls" hidden>
+    <button type="button" id="sj-back" aria-label="Go back"><i class="fas fa-arrow-left"></i> Back</button>
+    <button type="button" id="sj-forward" aria-label="Go forward"><i class="fas fa-arrow-right"></i> Forward</button>
+    <button type="button" id="sj-reload" aria-label="Reload website"><i class="fas fa-rotate-right"></i> Reload</button>
+  </div>
+  <div class="sj-frame-shell" id="sj-frame-shell" hidden>
+    <div id="sj-frame-mount"></div>
+  </div>
+  <p class="uv-footnote">Cloud Computer remains a separate Hyperbeam feature. Scramjet uses the external Wisp transport service and displays the proxied site inside this page.</p>
 </section>
 <section class="page-view" id="view-chat">
 <div id="chatAuthGate" role="dialog" aria-modal="true" aria-labelledby="chatAuthTitle">
@@ -3392,20 +3410,24 @@ showPage(p);});});
 <script>
 (function(){
   const WISP_URL="wss://proxy-scramjet-8xz5.onrender.com/wisp/";
-  const UV_TIKTOK="https://www.tiktok.com/";
-  let stackPromise=null;
-  let bareMuxConnection=null;
-
+  const DEFAULT_URL="https://www.tiktok.com/";
+  let stackPromise=null,bareMuxConnection=null,scramjetController=null,scramjetFrame=null;
   const byId=id=>document.getElementById(id);
-  const stateText=byId("uv-state-text");
-  const stateDot=byId("uv-state-dot");
-  const launchButton=byId("uv-launch-button");
-
+  const stateText=byId("uv-state-text"),stateDot=byId("uv-state-dot"),launchButton=byId("uv-launch-button");
   function setState(message,kind){
     if(stateText)stateText.textContent=message;
     if(stateDot)stateDot.className="uv-state-dot"+(kind==="ready"?" ready":kind==="error"?" error":"");
   }
-
+  function workerPath(worker){
+    if(!worker)return "";
+    try{return new URL(worker.scriptURL).pathname;}catch(e){return "";}
+  }
+  function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+  async function waitForCondition(test,message,timeoutMs){
+    const deadline=Date.now()+timeoutMs;
+    while(Date.now()<deadline){if(test())return;await wait(100);}
+    throw new Error(message);
+  }
   function loadProxyScript(src){
     return new Promise((resolve,reject)=>{
       const absolute=new URL(src,location.href).href;
@@ -3416,391 +3438,130 @@ showPage(p);});});
         existing.addEventListener("error",()=>reject(new Error("Could not load "+src)),{once:true});
         return;
       }
-      const script=document.createElement("script");
-      script.src=src;
-      script.async=true;
+      const script=document.createElement("script");script.src=src;script.async=true;
       script.onload=()=>{script.dataset.loaded="true";resolve();};
-      script.onerror=()=>reject(new Error("Could not load proxy asset: "+src));
+      script.onerror=()=>reject(new Error("Could not load Scramjet asset: "+src));
       document.head.appendChild(script);
     });
   }
-
-  // Wait for the specific UV registration to activate. Do not use
-  // navigator.serviceWorker.ready here: app.html may be controlled by
-  // the legacy Scramjet worker registered at scope "/".
-  async function waitForUvRegistration(registration){
-    const isActive=()=>Boolean(
-      registration.active && registration.active.state==="activated"
-    );
-
-    if(isActive())return registration.active;
-
-    const worker=
-      registration.installing ||
-      registration.waiting ||
-      registration.active;
-
-    if(!worker){
-      throw new Error("The Ultraviolet service worker did not start installing.");
-    }
-
-    await new Promise((resolve,reject)=>{
-      let finished=false;
-      const timeout=setTimeout(()=>{
-        cleanup();
-        reject(new Error("Ultraviolet's service worker did not activate in time."));
-      },15000);
-
-      function cleanup(){
-        if(finished)return;
-        finished=true;
-        clearTimeout(timeout);
-        worker.removeEventListener("statechange",checkState);
-      }
-
-      function checkState(){
-        if(isActive()){
-          cleanup();
-          resolve();
-        }else if(worker.state==="redundant"){
-          cleanup();
-          reject(new Error("Ultraviolet's service worker installation was replaced or failed."));
-        }
-      }
-
-      worker.addEventListener("statechange",checkState);
-      checkState();
-    });
-
-    return registration.active;
-  }
-
-  async function waitForUvController(){
-    const isUvController=()=>{
-      const controller=navigator.serviceWorker.controller;
-      if(!controller)return false;
+  async function installScramjetWorker(){
+    const registrations=await navigator.serviceWorker.getRegistrations();
+    for(const registration of registrations){
       try{
-        return new URL(controller.scriptURL).pathname==="/sw.js";
-      }catch(e){
-        return false;
-      }
-    };
-
-    if(isUvController())return;
-
-    await new Promise((resolve,reject)=>{
-      let finished=false;
-      const timeout=setTimeout(()=>{
-        cleanup();
-        const controller=navigator.serviceWorker.controller;
-        let controllerUrl="none";
-        try{controllerUrl=controller?controller.scriptURL:"none";}catch(e){}
-        reject(new Error("The /uv/ service worker activated but did not take control of this proxy page. Current controller: "+controllerUrl));
-      },10000);
-
-      function cleanup(){
-        if(finished)return;
-        finished=true;
-        clearTimeout(timeout);
-        navigator.serviceWorker.removeEventListener("controllerchange",checkController);
-      }
-
-      function checkController(){
-        if(isUvController()){
-          cleanup();
-          resolve();
-        }
-      }
-
-      navigator.serviceWorker.addEventListener("controllerchange",checkController);
-      checkController();
-    });
+        const scopePath=new URL(registration.scope).pathname;
+        if(scopePath==="/uv/"||scopePath.startsWith("/uv/"))await registration.unregister();
+      }catch(error){console.warn("[Neural Scramjet] Could not remove an old UV registration:",error);}
+    }
+    const registration=await navigator.serviceWorker.register("/scramjet-sw.js",{scope:"/",updateViaCache:"none"});
+    await waitForCondition(
+      ()=>Boolean(registration.active&&registration.active.state==="activated"&&workerPath(registration.active)==="/scramjet-sw.js"),
+      "Scramjet's service worker did not activate. Close old Neural UBG tabs and reopen app.html.",15000
+    );
+    await waitForCondition(
+      ()=>workerPath(navigator.serviceWorker.controller)==="/scramjet-sw.js",
+      "Scramjet is installed, but an old service worker still controls this tab. Close every Neural UBG tab and reopen app.html.",12000
+    );
+    return registration;
   }
-
-  async function initializeUnblocker(){
+  async function initializeScramjet(){
     if(stackPromise)return stackPromise;
     stackPromise=(async()=>{
       const user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
-      if(!user||user.isAnonymous||user.emailVerified!==true){
-        throw new Error("Web Unblocker requires a regular account with a verified email. Guest accounts are Chat-only.");
-      }
+      if(!user||user.isAnonymous||user.emailVerified!==true)throw new Error("Web Unblocker requires a regular account with a verified email. Guest accounts are Chat-only.");
       if(!("serviceWorker" in navigator))throw new Error("This browser does not support service workers.");
       if(!("SharedWorker" in window))throw new Error("This browser does not support SharedWorker, which BareMux requires.");
-
-      // Update the legacy root worker before navigating into /uv/. Its fetch
-      // handler now deliberately leaves /uv/ requests to Ultraviolet.
-      await refreshLegacyScramjetWorker();
-
-      setState("Loading Ultraviolet and BareMux files…");
-      await loadProxyScript("/uv/uv.bundle.js");
-      await loadProxyScript("/uv/uv.config.js");
+      setState("Loading BareMux transport…");
       await loadProxyScript("/baremux/index.js");
-
-      if(!window.__uv$config||!window.Ultraviolet)throw new Error("Ultraviolet did not initialise. Run the Unblocker asset build.");
       if(!window.BareMux||typeof window.BareMux.BareMuxConnection!=="function")throw new Error("BareMux did not load. Check /baremux/index.js.");
-
-      setState("Connecting to the Wisp transport…");
       bareMuxConnection=new window.BareMux.BareMuxConnection("/baremux/worker.js");
+      setState("Connecting to the Wisp transport…");
       try{
-        await bareMuxConnection.setTransport("/public/libcurl/index.mjs",[{wisp:WISP_URL}]);
-        setState("Libcurl transport selected. Registering the proxy service worker…");
+        await bareMuxConnection.setTransport("/libcurl/index.mjs",[{wisp:WISP_URL}]);
+        setState("Libcurl transport selected. Loading Scramjet…");
       }catch(libcurlError){
-        console.warn("[Neural Unblocker] Libcurl setup failed; trying Epoxy fallback.",libcurlError);
-        await bareMuxConnection.setTransport("/public/epoxy/index.mjs",[{wisp:WISP_URL}]);
-        setState("Epoxy fallback selected. Registering the proxy service worker…");
+        console.warn("[Neural Scramjet] Libcurl setup failed; trying Epoxy fallback.",libcurlError);
+        await bareMuxConnection.setTransport("/epoxy/index.mjs",[{wisp:WISP_URL}]);
+        setState("Epoxy fallback selected. Loading Scramjet…");
       }
-
-      // Keep UV isolated from the legacy Scramjet root-scope worker.
-      // The UV route lives under /uv/service/, so /uv/ is the correct scope.
-      const uvRegistration=await navigator.serviceWorker.register("/sw.js",{scope:"/uv/"});
-      if(!uvRegistration.scope.endsWith("/uv/")){
-        throw new Error("Ultraviolet registered with an unexpected service-worker scope: "+uvRegistration.scope);
-      }
-      await waitForUvRegistration(uvRegistration);
-      setState("Ready. TikTok is prefilled — enter a site or press Open TikTok.", "ready");
+      await loadProxyScript("/scramjet.config.js");
+      await loadProxyScript("/scram/scramjet.all.js");
+      if(typeof window.$scramjetLoadController!=="function")throw new Error("Scramjet did not initialise. Check /scram/scramjet.all.js.");
+      await installScramjetWorker();
+      const {ScramjetController}=window.$scramjetLoadController();
+      if(typeof ScramjetController!=="function")throw new Error("The ScramjetController API is missing from the loaded Scramjet bundle.");
+      scramjetController=new ScramjetController({files:{
+        wasm:"/scram/scramjet.wasm.wasm",all:"/scram/scramjet.all.js",sync:"/scram/scramjet.sync.js"
+      }});
+      await scramjetController.init();
+      if(typeof scramjetController.createFrame!=="function")throw new Error("Scramjet initialised without its createFrame API.");
+      setState("Ready. Enter a site or choose TikTok or Google below.","ready");
       return true;
-    })().catch(error=>{
-      stackPromise=null;
-      setState(error.message||"Could not initialise the Unblocker.","error");
-      throw error;
-    });
+    })().catch(error=>{stackPromise=null;setState(error.message||"Could not initialise Scramjet.","error");throw error;});
     return stackPromise;
   }
-
   function resolveAddress(raw){
     const value=String(raw||"").trim();
     if(!value)throw new Error("Enter a website or search term.");
-    if(/\s/.test(value)||!value.includes(".")){
-      return "https://www.google.com/search?q="+encodeURIComponent(value);
-    }
+    if(/\s/.test(value)||!value.includes("."))return "https://www.google.com/search?q="+encodeURIComponent(value);
     const withProtocol=/^[a-z][a-z0-9+.-]*:\/\//i.test(value)?value:"https://"+value;
     const url=new URL(withProtocol);
-    if(!["http:","https:"].includes(url.protocol)||url.username||url.password){
-      throw new Error("Only normal HTTP and HTTPS website addresses can be opened.");
-    }
+    if(!["http:","https:"].includes(url.protocol)||url.username||url.password)throw new Error("Only normal HTTP and HTTPS website addresses can be opened.");
     return url.href;
   }
-
+  function ensureScramjetFrame(){
+    if(scramjetFrame)return scramjetFrame;
+    const mount=byId("sj-frame-mount");
+    if(!mount)throw new Error("The Scramjet browser frame container is missing.");
+    scramjetFrame=scramjetController.createFrame();
+    scramjetFrame.frame.className="sj-frame";
+    scramjetFrame.frame.setAttribute("title","Neural UBG Scramjet browser");
+    scramjetFrame.frame.setAttribute("loading","eager");
+    scramjetFrame.frame.setAttribute("allow","clipboard-read; clipboard-write; fullscreen; autoplay");
+    mount.replaceChildren(scramjetFrame.frame);
+    scramjetFrame.addEventListener("urlchange",event=>{
+      if(!event||!event.url||!byId("uv-address-input"))return;
+      try{const parsed=new URL(event.url);if(parsed.protocol==="http:"||parsed.protocol==="https:")byId("uv-address-input").value=parsed.href;}catch(error){}
+    });
+    scramjetFrame.frame.addEventListener("load",()=>setState("Website loaded.","ready"));
+    return scramjetFrame;
+  }
   async function launchProxy(raw){
     const user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
-    if(!user||!user.emailVerified){
-      setState("Sign in to Chat with your verified email first.","error");
+    if(!user||user.isAnonymous||!user.emailVerified){
+      setState("Sign in with your verified email before using the Web Unblocker.","error");
       if(typeof showPage==="function")showPage("chat");
       return;
     }
     if(launchButton)launchButton.disabled=true;
     try{
-      await initializeUnblocker();
-      const destination=resolveAddress(raw);
-      const config=window.__uv$config;
-      if(!config||typeof config.encodeUrl!=="function")throw new Error("Ultraviolet URL encoder is unavailable.");
-      setState("Opening "+destination+"…","ready");
-      const proxiedPath=config.prefix+config.encodeUrl(destination);
-      // Same-tab navigation by design: no iframe/embedder is used.
-      window.location.replace(proxiedPath);
-    }catch(error){
-      setState(error.message||"Could not launch the website.","error");
-      if(launchButton)launchButton.disabled=false;
-    }
+      await initializeScramjet();
+      const destination=resolveAddress(raw),frame=ensureScramjetFrame();
+      const shell=byId("sj-frame-shell"),controls=byId("sj-browser-controls");
+      if(shell)shell.hidden=false;if(controls)controls.hidden=false;
+      setState("Opening "+destination+" with Scramjet…","ready");
+      frame.go(destination);
+    }catch(error){setState(error.message||"Could not open the website with Scramjet.","error");}
+    finally{if(launchButton)launchButton.disabled=false;}
   }
-
   window.openNeuralUnblocker=async function(){
     let user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
-    if(!user&&window.neuralChatAuthReady){
-      try{user=await window.neuralChatAuthReady;}catch(e){user=null;}
-    }
+    if(!user&&window.neuralChatAuthReady){try{user=await window.neuralChatAuthReady;}catch(e){user=null;}}
     if(!user||user.isAnonymous||user.emailVerified!==true){
-      showPage("unblocker");
-      showChatAuth();
+      showPage("unblocker");showChatAuth();
       if(user&&user.isAnonymous&&typeof window.neuralChatSetAuthMode==="function")window.neuralChatSetAuthMode("signup");
       return;
     }
     showPage("unblocker");
-    try{await initializeUnblocker();}
-    catch(error){console.warn("[Neural Unblocker]",error);}
+    try{await initializeScramjet();}catch(error){console.warn("[Neural Scramjet]",error);}
   };
-
   const form=byId("uv-launch-form");
-  if(form)form.addEventListener("submit",event=>{
-    event.preventDefault();
-    launchProxy(byId("uv-address-input").value);
-  });
-  document.querySelectorAll("[data-uv-quick]").forEach(button=>{
-    button.addEventListener("click",()=>launchProxy(button.getAttribute("data-uv-quick")));
-  });
-
-  window.NeuralUnblocker={initialize:initializeUnblocker,launch:launchProxy,defaultUrl:UV_TIKTOK,wisp:WISP_URL};
-
-  // Refresh the existing root Scramjet worker so its updated fetch handler
-  // can pass /uv/ navigations through to the more-specific UV registration.
-  async function refreshLegacyScramjetWorker(){
-    const registrations=await navigator.serviceWorker.getRegistrations();
-    const workerPath=worker=>{
-      if(!worker)return "";
-      try{return new URL(worker.scriptURL).pathname;}
-      catch(e){return "";}
-    };
-    const isRootWorker=worker=>
-      workerPath(worker)==="/scramjet-sw.js" ||
-      workerPath(worker)==="/uv.sw.js";
-
-    const rootRegistration=registrations.find(reg=>{
-      try{
-        const scope=new URL(reg.scope);
-        return scope.origin===location.origin &&
-          scope.pathname==="/" &&
-          [reg.active,reg.waiting,reg.installing].some(isRootWorker);
-      }catch(e){return false;}
-    });
-
-    if(!rootRegistration)return;
-
-    const oldUvWorker=[rootRegistration.active,rootRegistration.waiting,rootRegistration.installing]
-      .some(worker=>workerPath(worker)==="/uv.sw.js");
-
-    // An older deployment registered the Ultraviolet worker at "/" using
-    // /uv.sw.js. That broad scope wins over the new /uv/ registration, so
-    // remove that registration instead of merely asking it to update.
-    if(oldUvWorker){
-      const removed=await rootRegistration.unregister();
-      if(!removed){
-        throw new Error("Could not remove the outdated root /uv.sw.js service worker registration.");
-      }
-
-      const controller=navigator.serviceWorker.controller;
-      if(workerPath(controller)==="/uv.sw.js"){
-        const resetKey="neural-remove-root-uv-worker";
-        let alreadyRetried=false;
-        try{alreadyRetried=sessionStorage.getItem(resetKey)==="1";}catch(e){}
-        if(alreadyRetried){
-          throw new Error("The old /uv.sw.js worker is still controlling this tab after its registration was removed. Close every Neural tab for this site, then reopen app.html.");
-        }
-        try{sessionStorage.setItem(resetKey,"1");}catch(e){}
-        setState("Removing the outdated root proxy worker and reopening the app…");
-        window.location.replace("/app.html?worker-reset=uv-root");
-        await new Promise(()=>{});
-      }
-
-      try{sessionStorage.removeItem("neural-remove-root-uv-worker");}catch(e){}
-      return;
-    }
-
-    // The current Scramjet root worker deliberately passes /uv/ requests
-    // through so the more-specific Ultraviolet registration can own them.
-    const previousActive=rootRegistration.active;
-    const previousController=navigator.serviceWorker.controller;
-
-    await rootRegistration.update();
-
-    const installing=rootRegistration.installing;
-    if(installing){
-      await new Promise((resolve,reject)=>{
-        let finished=false;
-        const timeout=setTimeout(()=>{
-          cleanup();
-          reject(new Error("The updated Scramjet worker did not activate in time."));
-        },15000);
-        function cleanup(){
-          if(finished)return;
-          finished=true;
-          clearTimeout(timeout);
-          installing.removeEventListener("statechange",checkState);
-        }
-        function checkState(){
-          if(installing.state==="activated"){
-            cleanup();
-            resolve();
-          }else if(installing.state==="redundant"){
-            cleanup();
-            reject(new Error("The updated Scramjet worker installation failed."));
-          }
-        }
-        installing.addEventListener("statechange",checkState);
-        checkState();
-      });
-    }
-
-    const activeNow=rootRegistration.active;
-    if(
-      previousController &&
-      previousController===navigator.serviceWorker.controller &&
-      previousActive &&
-      activeNow &&
-      activeNow!==previousActive
-    ){
-      await new Promise((resolve,reject)=>{
-        let finished=false;
-        const timeout=setTimeout(()=>{
-          cleanup();
-          reject(new Error("The updated Scramjet worker did not take over this tab. Close old Neural UBG tabs and reopen the site."));
-        },10000);
-        function cleanup(){
-          if(finished)return;
-          finished=true;
-          clearTimeout(timeout);
-          navigator.serviceWorker.removeEventListener("controllerchange",checkController);
-        }
-        function checkController(){
-          if(navigator.serviceWorker.controller!==previousController){
-            cleanup();
-            resolve();
-          }
-        }
-        navigator.serviceWorker.addEventListener("controllerchange",checkController);
-        checkController();
-      });
-    }
-  }
-
-  // GitHub Pages may serve 404.html for a direct /uv/service/* request
-  // if the UV worker did not control the first navigation. After removing
-  // any stale root Scramjet controller, reload this URL once so /uv/ can own it.
-  if(location.pathname.startsWith("/uv/service/")){
-    window.neuralChatAuthReady.then(async user=>{
-      if(!user||!user.emailVerified){
-        try{sessionStorage.removeItem("neural-uv-fallback-reload");}catch(e){}
-        window.location.replace("/app.html");
-        return;
-      }
-      try{
-        showPage("unblocker");
-        await initializeUnblocker();
-
-        const controller=navigator.serviceWorker.controller;
-        let controllerPath="none";
-        try{controllerPath=controller?new URL(controller.scriptURL).pathname:"none";}catch(e){}
-        const isUvControlled=controllerPath==="/sw.js";
-        let routePhase="";
-        try{routePhase=sessionStorage.getItem("neural-uv-fallback-phase")||"";}catch(e){}
-
-        if(!isUvControlled){
-          if(routePhase==="root-worker-retried"){
-            throw new Error(
-              "The /uv/ route is still controlled by "+controllerPath+
-              ". Close old Neural UBG proxy tabs, then reopen app.html so the updated Scramjet worker can load."
-            );
-          }
-          try{sessionStorage.setItem("neural-uv-fallback-phase","root-worker-retried");}catch(e){}
-          setState("Refreshing the old proxy worker so Ultraviolet can take over…");
-          window.location.reload();
-          return;
-        }
-
-        if(routePhase==="uv-worker-retried"){
-          try{sessionStorage.removeItem("neural-uv-fallback-phase");}catch(e){}
-          throw new Error("GitHub Pages still returned its fallback after the Ultraviolet worker controlled the page. Check the /uv/service route and worker fetch errors.");
-        }
-
-        try{sessionStorage.setItem("neural-uv-fallback-phase","uv-worker-retried");}catch(e){}
-        setState("Ultraviolet is controlling this route. Retrying the requested website…");
-        window.location.reload();
-      }catch(error){
-        setState(error.message||"Could not initialise the proxy route.","error");
-      }
-    }).catch(error=>{
-      setState(error.message||"Could not restore your chat sign-in.","error");
-    });
-  }
+  if(form)form.addEventListener("submit",event=>{event.preventDefault();launchProxy(byId("uv-address-input").value);});
+  document.querySelectorAll("[data-proxy-quick]").forEach(button=>button.addEventListener("click",()=>launchProxy(button.getAttribute("data-proxy-quick"))));
+  const backButton=byId("sj-back"),forwardButton=byId("sj-forward"),reloadButton=byId("sj-reload");
+  if(backButton)backButton.addEventListener("click",()=>{if(scramjetFrame)scramjetFrame.back();});
+  if(forwardButton)forwardButton.addEventListener("click",()=>{if(scramjetFrame)scramjetFrame.forward();});
+  if(reloadButton)reloadButton.addEventListener("click",()=>{if(scramjetFrame)scramjetFrame.reload();});
+  window.NeuralUnblocker={initialize:initializeScramjet,launch:launchProxy,defaultUrl:DEFAULT_URL,wisp:WISP_URL};
 })();
 </script>
 

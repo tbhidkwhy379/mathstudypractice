@@ -1,44 +1,40 @@
 # Neural UBG Unblocker setup
 
-The Unblocker is an additional page inside `app.html`. It reuses the existing Firebase email/password Chat account; it does not create a separate account system. Cloud Computer / Hyperbeam remains a separate page.
+The Unblocker is built into `app.html`. It uses the existing Firebase email/password Chat account; it does not create a separate account system. Cloud Computer / Hyperbeam remains separate.
 
-## Build
+## Static build
 
-The GitHub Pages workflow runs:
+GitHub Pages serves the frontend, Scramjet browser assets and service worker as static files. GitHub Actions runs:
 
 ```sh
 npm install --no-audit --no-fund
 npm run build:unblocker
 ```
 
-The build script copies the pinned browser assets into:
-
-- `public/uv/`
-- `public/baremux/`
-- `public/libcurl/`
-- `public/epoxy/`
-
-It validates the expected entry files and writes `public/unblocker-assets.json`. The Pages workflow then includes these assets in the deployment artifact. It also copies `app.html` to `404.html` as the GitHub Pages deep-route fallback; `_redirects` is retained for Cloudflare Pages or Netlify deployments.
+The build copies the pinned browser assets into `public/scram/`, `public/baremux/`, `public/libcurl/` and `public/epoxy/`. The deployment mirrors the runtime folders to root paths and copies `app.html` to `404.html` for GitHub Pages fallback handling.
 
 ## Runtime
 
-- Ultraviolet service prefix: `/uv/service/`
-- Root service worker: `/sw.js`
+- Scramjet URL prefix: `/scramjet/`
+- Root service worker: `/scramjet-sw.js` (scope `/`)
+- Scramjet configuration: `/scramjet.config.js`
 - Wisp WebSocket endpoint: `wss://proxy-scramjet-8xz5.onrender.com/wisp/`
 - Primary transport: Libcurl through BareMux
 - Fallback transport: Epoxy through BareMux
 
-The Unblocker UI checks the same verified Firebase Chat session before it lets the user launch a URL. This is a frontend route gate. **It does not authenticate a direct connection to the public Wisp server**; enforcing account access against someone who connects to Wisp outside Neural UBG requires adding Firebase ID-token verification / per-user connection controls to the Render Wisp server itself.
+GitHub Pages is static: it serves the Scramjet runtime and app files. The Wisp WebSocket service is hosted separately on Render. Static hosting cannot itself accept Wisp WebSocket connections.
 
-## Compatibility note
+The Unblocker checks the same verified Firebase Chat session before initialization. This is a frontend route gate. **It does not authenticate direct connections to the public Wisp server**; enforcing account access for direct Wisp clients requires Firebase ID-token verification and per-user connection controls on the Render Wisp server.
 
-The pinned versions deliberately match the Ultraviolet 3.x + BareMux transport interface:
+## Pinned compatible packages
 
-- `@titaniumnetwork-dev/ultraviolet@3.2.10`
+The supplied browser code uses the Scramjet v1 controller API (`$scramjetLoadController` / `ScramjetController`) with BareMux. These exact compatible versions are pinned:
+
+- `@mercuryworkshop/scramjet@1.1.0`
 - `@mercuryworkshop/bare-mux@2.1.9`
 - `@mercuryworkshop/libcurl-transport@1.5.2`
 - `@mercuryworkshop/epoxy-transport@2.1.28`
 
-Do not upgrade the transport package major versions independently. Ultraviolet 3.x uses BareMux; newer transport major versions target a different interface.
+The current Scramjet 2.x package generation splits the controller into separate packages and uses a different interface. It must not be substituted without migrating the app code and transport stack as well.
 
-The requested no-iframe full-page navigation is implemented. Upstream Ultraviolet guidance warns that BareMux can occasionally lose its transport MessagePort after full-page navigation and recommends an iframe for maximum reliability. This build intentionally keeps the requested no-iframe design, so some sites may still need a transport/session adjustment.
+The Scramjet frame stays inside the Neural UBG page. This keeps the parent page and its BareMux/Wisp transport session alive while a proxied site is open.
