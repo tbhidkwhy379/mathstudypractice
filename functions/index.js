@@ -49,10 +49,15 @@ exports.purgeAnonymousChatAccounts = onSchedule(
         deleted += result.successCount;
         deleteFailures += result.failureCount;
 
+        // Firebase reports failed batch deletions by their index. Only remove
+        // database records for accounts that were actually deleted.
+        const failedIndexes = new Set((result.errors || []).map(error => error.index));
+        const deletedUsers = batch.filter((user, index) => !failedIndexes.has(index));
+
         // Remove each deleted guest's own chat profile and private account data.
         // Shared global messages are intentionally retained in the chat history.
         const updates = {};
-        for (const user of batch) {
+        for (const user of deletedUsers) {
           const uid = user.uid;
           updates[`${SOCIAL_ROOT}/users/${uid}`] = null;
           updates[`${SOCIAL_ROOT}/friends/${uid}`] = null;
