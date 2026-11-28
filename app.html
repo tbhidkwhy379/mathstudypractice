@@ -1157,6 +1157,7 @@ button { line-height: 1.25; }
 @media(max-width:600px){#sj-frame-mount{height:68vh;min-height:340px}.sj-browser-stage:fullscreen,.sj-browser-stage.sj-fullscreen-fallback{padding:6px}.sj-browser-stage:fullscreen .sj-frame-shell,.sj-browser-stage.sj-fullscreen-fallback .sj-frame-shell{border-radius:6px}}
 
 </style>
+  <script src="/backend/neural-config.js"></script>
 </head>
 <body>
 <div id="bgLayer"></div>
@@ -1206,7 +1207,7 @@ button { line-height: 1.25; }
         <div class="dd-card"><div class="dd-label">AI API</div><div class="dd-value" id="dd-api-status" style="font-size:20px">Not checked</div><div class="dd-note" id="dd-api-note">Run an API check to test the live endpoint</div></div>
         <div class="dd-card"><div class="dd-label">Last data refresh</div><div class="dd-value" id="dd-last-refresh" style="font-size:18px">Not yet</div><div class="dd-note">Dashboard data is only loaded when requested</div></div>
       </div>
-      <div class="dd-panel"><h2>Service overview</h2><p>Use the API Checker to send a small test prompt through the same AI Worker used by chat. The provider header identifies whether Groq or the fallback handled it.</p><div class="dd-status"><span class="dd-dot" id="dd-api-dot"></span><span id="dd-api-summary">Waiting for an API check</span></div></div>
+      <div class="dd-panel"><h2>Service overview</h2><p>Use the API Checker to send a small test prompt through the same AI Worker used by chat. The provider header identifies which Groq model handled it.</p><div class="dd-status"><span class="dd-dot" id="dd-api-dot"></span><span id="dd-api-summary">Waiting for an API check</span></div></div>
     </section>
     <section id="dd-view-api" class="dd-hidden">
       <div class="dd-panel"><h2>AI API connectivity</h2><p>Sends a short test request to the production AI endpoint. This uses a small amount of API tokens. It does not expose provider keys.</p><div class="dd-row"><div class="dd-status"><span class="dd-dot" id="dd-api-dot-2"></span><span id="dd-api-summary-2">Not checked</span></div><button class="dd-btn primary" id="dd-run-api">Run API test</button></div><div class="dd-grid"><div class="dd-card"><div class="dd-label">Provider reported</div><div class="dd-value" id="dd-provider" style="font-size:19px">—</div></div><div class="dd-card"><div class="dd-label">Response time</div><div class="dd-value" id="dd-latency">—</div></div><div class="dd-card"><div class="dd-label">Test result</div><div class="dd-value" id="dd-api-result" style="font-size:19px">Not run</div></div></div><div class="dd-feedback" id="dd-api-feedback" aria-live="polite"></div></div>
@@ -1413,7 +1414,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 <div id="chatSocial">
  <div class="chat-tabs"><button id="globalTab" class="active" type="button">🌐 Global chat</button><button id="friendsTab" type="button">👥 Friends <span id="requestCount"></span></button><button id="dmsTab" type="button">✉ DMs</button><button id="aiTab" type="button">✦ AI Chat</button></div>
  <div id="peoplePanel" hidden><div class="people-search"><input id="findUserId" placeholder="Enter someone's User ID" autocomplete="off"><button id="findUserBtn" type="button">Find / Add</button></div><p class="social-hint">Share your User ID so friends can add you.</p><h3>Friend requests <span id="requestsEmpty"></span></h3><div id="friendRequests" class="people-list"></div><h3>Your friends</h3><div id="friendsList" class="people-list"></div></div>
- <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div><div id="aiPanel" hidden><div class="ai-library-head"><button id="aiBackBtn" type="button">← Human chats</button><strong>Your AI chats</strong><label class="ai-model-label" for="aiProviderSelect">AI MODE</label><select id="aiProviderSelect"><option value="local">Local · runs on this device</option><option value="api">API · Claude</option></select><span id="localModelWrap"><label class="ai-model-label" for="aiModelSelect">LOCAL MODEL</label><select id="aiModelSelect"><option value="HuggingFaceTB/SmolLM3-3B-ONNX">SmolLM3 · 3B parameters (approx. 2.1 GB GPU download)</option></select><button id="aiDeleteModel" type="button" class="ai-delete-model">Delete downloaded model</button><button id="aiUnloadModel" type="button" class="ai-unload-model">Unload AI from memory</button></span><button id="aiNewChat" type="button">＋ New chat</button></div><div id="aiChatList"></div><div id="aiUsage">Runs on this device · Chats are saved in this browser.</div></div>
+ <div id="dmPanel" hidden><div id="dmList" class="people-list"></div><div id="dmHeader">Choose a friend to start a DM.</div></div><div id="aiPanel" hidden><div class="ai-library-head"><button id="aiBackBtn" type="button">← Human chats</button><strong>Your AI chats</strong><label class="ai-model-label" for="aiProviderSelect">AI MODE</label><select id="aiProviderSelect"><option value="local">Local · runs on this device</option><option value="api">API · Neural AI</option></select><span id="localModelWrap"><label class="ai-model-label" for="aiModelSelect">LOCAL MODEL</label><select id="aiModelSelect"><option value="HuggingFaceTB/SmolLM3-3B-ONNX">SmolLM3 · 3B parameters (approx. 2.1 GB GPU download)</option></select><button id="aiDeleteModel" type="button" class="ai-delete-model">Delete downloaded model</button><button id="aiUnloadModel" type="button" class="ai-unload-model">Unload AI from memory</button></span><button id="aiNewChat" type="button">＋ New chat</button></div><div id="aiChatList"></div><div id="aiUsage">Runs on this device · Chats are saved in this browser.</div></div>
 </div>
 <main id="main"><div id="empty">No messages yet. Say hello!</div></main>
 <div id="status"></div>
@@ -1543,9 +1544,9 @@ function tick(){if(!reduceMotion){stars.forEach(s=>{s.y+=s.vy;s.x+=s.drift;s.tw+
 addEventListener('resize',resize);resize();tick();
 const settingsBtn=document.getElementById('settingsBtn'),settingsPanel=document.getElementById('settingsPanel');
 const devModeToggle=document.getElementById('devModeToggle');
-const DEV_GATEKEEPER_URL='https://gatekeeper.sapktaayush.workers.dev/';
+const DEV_GATEKEEPER_URL=window.NEURAL_CONFIG?.gatekeeperUrl||'https://gatekeeper.sapktaayush.workers.dev/';
 const DEV_TOKEN_KEY='cs_dev_mode_token';
-const TURNSTILE_SITE_KEY='0x4AAAAAAGWlP_bSshAjBaAh';
+const TURNSTILE_SITE_KEY=window.NEURAL_CONFIG?.turnstileSiteKey||'0x4AAAAAAGWlP_bSshAjBaAh';
 let turnstileWidgetId=null;
 async function waitForDeveloperTurnstile(){
   if(window.turnstile)return window.turnstile;
@@ -1692,7 +1693,7 @@ async function runDevApiCheck(){
   document.getElementById('dd-api-result').textContent='Running';
   const started=performance.now();
   try{
-    const response=await fetch('https://api.sapktaayush.workers.dev/',{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-opus-5-5',messages:[{role:'user',content:'Reply with OK only.'}],stream:true})});
+    const response=await fetch(AI_API_URL,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:AI_API_MODEL,messages:[{role:'user',content:'Reply with OK only.'}],stream:true})});
     if(!response.ok){let detail='HTTP '+response.status;try{const e=await response.json();if(e.error)detail=e.error.message||e.error;}catch(e){}throw new Error(detail);}
     const provider=response.headers.get('x-ai-provider')||'Provider not reported';
     if(!response.body)throw new Error('The API responded without a readable stream.');
@@ -1852,7 +1853,7 @@ hi.classList.add('bye');setTimeout(()=>{hi.style.display='none';},900);},5000);
 })();}catch(e){console.error("[init:home]",e&&e.message);}
 try{(function(){
 /* ===== CHAT (Firebase Realtime Database) ===== */
-var FIREBASE_CONFIG = {
+var FIREBASE_CONFIG = window.NEURAL_CONFIG?.firebase || {
   apiKey: "AIzaSyC2-OgUKegzi63XA2LuEzJ7MEtv9hmuhzo",
   authDomain: "ubg1-363a4.firebaseapp.com",
   databaseURL: "https://ubg1-363a4-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -1890,10 +1891,10 @@ const chatVerifyEmail=document.getElementById('chatVerifyEmail');
 const chatVerifyMessage=document.getElementById('chatVerifyMessage');
 let chatAuthMode='login',chatAuthBusy=false,chatStartedUid=null,chatAuthUiBound=false;
 const CHAT_EMAIL_ACTION_SETTINGS={
-  url:'https://neural.qzz.io/?from=chat-email',
+  url:window.NEURAL_CONFIG?.emailActionUrl||'https://neural.qzz.io/?from=chat-email',
   handleCodeInApp:false
 };
-const CHAT_GATEKEEPER_URL='https://gatekeeper.sapktaayush.workers.dev/';
+const CHAT_GATEKEEPER_URL=window.NEURAL_CONFIG?.gatekeeperUrl||'https://gatekeeper.sapktaayush.workers.dev/';
 const CHAT_DEV_TOKEN_KEY='cs_dev_mode_token';
 let resolveInitialChatAuth=null,initialChatAuthResolved=false;
 window.neuralChatAuthUser=null;
@@ -1917,7 +1918,7 @@ async function verifyChatDeveloperSession(){
 const globalTab=document.getElementById('globalTab'),friendsTab=document.getElementById('friendsTab'),dmsTab=document.getElementById('dmsTab'),aiTab=document.getElementById('aiTab'),peoplePanel=document.getElementById('peoplePanel'),dmPanel=document.getElementById('dmPanel'),aiPanel=document.getElementById('aiPanel'),aiChatListEl=document.getElementById('aiChatList'),aiUsageEl=document.getElementById('aiUsage'),aiNewChatBtn=document.getElementById('aiNewChat'),findUserId=document.getElementById('findUserId'),findUserBtn=document.getElementById('findUserBtn'),friendRequestsEl=document.getElementById('friendRequests'),friendsListEl=document.getElementById('friendsList'),dmListEl=document.getElementById('dmList'),dmHeaderEl=document.getElementById('dmHeader'),requestCountEl=document.getElementById('requestCount');
  const AI_MAX_CHARS=128000,LOCAL_AI_CONTEXT_CHARS=10000;let aiCurrentChatId=null,aiChatCache={},aiRequestInProgress=false;let aiPendingFiles=[];const aiFileInput=document.getElementById('aiFileInput'),aiAttachBtn=document.getElementById('aiAttachBtn'),aiFileTray=document.getElementById('aiFileTray'),aiModelSelect=document.getElementById('aiModelSelect');
 const LOCAL_AI_MODELS=[{id:'HuggingFaceTB/SmolLM3-3B-ONNX',name:'SmolLM3 · 3B'}];
-const AI_API_URL='https://api.sapktaayush.workers.dev/',AI_API_MODEL='claude-opus-5-5';
+const AI_API_URL=window.NEURAL_CONFIG?.aiApiUrl||'https://api.sapktaayush.workers.dev/',AI_API_MODEL=window.NEURAL_CONFIG?.aiModel||'openai/gpt-oss-20b';
 const aiProviderSelect=document.getElementById('aiProviderSelect'),localModelWrap=document.getElementById('localModelWrap');
 const aiDeleteModelBtn=document.getElementById('aiDeleteModel');
 const aiUnloadModelBtn=document.getElementById('aiUnloadModel');
@@ -1932,7 +1933,7 @@ function hideLocalAiOption(){
   }
   if(localModelWrap)localModelWrap.hidden=true;
 }
-function getAiAssistantName(){return aiProviderMode==='api'?'Claude Opus 5.5':'Local AI';}
+function getAiAssistantName(){return aiProviderMode==='api'?(window.NEURAL_CONFIG?.aiName||'Neural AI'):'Local AI';}
 function updateAiProviderUi(){
   if(localAiAccessDenied)hideLocalAiOption();
   if(aiProviderSelect){const localOption=aiProviderSelect.querySelector('option[value="local"]');if(localOption)localOption.hidden=localAiAccessDenied;aiProviderSelect.value=aiProviderMode;}
@@ -2670,7 +2671,7 @@ async function sendAiMessage(raw){
     aiPendingFiles=[];renderAiFileTray();renderAiChat(chat);
     const isApi=aiProviderMode==='api';
     const history=isApi?buildApiAiHistory(chat):buildLocalAiHistory(chat);
-    setAiUsage(isApi?'Connecting to Claude …':'Preparing '+selectedLocalAiModel().name+' on this device…');
+    setAiUsage(isApi?'Connecting to Neural AI …':'Preparing '+selectedLocalAiModel().name+' on this device…');
     temp=document.createElement('div');temp.className='msg other ai-message';
     const label=document.createElement('div');label.className='name';label.textContent=getAiAssistantName();
     const bubble=document.createElement('div');bubble.className='bubble ai-markdown ai-thinking';
@@ -2732,7 +2733,7 @@ async function sendFriendRequest(uid){uid=(uid||'').trim();if(!uid||uid===myId){
 async function acceptRequest(uid){try{await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);await firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/accepted').set(true);friendsMap[uid]=true;renderPeople();render(globalMessages);setStatus('Friend added! You can now DM each other.');}catch(e){setStatus('Could not accept request: '+(e.message||'check Firebase rules'));}}
 async function syncAcceptedOutgoing(){for(const uid of Object.keys(outgoingRequests)){try{const snap=await firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).once('value');const q=snap.val();if(q&&q.accepted===true){await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);friendsMap[uid]=true;delete outgoingRequests[uid];saveOutgoing();}}catch(e){}}renderPeople();renderDmList();}
 function installSocialListeners(){usersRef=firebase.database().ref(socialRoot+'/users');friendsRef=firebase.database().ref(socialRoot+'/friends/'+myId);requestsRef=firebase.database().ref(socialRoot+'/friendRequests/'+myId);friendsRef.on('value',snap=>{friendsMap=snap.val()||{};if(dmPartner&&friendsMap[dmPartner.uid]!==true){if(dmListener&&dmRef)dmRef.off('value',dmListener);dmListener=null;dmRef=null;dmPartner=null;if(viewMode==='dms'){dmHeaderEl.textContent='That user is no longer your friend. Add them again to DM.';render([]);}}renderPeople();renderDmList();});requestsRef.on('value',snap=>{requestsMap=snap.val()||{};renderPeople();});syncAcceptedOutgoing();}
-globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='api')setAiUsage('API mode · Claude');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;const requestedMode=aiProviderSelect.value==='api'?'api':'local';if(requestedMode==='local'&&!unlockLocalAi()){aiProviderSelect.value=aiProviderMode;return;}aiProviderMode=requestedMode;localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();syncLocalAiLifecycle();if(aiProviderMode==='api')setAiUsage('API mode · Claude');if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);});}if(!localAiAccessGranted&&aiProviderMode==='local'){aiProviderMode='api';localStorage.setItem('cs_ai_provider','api');}updateAiProviderUi();syncLocalAiLifecycle();if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';syncLocalAiLifecycle();});}if(aiDeleteModelBtn)aiDeleteModelBtn.addEventListener('click',deleteSelectedLocalAiModel);if(aiUnloadModelBtn)aiUnloadModelBtn.addEventListener('click',manuallyUnloadLocalAiModel);updateAiUnloadButton();aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
+globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='api')setAiUsage('API mode · Neural AI');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;const requestedMode=aiProviderSelect.value==='api'?'api':'local';if(requestedMode==='local'&&!unlockLocalAi()){aiProviderSelect.value=aiProviderMode;return;}aiProviderMode=requestedMode;localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();syncLocalAiLifecycle();if(aiProviderMode==='api')setAiUsage('API mode · Neural AI');if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);});}if(!localAiAccessGranted&&aiProviderMode==='local'){aiProviderMode='api';localStorage.setItem('cs_ai_provider','api');}updateAiProviderUi();syncLocalAiLifecycle();if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';syncLocalAiLifecycle();});}if(aiDeleteModelBtn)aiDeleteModelBtn.addEventListener('click',deleteSelectedLocalAiModel);if(aiUnloadModelBtn)aiUnloadModelBtn.addEventListener('click',manuallyUnloadLocalAiModel);updateAiUnloadButton();aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
 findUserBtn.addEventListener('click',()=>sendFriendRequest(findUserId.value));findUserId.addEventListener('keydown',e=>{if(e.key==='Enter')sendFriendRequest(findUserId.value);});
 document.getElementById('chatSocial').addEventListener('click',e=>{const a=e.target.closest('[data-accept]');if(a){acceptRequest(a.getAttribute('data-accept'));return;}const d=e.target.closest('[data-decline]');if(d){const uid=d.getAttribute('data-decline');firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/ignored').set(true).then(()=>{requestsMap[uid]=Object.assign({},requestsMap[uid],{ignored:true});renderPeople();}).catch(err=>setStatus('Could not ignore request: '+err.message));return;}const o=e.target.closest('[data-open-dm]');if(o){const uid=o.getAttribute('data-open-dm');usersRef.child(uid).once('value').then(s=>openDM(uid,(s.val()||{}).name||'Friend'));}});
 mainEl.addEventListener('click',async e=>{
