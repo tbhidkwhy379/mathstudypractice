@@ -67,3 +67,8 @@ The loader now checks for an already-loaded API and polls briefly while waiting,
 ## Important security note
 
 Do not use variable scrambling as an anti-scraping or access-control mechanism. Keep authentication, Turnstile Siteverify, rate limiting, and authorization checks on the server. Public frontend code and public static assets remain retrievable.
+
+
+## Automatic stale service-worker recovery
+
+The Scramjet startup helper (`_0x1e5a`) now detects and unregisters legacy UV workers and stale same-origin root-scope workers, registers/updates `/scramjet-sw.js`, requests immediate activation, waits for `controllerchange`, and performs one guarded automatic reload if the current tab is still controlled by the old worker. The reload guard uses session storage key `neural-scramjet-worker-reload` to prevent a reload loop. The worker listens for `$neuralScramjetSkipWaiting` and calls `skipWaiting()`; its activate handler already calls `clients.claim()`. Unrelated non-root scoped workers are left alone. This is intended to remove the need to manually close every Neural UBG tab for ordinary stale-worker upgrades.
