@@ -3652,12 +3652,14 @@ showPage(p);});});
       bareMuxConnection=new window.BareMux.BareMuxConnection("/baremux/worker.js");
       setState("Connecting to the Wisp transport…");
       try{
-        const selected=await setTransportWithFallback("libcurl",[{wisp:WISP_URL}]);
-        setState("Libcurl transport selected ("+selected+"). Loading Scramjet…");
-      }catch(libcurlError){
-        console.warn("[Neural Scramjet] Libcurl setup failed; trying Epoxy fallback.",libcurlError);
+        // Epoxy uses its own TLS implementation, avoiding Libcurl-specific TLS
+        // handshake failures while keeping the same Wisp connection.
         const selected=await setTransportWithFallback("epoxy",[{wisp:WISP_URL}]);
-        setState("Epoxy fallback selected ("+selected+"). Loading Scramjet…");
+        setState("Epoxy transport selected ("+selected+"). Loading Scramjet…");
+      }catch(epoxyError){
+        console.warn("[Neural Scramjet] Epoxy setup failed; trying Libcurl fallback.",epoxyError);
+        const selected=await setTransportWithFallback("libcurl",[{wisp:WISP_URL}]);
+        setState("Libcurl fallback selected ("+selected+"). Loading Scramjet…");
       }
       await loadProxyScript("/scram/scramjet.all.js");
       if(typeof window.$scramjetLoadController!=="function")throw new Error("Scramjet did not initialise. Check /scram/scramjet.all.js.");
