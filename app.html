@@ -3700,6 +3700,14 @@ showPage(p);});});
       document.head.appendChild(script);
     });
   }
+  async function _0x92d1(paths){
+    const failures=[];
+    for(const path of paths){
+      try{await _0x92d0(path);return path;}
+      catch(error){failures.push(path+": "+(error&&error.message||String(error)));}
+    }
+    throw new Error("Could not load Scramjet asset from any deployed path. "+failures.join(" | "));
+  }
   async function _0x1e5a(){
     const registrations=await navigator.serviceWorker.getRegistrations();
     for(const registration of registrations){
@@ -3839,8 +3847,8 @@ showPage(p);});});
         const selected=await _0x3d8e("libcurl",[{wisp:WISP_URL}]);
         _0x4f2b("Libcurl fallback selected ("+selected+"). Loading Scramjet…");
       }
-      await _0x92d0("/scram/scramjet.all.js");
-      if(typeof window.$scramjetLoadController!=="function")throw new Error("Scramjet did not initialise. Check /scram/scramjet.all.js.");
+      const scramjetBundle=await _0x92d1(["/scram/scramjet.all.js?v=scramjet-root-2","/public/scram/scramjet.all.js?v=scramjet-public-2"]);
+      if(typeof window.$scramjetLoadController!=="function")throw new Error("Scramjet did not initialise. Loaded "+scramjetBundle+" but its controller API is missing.");
       await _0x1e5a();
       _0x4f2b("Checking Scramjet browser storage…");
       await _0x6c1f();
@@ -3849,9 +3857,9 @@ showPage(p);});});
       _0x8f21=new ScramjetController({
         prefix:SCRAMJET_PREFIX,
         files:{
-          wasm:"/scram/scramjet.wasm.wasm",
-          all:"/scram/scramjet.all.js",
-          sync:"/scram/scramjet.sync.js"
+          wasm:scramjetBundle.replace(/scramjet\.all\.js(?:\?.*)?$/,"scramjet.wasm.wasm"),
+          all:scramjetBundle,
+          sync:scramjetBundle.replace(/scramjet\.all\.js(?:\?.*)?$/,"scramjet.sync.js")
         }
       });
       await _0x8f21.init();
