@@ -959,7 +959,8 @@ button { line-height: 1.25; }
 
 /* Neural Browser — full in-page Scramjet browser chrome */
 #view-unblocker{min-height:100vh;padding:clamp(12px,2vw,24px);padding-bottom:110px;color:var(--text)}
-#view-unblocker.active{display:flex;flex-direction:column;gap:12px}
+#view-unblocker.active{position:fixed;inset:0 0 104px;z-index:2;box-sizing:border-box;min-height:0;display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;background:#0b0d13}
+#view-unblocker.active>.uv-heading,#view-unblocker.active>.uv-footnote{display:none}
 .uv-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .uv-heading h1{margin:0 0 4px;font-size:clamp(23px,3vw,31px);letter-spacing:-.045em}
 .uv-heading p{margin:0;color:var(--muted);font-size:12px}
@@ -968,7 +969,7 @@ button { line-height: 1.25; }
 .uv-state-dot.ready{background:#37d79b;box-shadow:0 0 0 4px rgba(55,215,155,.1)}
 .uv-state-dot.error{background:#ff7373;box-shadow:0 0 0 4px rgba(255,115,115,.1)}
 .uv-footnote{width:min(100%,1200px);margin:0 auto;color:#778196;font-size:10px;line-height:1.5}
-.sj-browser-stage{width:100%;max-width:1500px;min-height:600px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;border:1px solid #2b3040;border-radius:15px;background:#11131a;box-shadow:0 22px 65px rgba(0,0,0,.32)}
+.sj-browser-stage{width:100%;max-width:none;height:100%;min-height:0;flex:1;margin:0;display:flex;flex-direction:column;overflow:hidden;border:0;border-radius:0;background:#11131a;box-shadow:none}
 .sj-tabbar{height:42px;display:flex;align-items:flex-end;gap:7px;padding:6px 9px 0;background:#191c25;border-bottom:1px solid #2b3040}
 .sj-tab{height:35px;min-width:150px;max-width:280px;display:flex;align-items:center;gap:9px;padding:0 10px;border:1px solid #34394a;border-bottom-color:#11131a;border-radius:9px 9px 0 0;background:#11131a;color:#e9ecf5;font-size:11px}
 .sj-tab>i{color:#91a6ff}.sj-tab span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -987,7 +988,7 @@ button { line-height: 1.25; }
 .sj-bookmarks button,.sj-start-links button{display:flex;align-items:center;gap:7px;padding:6px 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:#c5cada;font-size:11px;cursor:pointer}
 .sj-bookmarks button:hover,.sj-start-links button:hover{background:#242a38;border-color:#353d51}
 .sj-browser-status{display:flex;align-items:center;gap:8px;min-height:27px;padding:4px 12px;background:#191c25;color:#929bad;font-size:10px}
-.sj-frame-shell{position:relative;width:100%;height:min(72vh,850px);min-height:480px;flex:1;overflow:hidden;background:#fff}
+.sj-frame-shell{position:relative;width:100%;height:auto;min-height:0;flex:1;overflow:hidden;background:#fff}
 #sj-frame-mount{position:absolute;inset:0;height:100%;background:#fff}
 #sj-frame-mount iframe{display:block;width:100%;height:100%;border:0;background:#fff}
 .sj-start-page{position:absolute;inset:0;z-index:2;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 35%,rgba(108,140,255,.15),transparent 48%),#0c0f17;color:#f3f5fb}
@@ -1000,9 +1001,9 @@ button { line-height: 1.25; }
 #sj-start-form input{min-width:0;flex:1;padding:8px 10px;border:0;outline:0;background:transparent;color:#fff;font:inherit}
 #sj-start-form button{width:38px;border:0;border-radius:9px;background:var(--accent);color:#080910;cursor:pointer}
 .sj-start-links{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-top:16px}
-.sj-browser-stage:fullscreen,.sj-browser-stage.sj-fullscreen-fallback{position:fixed;inset:0;z-index:10020;width:100vw;height:100vh;height:100dvh;max-width:none;min-height:0;margin:0;padding:8px;border-radius:0;gap:0;background:#08090c}
-.sj-browser-stage:fullscreen .sj-frame-shell,.sj-browser-stage.sj-fullscreen-fallback .sj-frame-shell{height:auto;min-height:0;flex:1}
-@media(max-width:650px){#view-unblocker{padding:10px 7px 100px}.sj-browser-stage{min-height:540px;border-radius:10px}.sj-browser-controls{gap:4px;padding:6px}.sj-browser-controls>button{width:30px;height:32px;flex-basis:30px}.sj-address-form{height:34px;padding-left:8px}.sj-go{padding:0 9px}.sj-frame-shell{height:66vh;min-height:390px}.sj-tab{min-width:110px}.sj-bookmarks{gap:2px;padding:5px}.sj-bookmarks button{padding:5px 7px;font-size:10px}}
+.sj-browser-stage.sj-fullscreen-fallback{position:fixed;inset:0 0 104px;z-index:5;width:100vw;height:auto;max-width:none;min-height:0;margin:0;padding:0;border:0;border-radius:0;gap:0;background:#08090c}
+.sj-browser-stage.sj-fullscreen-fallback .sj-frame-shell{height:auto;min-height:0;flex:1}
+@media(max-width:650px){#view-unblocker.active{inset:0 0 104px}.sj-browser-controls{gap:4px;padding:6px}.sj-browser-controls>button{width:30px;height:32px;flex-basis:30px}.sj-address-form{height:34px;padding-left:8px}.sj-go{padding:0 9px}.sj-tab{min-width:110px}.sj-bookmarks{gap:2px;padding:5px}.sj-bookmarks button{padding:5px 7px;font-size:10px}}
 
 /* Hyperbeam full browser */
 #view-browser{min-height:100vh;padding:clamp(12px,2.2vw,28px);padding-bottom:112px;color:var(--text)}
@@ -1299,11 +1300,12 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
       <button type="button" data-proxy-quick="https://www.google.com/"><i class="fab fa-google"></i> Google</button>
       <button type="button" data-proxy-quick="https://www.youtube.com/"><i class="fab fa-youtube"></i> YouTube</button>
       <button type="button" data-proxy-quick="https://www.tiktok.com/"><i class="fab fa-tiktok"></i> TikTok</button>
-      <button type="button" data-proxy-quick="https://www.wikipedia.org/"><i class="fab fa-wikipedia-w"></i> Wikipedia</button>
+      <button type="button" data-proxy-quick="https://discord.com/app"><i class="fab fa-discord"></i> Discord</button>
+      <button type="button" data-proxy-quick="https://www.snapchat.com/"><i class="fab fa-snapchat"></i> Snapchat</button>
     </div>
     <div class="sj-browser-status" role="status" aria-live="polite"><span class="uv-state-dot" id="uv-state-dot"></span><span id="uv-state-text">Starting your browser…</span></div>
     <div class="sj-frame-shell" id="sj-frame-shell">
-      <div class="sj-start-page" id="sj-start-page"><div class="sj-start-content"><div class="sj-start-logo"><i class="fas fa-globe"></i></div><h2>Browse the web</h2><p>Search or enter a website address above to get started.</p><form id="sj-start-form"><input id="sj-start-input" type="text" placeholder="Search the web…" autocomplete="off"><button type="submit"><i class="fas fa-arrow-right"></i></button></form><div class="sj-start-links"><button type="button" data-proxy-quick="https://www.google.com/"><i class="fab fa-google"></i> Google</button><button type="button" data-proxy-quick="https://www.youtube.com/"><i class="fab fa-youtube"></i> YouTube</button><button type="button" data-proxy-quick="https://www.tiktok.com/"><i class="fab fa-tiktok"></i> TikTok</button></div></div></div>
+      <div class="sj-start-page" id="sj-start-page"><div class="sj-start-content"><div class="sj-start-logo"><i class="fas fa-globe"></i></div><h2>Browse the web</h2><p>Search or enter a website address above to get started.</p><form id="sj-start-form"><input id="sj-start-input" type="text" placeholder="Search the web…" autocomplete="off"><button type="submit"><i class="fas fa-arrow-right"></i></button></form><div class="sj-start-links"><button type="button" data-proxy-quick="https://www.google.com/"><i class="fab fa-google"></i> Google</button><button type="button" data-proxy-quick="https://www.youtube.com/"><i class="fab fa-youtube"></i> YouTube</button><button type="button" data-proxy-quick="https://www.tiktok.com/"><i class="fab fa-tiktok"></i> TikTok</button><button type="button" data-proxy-quick="https://discord.com/app"><i class="fab fa-discord"></i> Discord</button><button type="button" data-proxy-quick="https://www.snapchat.com/"><i class="fab fa-snapchat"></i> Snapchat</button></div></div></div>
       <div id="sj-frame-mount"></div>
     </div>
   </div>
@@ -3882,22 +3884,9 @@ showPage(p);});});
   }
   async function _0x4b09(){
     if(!browserStage)return;
-    if(browserStage.classList.contains("sj-fullscreen-fallback")){
-      browserStage.classList.remove("sj-fullscreen-fallback");
-      _0x6d84();
-      return;
-    }
-    if(document.fullscreenElement===browserStage){
-      try{await document.exitFullscreen();}catch(error){console.warn("[Neural Scramjet] Could not exit fullscreen:",error);}
-      return;
-    }
-    try{
-      if(typeof browserStage.requestFullscreen!=="function")throw new Error("Fullscreen API unavailable.");
-      await browserStage.requestFullscreen({navigationUI:"hide"});
-    }catch(error){
-      console.warn("[Neural Scramjet] Using CSS fullscreen fallback:",error);
-      browserStage.classList.add("sj-fullscreen-fallback");
-    }
+    // Expand within the app viewport while deliberately leaving the bottom
+    // navigation dock visible (native fullscreen would hide the dock).
+    browserStage.classList.toggle("sj-fullscreen-fallback");
     _0x6d84();
   }
   if(fullscreenButton)fullscreenButton.addEventListener("click",_0x4b09);
