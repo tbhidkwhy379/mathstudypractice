@@ -3551,8 +3551,8 @@ showPage(p);});});
 </script>
 <script>
 (function(){
-  const WISP_URL="wss://proxy-scramjet-8xz5.onrender.com/wisp/";
-  const SCRAMJET_PREFIX="/scramjet/";
+  const WISP_URL=window.NEURAL_CONFIG?.wispUrl||"";
+  const SCRAMJET_PREFIX=window.NEURAL_CONFIG?.scramjetPrefix||"/scramjet/";
   const DEFAULT_URL="https://www.tiktok.com/";
   let _0x51a2=null,_0x7b30=null,_0x8f21=null,_0xa14c=null;
   const _0x3e91=id=>document.getElementById(id);
