@@ -2311,6 +2311,7 @@ textEl.addEventListener('paste',e=>{const items=e.clipboardData&&e.clipboardData
 function sendMessage(text){text=(text||'').trim();if(viewMode==='ai'){sendAiMessage(text);return;}if(!text&&!pendingImage)return;
 if(!myName){pendingText=text;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);return;}
 if(!liveReady||!liveRef||!myId){setStatus('Chat is still connecting — try sending again in a moment.');return;}
+if(viewMode==='dms'&&(!dmPartner||friendsMap[dmPartner.uid]!==true||!dmRef)){setStatus('You can only DM someone after they accept your friend request.');return;}
 const targetRef=viewMode==='dms'?(dmPartner&&dmRef?dmRef:null):liveRef;if(!targetRef){setStatus('Choose a friend first.');return;}
 const file=pendingImage;const entry={uid:myId,name:myName,text:text.slice(0,1000),ts:Date.now()};
 sendBtn.disabled=true;attachImageBtn.disabled=true;
@@ -2730,7 +2731,7 @@ function openDM(uid,name){if(!uid||uid===myId||!friendsMap[uid]){setStatus('You 
 async function sendFriendRequest(uid){uid=(uid||'').trim();if(!uid||uid===myId){setStatus('Enter another person’s User ID.');return;}if(!liveReady||!myId||!usersRef){setStatus('Chat is still connecting. Try again shortly.');return;}if(friendsMap[uid]){setStatus('You are already friends with this user.');return;}try{const snap=await usersRef.child(uid).once('value');const p=snap.val();if(!p){setStatus('No user found with that ID. Ask them to open chat once and share their ID.');return;}await firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).set({uid:myId,name:myName,ts:Date.now()});outgoingRequests[uid]=true;saveOutgoing();setStatus('Friend request sent to '+(p.name||'user')+'.');findUserId.value='';}catch(e){setStatus('Could not send request: '+(e.message||'check Firebase rules'));}}
 async function acceptRequest(uid){try{await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);await firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/accepted').set(true);friendsMap[uid]=true;renderPeople();render(globalMessages);setStatus('Friend added! You can now DM each other.');}catch(e){setStatus('Could not accept request: '+(e.message||'check Firebase rules'));}}
 async function syncAcceptedOutgoing(){for(const uid of Object.keys(outgoingRequests)){try{const snap=await firebase.database().ref(socialRoot+'/friendRequests/'+uid+'/'+myId).once('value');const q=snap.val();if(q&&q.accepted===true){await firebase.database().ref(socialRoot+'/friends/'+myId+'/'+uid).set(true);friendsMap[uid]=true;delete outgoingRequests[uid];saveOutgoing();}}catch(e){}}renderPeople();renderDmList();}
-function installSocialListeners(){usersRef=firebase.database().ref(socialRoot+'/users');friendsRef=firebase.database().ref(socialRoot+'/friends/'+myId);requestsRef=firebase.database().ref(socialRoot+'/friendRequests/'+myId);friendsRef.on('value',snap=>{friendsMap=snap.val()||{};renderPeople();renderDmList();});requestsRef.on('value',snap=>{requestsMap=snap.val()||{};renderPeople();});syncAcceptedOutgoing();}
+function installSocialListeners(){usersRef=firebase.database().ref(socialRoot+'/users');friendsRef=firebase.database().ref(socialRoot+'/friends/'+myId);requestsRef=firebase.database().ref(socialRoot+'/friendRequests/'+myId);friendsRef.on('value',snap=>{friendsMap=snap.val()||{};if(dmPartner&&friendsMap[dmPartner.uid]!==true){if(dmListener&&dmRef)dmRef.off('value',dmListener);dmListener=null;dmRef=null;dmPartner=null;if(viewMode==='dms'){dmHeaderEl.textContent='That user is no longer your friend. Add them again to DM.';render([]);}}renderPeople();renderDmList();});requestsRef.on('value',snap=>{requestsMap=snap.val()||{};renderPeople();});syncAcceptedOutgoing();}
 globalTab.addEventListener('click',()=>setMode('global'));friendsTab.addEventListener('click',()=>setMode('friends'));dmsTab.addEventListener('click',()=>setMode('dms'));aiTab.addEventListener('click',()=>{setMode('ai');if(aiProviderMode==='api')setAiUsage('API mode · Claude');});document.getElementById('aiBackBtn').addEventListener('click',()=>setMode('global'));aiAttachBtn.addEventListener('click',()=>aiFileInput.click());aiFileInput.addEventListener('change',()=>addAiFiles(aiFileInput.files));aiNewChatBtn.addEventListener('click',createAiChat);updateAiProviderUi();if(aiProviderSelect){aiProviderSelect.value=aiProviderMode;aiProviderSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;const requestedMode=aiProviderSelect.value==='api'?'api':'local';if(requestedMode==='local'&&!unlockLocalAi()){aiProviderSelect.value=aiProviderMode;return;}aiProviderMode=requestedMode;localStorage.setItem('cs_ai_provider',aiProviderMode);updateAiProviderUi();syncLocalAiLifecycle();if(aiProviderMode==='api')setAiUsage('API mode · Claude');if(aiCurrentChatId&&aiChatCache[aiCurrentChatId])renderAiChat(aiChatCache[aiCurrentChatId]);});}if(!localAiAccessGranted&&aiProviderMode==='local'){aiProviderMode='api';localStorage.setItem('cs_ai_provider','api');}updateAiProviderUi();syncLocalAiLifecycle();if(aiModelSelect){aiModelSelect.value=localAiModelId;aiModelSelect.addEventListener('change',()=>{if(aiRequestInProgress)return;localAiModelId=aiModelSelect.value;localStorage.setItem('cs_local_ai_model',localAiModelId);localAiReady=false;localAiLoadedModel='';syncLocalAiLifecycle();});}if(aiDeleteModelBtn)aiDeleteModelBtn.addEventListener('click',deleteSelectedLocalAiModel);if(aiUnloadModelBtn)aiUnloadModelBtn.addEventListener('click',manuallyUnloadLocalAiModel);updateAiUnloadButton();aiChatListEl.addEventListener('click',async e=>{const open=e.target.closest('[data-ai-open]');if(open){openAiChat(open.getAttribute('data-ai-open'));return;}const del=e.target.closest('[data-ai-delete]');if(del){const id=del.getAttribute('data-ai-delete');if(!confirm('Delete this AI conversation permanently from this device?'))return;try{await aiDbAction('delete',id);delete aiChatCache[id];if(aiCurrentChatId===id){aiCurrentChatId=null;render([]);}renderAiChatList();setAiUsage('Conversation deleted from this device.');}catch(err){setAiUsage('Could not delete conversation: '+err.message);}}});
 findUserBtn.addEventListener('click',()=>sendFriendRequest(findUserId.value));findUserId.addEventListener('keydown',e=>{if(e.key==='Enter')sendFriendRequest(findUserId.value);});
 document.getElementById('chatSocial').addEventListener('click',e=>{const a=e.target.closest('[data-accept]');if(a){acceptRequest(a.getAttribute('data-accept'));return;}const d=e.target.closest('[data-decline]');if(d){const uid=d.getAttribute('data-decline');firebase.database().ref(socialRoot+'/friendRequests/'+myId+'/'+uid+'/ignored').set(true).then(()=>{requestsMap[uid]=Object.assign({},requestsMap[uid],{ignored:true});renderPeople();}).catch(err=>setStatus('Could not ignore request: '+err.message));return;}const o=e.target.closest('[data-open-dm]');if(o){const uid=o.getAttribute('data-open-dm');usersRef.child(uid).once('value').then(s=>openDM(uid,(s.val()||{}).name||'Friend'));}});
@@ -3527,6 +3528,7 @@ if(authGate){
 if(name==="chat"){var unreadDot=document.querySelector(".dock .chat-unread-dot");if(unreadDot)unreadDot.classList.remove("visible");}
 Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active");});
 pageViews[name].classList.add("active");
+if(typeof window.setNeuralBrowserActive==="function")window.setNeuralBrowserActive(name==="unblocker");
 if(name==="unblocker"){
   var unblockerStage=document.getElementById("sj-browser-stage");
   if(unblockerStage)unblockerStage.classList.add("sj-fullscreen-fallback");
@@ -3834,7 +3836,7 @@ showPage(p);});});
     _0xa14c.frame.setAttribute("title","Neural UBG Scramjet browser");
     _0xa14c.frame.setAttribute("loading","eager");
     _0xa14c.frame.setAttribute("allow","clipboard-read; clipboard-write; fullscreen; autoplay");
-    _0xa14c.frame.addEventListener("load",()=>_0x2d73(scramjetMuted));
+    _0xa14c.frame.addEventListener("load",()=>{_0x2d73(scramjetMuted);_0x7d91();});
     mount.replaceChildren(_0xa14c.frame);
     _0xa14c.addEventListener("urlchange",event=>{
       if(!event||!event.url||!_0x3e91("uv-address-input"))return;
@@ -3892,6 +3894,49 @@ showPage(p);});});
   const fullscreenButton=_0x3e91("sj-fullscreen"),browserStage=_0x3e91("sj-browser-stage");
   const muteButton=_0x3e91("sj-mute");
   let scramjetMuted=false,scramjetMediaObserver=null;
+  let _0xPaused=true;
+  const _0xMediaPlayback=new WeakMap();
+  function _0x7d91(){
+    const frame=_0xa14c&&_0xa14c.frame;
+    if(!frame)return;
+    try{
+      const win=frame.contentWindow,doc=frame.contentDocument;
+      if(!win||!doc)return;
+      // Mirror the parent app's active state into the proxied page so sites
+      // that listen for visibilitychange can suspend animations and polling.
+      try{
+        Object.defineProperty(doc,"visibilityState",{configurable:true,get:()=>_0xPaused?"hidden":"visible"});
+        Object.defineProperty(doc,"hidden",{configurable:true,get:()=>_0xPaused});
+      }catch(error){}
+      doc.dispatchEvent(new win.Event("visibilitychange"));
+      if(_0xPaused){
+        win.dispatchEvent(new win.Event("blur"));
+        doc.querySelectorAll("audio,video").forEach(media=>{
+          if(!_0xMediaPlayback.has(media))_0xMediaPlayback.set(media,{wasPlaying:!media.paused,currentTime:media.currentTime});
+          try{media.pause();}catch(error){}
+        });
+      }else{
+        win.dispatchEvent(new win.Event("focus"));
+        doc.querySelectorAll("audio,video").forEach(media=>{
+          const state=_0xMediaPlayback.get(media);
+          if(state&&state.wasPlaying){try{const play=media.play();if(play&&typeof play.catch==="function")play.catch(()=>{});}catch(error){}}
+          _0xMediaPlayback.delete(media);
+        });
+      }
+    }catch(error){
+      // Some proxied sites isolate their frame; the outer browser still hides it.
+      console.debug("[Neural Scramjet] Page visibility could not be mirrored:",error);
+    }
+  }
+  window.setNeuralBrowserActive=function(active){
+    _0xPaused=active!==true||document.visibilityState!=="visible";
+    _0x7d91();
+  };
+  document.addEventListener("visibilitychange",()=>{
+    const page=document.getElementById("view-unblocker");
+    _0xPaused=!page||!page.classList.contains("active")||document.visibilityState!=="visible";
+    _0x7d91();
+  });
   function _0x8c12(){
     if(!muteButton)return;
     muteButton.innerHTML=scramjetMuted?'<i class="fas fa-volume-mute"></i> Unmute':'<i class="fas fa-volume-up"></i> Mute';
