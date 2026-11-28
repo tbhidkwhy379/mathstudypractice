@@ -42,28 +42,9 @@ footer{position:relative;z-index:10;padding:36px 9vw 44px;border-top:1px solid v
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.reveal{opacity:1;transform:none}.scroll-hint .bar{animation:none}}
 </style>
 
-<style id="initial-bot-gate-style">
-html:not(.bot-verified), html:not(.bot-verified) body { overflow: hidden !important; }
-html:not(.bot-verified) body > *:not(#botGate) { visibility: hidden !important; }
-#botGate{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:24px;background:#05070d;color:#e9edf8;font-family:Inter,system-ui,sans-serif}
-#botGate .bot-card{width:min(100%,460px);padding:34px;border:1px solid rgba(142,177,220,.24);background:radial-gradient(ellipse at 100% 0,rgba(0,223,245,.1),transparent 48%),#0d1424;box-shadow:0 35px 110px rgba(0,0,0,.6);text-align:center}
-#botGate .bot-kicker{color:#00dff5;font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase}
-#botGate h1{font-family:'Space Grotesk',system-ui,sans-serif;font-size:30px;letter-spacing:-.04em;margin:18px 0 9px;color:#f3f6ff}
-#botGate p{color:#98a2b8;font-size:13px;line-height:1.7;margin:0 0 22px}
-#botTurnstile{display:flex;justify-content:center;min-height:65px}
-#botGateError{min-height:22px;margin-top:12px;color:#ffaaa8;font-size:12px}
-</style>
 </head>
 <body>
 
-<div id="botGate" role="dialog" aria-modal="true" aria-labelledby="botGateTitle">
-  <div class="bot-card">
-    <div class="bot-kicker">NEURAL SECURITY CHECK</div>
-    <h1 id="botGateTitle">One quick check.</h1>
-    <p>Complete the Cloudflare check to continue to Neural.</p>
-    <div id="botTurnstile"></div>
-    <div id="botGateError" role="alert" aria-live="polite">Loading security check…</div>
-  </div>
 </div>
 
 <video class="atmosphere-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true"><source src="https://cdn.pixabay.com/video/2016/09/13/5224-183786646_large.mp4" type="video/mp4"></video>
@@ -203,57 +184,47 @@ const WORKER_URL="https://gatekeeper.sapktaayush.workers.dev/";
 const DESTINATION_URL="./app.html";
 const TURNSTILE_SITE_KEY="0x4AAAAAAGWlP_bSshAjBaAh";
 const modal=document.getElementById("authModal"),passInput=document.getElementById("passcode"),errorBox=document.getElementById("authError"),form=document.getElementById("authForm"),submitButton=document.getElementById("submitCode");
-let previousFocus=null,turnstileWidgetId=null,turnstileLoadPromise=null,botWidgetId=null;
-const botGate=document.getElementById("botGate"),botGateError=document.getElementById("botGateError");
-function revealSite(){document.documentElement.classList.add("bot-verified");botGate.remove();}
-async function waitForTurnstile(){
- if(window.turnstile)return;
- await new Promise((resolve,reject)=>{
-  const scriptTag=document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
-  if(!scriptTag){reject(new Error("Cloudflare Turnstile script is missing."));return;}
-  scriptTag.addEventListener("load",resolve,{once:true});
-  scriptTag.addEventListener("error",()=>reject(new Error("Cloudflare Turnstile could not load.")),{once:true});
-  setTimeout(()=>reject(new Error("Cloudflare security check timed out. Check your connection.")),20000);
- });
- if(!window.turnstile)throw new Error("Cloudflare Turnstile is unavailable.");
-}
-async function startInitialBotCheck(){
- const storedToken=sessionStorage.getItem("neuralBotClearanceToken");
- const storedExpiry=Number(sessionStorage.getItem("neuralBotClearanceExpiry")||0);
- if(storedToken&&storedExpiry>Date.now()){
-  revealSite();
-  return;
+let previousFocus=null,turnstileWidgetId=null,turnstileLoadPromise=null;
+async function getWebsiteTurnstileToken(){
+ if(!window.turnstile){
+  if(!turnstileLoadPromise){
+   turnstileLoadPromise=new Promise((resolve,reject)=>{
+    const script=document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
+    if(!script){reject(new Error("Cloudflare Turnstile script is missing."));return;}
+    script.addEventListener("load",resolve,{once:true});
+    script.addEventListener("error",()=>reject(new Error("Cloudflare Turnstile could not load.")),{once:true});
+    setTimeout(()=>reject(new Error("Cloudflare Turnstile timed out. Check whether your network blocks challenges.cloudflare.com.")),15000);
+   });
+  }
+  await turnstileLoadPromise;
  }
- sessionStorage.removeItem("neuralBotClearanceToken");
- sessionStorage.removeItem("neuralBotClearanceExpiry");
- try{
-  await waitForTurnstile();
-  botWidgetId=window.turnstile.render("#botTurnstile",{
+ if(!window.turnstile)throw new Error("Cloudflare Turnstile is unavailable.");
+ if(turnstileWidgetId===null){
+  const mount=document.createElement("div");
+  mount.id="website-turnstile-widget";
+  mount.style.cssText="position:fixed;left:-10000px;top:0;width:1px;height:1px;overflow:hidden";
+  document.body.appendChild(mount);
+  turnstileWidgetId=window.turnstile.render(mount,{
    sitekey:TURNSTILE_SITE_KEY,
-   theme:"dark",
-   size:"normal",
-   action:"website_bot_check",
-   callback:async turnstileToken=>{
-    botGateError.textContent="Verifying…";
-    try{
-     const response=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"website-bot-check",turnstileToken}),cache:"no-store"});
-     const result=await response.json().catch(()=>({}));
-     if(!response.ok||result.success!==true||!result.token)throw new Error(result.error||"Bot verification failed. Please try again.");
-     sessionStorage.setItem("neuralBotClearanceToken",result.token);
-     sessionStorage.setItem("neuralBotClearanceExpiry",String(Date.now()+(Number(result.expiresIn)||1800)*1000));
-     revealSite();
-    }catch(error){
-     botGateError.textContent=error.message||"Verification failed. Please try again.";
-     if(botWidgetId!==null)window.turnstile.reset(botWidgetId);
-    }
-   },
-   "error-callback":()=>{botGateError.textContent="Cloudflare could not complete the check. Please retry.";},
-   "expired-callback":()=>{botGateError.textContent="The check expired. Please complete it again.";}
+   size:"invisible",
+   action:"website_access",
+   callback:token=>{if(typeof window.__websiteTurnstileCallback==="function")window.__websiteTurnstileCallback(token);},
+   "error-callback":()=>{if(typeof window.__websiteTurnstileCallback==="function")window.__websiteTurnstileCallback("");},
+   "expired-callback":()=>{if(typeof window.__websiteTurnstileCallback==="function")window.__websiteTurnstileCallback("");}
   });
-  botGateError.textContent="Complete the check above to load the site.";
- }catch(error){botGateError.textContent=error.message||"Unable to load the security check.";}
+ }
+ return await new Promise((resolve,reject)=>{
+  let settled=false;
+  const finish=(fn,value)=>{if(settled)return;settled=true;window.__websiteTurnstileCallback=null;fn(value);};
+  window.__websiteTurnstileCallback=token=>{
+   if(token)finish(resolve,token);
+   else finish(reject,new Error("Cloudflare verification failed. Please try again."));
+  };
+  try{window.turnstile.reset(turnstileWidgetId);window.turnstile.execute(turnstileWidgetId);}
+  catch(error){finish(reject,error);}
+  setTimeout(()=>finish(reject,new Error("Cloudflare verification timed out. Please try again.")),20000);
+ });
 }
-
 function openModal(){previousFocus=document.activeElement;modal.classList.add("open");modal.setAttribute("aria-hidden","false");errorBox.textContent="";passInput.value="";window.setTimeout(()=>passInput.focus(),0);}
 function closeModal(){modal.classList.remove("open");modal.setAttribute("aria-hidden","true");if(previousFocus&&typeof previousFocus.focus==="function")previousFocus.focus();}
 document.addEventListener("keydown",event=>{
@@ -269,9 +240,8 @@ form.addEventListener("submit",async event=>{
  if(!WORKER_URL||WORKER_URL==="YOUR_CLOUDFLARE_WORKER_URL"){errorBox.textContent="Access verification is not configured yet.";return;}
  submitButton.disabled=true;submitButton.textContent="Verifying…";
  try{
-  const botToken=sessionStorage.getItem("neuralBotClearanceToken");
-  if(!botToken)throw new Error("Complete the bot check before entering the access code.");
-  const response=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({passcode,botToken}),cache:"no-store"});
+  const turnstileToken=await getWebsiteTurnstileToken();
+  const response=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({passcode,turnstileToken}),cache:"no-store"});
   const result=await response.json().catch(()=>({}));
   if(response.ok&&result.success===true){sessionStorage.setItem("neuralSiteAccessGranted","1");location.assign(DESTINATION_URL);return;}
   errorBox.textContent=result.error||"Access verification failed. Please try again.";passInput.select();
@@ -279,7 +249,6 @@ form.addEventListener("submit",async event=>{
  finally{submitButton.disabled=false;submitButton.textContent="Continue →";}
 });
 
-startInitialBotCheck();
 </script>
 </body>
 </html>
