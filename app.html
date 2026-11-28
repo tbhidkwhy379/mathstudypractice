@@ -1150,6 +1150,10 @@ button { line-height: 1.25; }
 .sj-browser-stage:fullscreen .sj-frame-shell,.sj-browser-stage.sj-fullscreen-fallback .sj-frame-shell{width:100%;min-height:0;flex:1;margin:0;border-radius:10px;box-shadow:none}
 .sj-browser-stage:fullscreen #sj-frame-mount,.sj-browser-stage.sj-fullscreen-fallback #sj-frame-mount{height:100%;min-height:0}
 .sj-browser-stage:fullscreen #sj-frame-mount iframe,.sj-browser-stage.sj-fullscreen-fallback #sj-frame-mount iframe{height:100%;min-height:0}
+/* Neural UBG opens its browser expanded automatically, while keeping the app dock visible */
+#view-unblocker .sj-browser-stage.sj-fullscreen-fallback{inset:0 0 104px;z-index:5;width:100vw;height:auto;max-width:none;min-height:0;margin:0;padding:0;border:0;border-radius:0;gap:0;background:#08090c}
+#view-unblocker .sj-browser-stage.sj-fullscreen-fallback .sj-frame-shell{min-height:0;flex:1;margin:0;border-radius:0;box-shadow:none}
+#view-unblocker .sj-browser-stage.sj-fullscreen-fallback #sj-frame-mount,#view-unblocker .sj-browser-stage.sj-fullscreen-fallback #sj-frame-mount iframe{height:100%;min-height:0}
 @media(max-width:600px){#sj-frame-mount{height:68vh;min-height:340px}.sj-browser-stage:fullscreen,.sj-browser-stage.sj-fullscreen-fallback{padding:6px}.sj-browser-stage:fullscreen .sj-frame-shell,.sj-browser-stage.sj-fullscreen-fallback .sj-frame-shell{border-radius:6px}}
 
 </style>
@@ -3523,6 +3527,10 @@ if(authGate){
 if(name==="chat"){var unreadDot=document.querySelector(".dock .chat-unread-dot");if(unreadDot)unreadDot.classList.remove("visible");}
 Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active");});
 pageViews[name].classList.add("active");
+if(name==="unblocker"){
+  var unblockerStage=document.getElementById("sj-browser-stage");
+  if(unblockerStage)unblockerStage.classList.add("sj-fullscreen-fallback");
+}
 if(name==="unblocker"&&(!window.neuralChatAuthUser||window.neuralChatAuthUser.isAnonymous||window.neuralChatAuthUser.emailVerified!==true)){
   showChatAuth();
   if(window.neuralChatAuthUser&&window.neuralChatAuthUser.isAnonymous&&typeof window.neuralChatSetAuthMode==="function")window.neuralChatSetAuthMode('signup');
