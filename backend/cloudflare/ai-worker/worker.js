@@ -119,6 +119,32 @@ async function callGroq(env, messages) {
   });
 }
 
+async function enforceAiRateLimit(env, request) {
+  const limiter = env.AI_RATE_LIMITER;
+  if (!limiter || typeof limiter.limit !== "function") {
+    return jsonResponse({ error: "AI_RATE_LIMITER is not configured on this Worker." }, 503);
+  }
+
+  const ip = request.headers.get("CF-Connecting-IP");
+  if (!ip) return jsonResponse({ error: "Unable to verify request source." }, 403);
+
+  const result = await limiter.limit({ key: ip });
+  if (!result || result.success !== true) {
+    return new Response(JSON.stringify({
+      error: "Too many AI requests. Please wait a minute and try again."
+    }), {
+      status: 429,
+      headers: {
+        ...corsHeaders(),
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+        "Retry-After": "60"
+      }
+    });
+  }
+  return null;
+}
+
 function copyUpstreamError(response) {
   return new Response(response.body, {
     status: response.status,
@@ -297,6 +323,9 @@ export default {
     if (request.method !== "POST") {
       return jsonResponse({ error: "Method not allowed." }, 405);
     }
+
+    const rateLimitResponse = await enforceAiRateLimit(env, request);
+    if (rateLimitResponse) return rateLimitResponse;
 
     try {
       const rawBody = await request.text();
