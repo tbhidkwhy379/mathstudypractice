@@ -8,6 +8,7 @@
 <meta property="og:title" content="Neural — A Field Guide to AI">
 <meta property="og:description" content="Understand the intelligence behind the interface.">
 <title>Neural — A Field Guide to AI</title>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -177,7 +178,49 @@ const video=document.querySelector('.atmosphere-video');if(reduced&&video)video.
 <script>
 const WORKER_URL="https://gatekeeper.sapktaayush.workers.dev/";
 const DESTINATION_URL="./app.html";
+const TURNSTILE_SITE_KEY="0x4AAAAAAGWlP_bSshAjBaAh";
 const modal=document.getElementById("authModal"),passInput=document.getElementById("passcode"),errorBox=document.getElementById("authError"),form=document.getElementById("authForm"),submitButton=document.getElementById("submitCode");
+let previousFocus=null,turnstileWidgetId=null,turnstileLoadPromise=null;
+async function getWebsiteTurnstileToken(){
+ if(!window.turnstile){
+  if(!turnstileLoadPromise){
+   turnstileLoadPromise=new Promise((resolve,reject)=>{
+    const script=document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
+    if(!script){reject(new Error("Cloudflare Turnstile script is missing."));return;}
+    script.addEventListener("load",resolve,{once:true});
+    script.addEventListener("error",()=>reject(new Error("Cloudflare Turnstile could not load.")),{once:true});
+    setTimeout(()=>reject(new Error("Cloudflare Turnstile timed out. Check whether your network blocks challenges.cloudflare.com.")),15000);
+   });
+  }
+  await turnstileLoadPromise;
+ }
+ if(!window.turnstile)throw new Error("Cloudflare Turnstile is unavailable.");
+ if(turnstileWidgetId===null){
+  const mount=document.createElement("div");
+  mount.id="website-turnstile-widget";
+  mount.style.cssText="position:fixed;left:-10000px;top:0;width:1px;height:1px;overflow:hidden";
+  document.body.appendChild(mount);
+  turnstileWidgetId=window.turnstile.render(mount,{
+   sitekey:TURNSTILE_SITE_KEY,
+   size:"invisible",
+   action:"website_access",
+   callback:token=>{if(typeof window.__websiteTurnstileCallback==="function")window.__websiteTurnstileCallback(token);},
+   "error-callback":()=>{if(typeof window.__websiteTurnstileCallback==="function")window.__websiteTurnstileCallback("");},
+   "expired-callback":()=>{if(typeof window.__websiteTurnstileCallback==="function")window.__websiteTurnstileCallback("");}
+  });
+ }
+ return await new Promise((resolve,reject)=>{
+  let settled=false;
+  const finish=(fn,value)=>{if(settled)return;settled=true;window.__websiteTurnstileCallback=null;fn(value);};
+  window.__websiteTurnstileCallback=token=>{
+   if(token)finish(resolve,token);
+   else finish(reject,new Error("Cloudflare verification failed. Please try again."));
+  };
+  try{window.turnstile.reset(turnstileWidgetId);window.turnstile.execute(turnstileWidgetId);}
+  catch(error){finish(reject,error);}
+  setTimeout(()=>finish(reject,new Error("Cloudflare verification timed out. Please try again.")),20000);
+ });
+}
 let previousFocus=null;
 function openModal(){previousFocus=document.activeElement;modal.classList.add("open");modal.setAttribute("aria-hidden","false");errorBox.textContent="";passInput.value="";window.setTimeout(()=>passInput.focus(),0);}
 function closeModal(){modal.classList.remove("open");modal.setAttribute("aria-hidden","true");if(previousFocus&&typeof previousFocus.focus==="function")previousFocus.focus();}
@@ -193,10 +236,13 @@ form.addEventListener("submit",async event=>{
  if(!passcode){errorBox.textContent="Enter your access passcode.";passInput.focus();return;}
  if(!WORKER_URL||WORKER_URL==="YOUR_CLOUDFLARE_WORKER_URL"){errorBox.textContent="Access verification is not configured yet.";return;}
  submitButton.disabled=true;submitButton.textContent="Verifying…";
- try{const response=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({passcode}),cache:"no-store"});const result=await response.json().catch(()=>({}));
+ try{
+  const turnstileToken=await getWebsiteTurnstileToken();
+  const response=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({passcode,turnstileToken}),cache:"no-store"});
+  const result=await response.json().catch(()=>({}));
   if(response.ok&&result.success===true){sessionStorage.setItem("neuralSiteAccessGranted","1");location.assign(DESTINATION_URL);return;}
-  errorBox.textContent="Invalid access passcode";passInput.select();
- }catch(error){errorBox.textContent="Unable to verify right now. Check your connection and try again.";}
+  errorBox.textContent=result.error||"Access verification failed. Please try again.";passInput.select();
+ }catch(error){errorBox.textContent=error.message||"Unable to verify right now. Check your connection and try again.";}
  finally{submitButton.disabled=false;submitButton.textContent="Continue →";}
 });
 </script>
