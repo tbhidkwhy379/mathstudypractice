@@ -33,8 +33,9 @@ jobs:
 
       - name: Prepare static site and proxy fallback
         run: |
-          mkdir -p _site/scram _site/baremux _site/libcurl _site/epoxy
+          mkdir -p _site/scram _site/baremux _site/libcurl _site/epoxy _site/backend
           cp -a *.html *.js *.css *.svg *.webp *.json *.png *.ico CNAME _site/ 2>/dev/null || true
+          cp -a backend/. _site/backend/
           cp -aL public _site/public
           cp -aL public/scram/. _site/scram/
           cp -aL public/baremux/. _site/baremux/
@@ -49,6 +50,7 @@ jobs:
           test -f _site/app.html
           test -f _site/404.html
           test -f _site/scramjet-sw.js
+          test -s _site/backend/neural-config.js
           test -f _site/public/unblocker-assets.json
           test -f _site/public/scram/scramjet.all.js
           test -f _site/public/scram/scramjet.wasm.wasm
