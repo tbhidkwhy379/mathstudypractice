@@ -1,3 +1,13 @@
 name = "neural-ai"
 main = "worker.js"
 compatibility_date = "2026-11-28"
+
+# Basic per-IP protection for the public AI endpoint. This is approximate per
+# Cloudflare location; adjust the threshold to suit your expected traffic.
+[[ratelimits]]
+name = "AI_RATE_LIMITER"
+namespace_id = "70262"
+
+[ratelimits.simple]
+limit = 30
+period = 60
