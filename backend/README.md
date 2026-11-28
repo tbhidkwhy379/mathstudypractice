@@ -47,8 +47,11 @@ The two Workers can be deployed independently. The Scramjet Wisp WebSocket backe
    - Anonymous
 6. In **Authentication → Settings → Authorized domains**, add the domain where your frontend is hosted (for example, `neural.qzz.io`).
 7. Open **Realtime Database**, create a database, and choose its region.
-8. Copy the database's root URL into `firebase.databaseURL` in `backend/neural-config.js`.
-9. Open **Realtime Database → Rules** and publish the full contents of `backend/firebase/database.rules.json`.
+8. Copy the database's root URL. You must use this same URL in **both** places:
+   - `firebase.databaseURL` in `backend/neural-config.js` (the frontend Firebase connection).
+   - `FIREBASE_DATABASE_URL` in `backend/cloudflare/gatekeeper-worker/wrangler.toml` under `[vars]` (the Gatekeeper server connection).
+9. In `backend/cloudflare/gatekeeper-worker/wrangler.toml`, also change `FIREBASE_PROJECT_ID` to your Firebase **Project ID** (Firebase Console → Project settings → General → Your project → Project ID). These two Wrangler values must belong to the same Firebase project as the Web app config.
+10. Open **Realtime Database → Rules** and publish the full contents of `backend/firebase/database.rules.json`.
 
 The rules keep messages tied to the signed-in UID. Direct-message reads and writes require a friendship entry, and a user cannot create an arbitrary friend entry without the matching friend-request flow. Do not replace these rules with public read/write access.
 
@@ -60,7 +63,7 @@ The Gatekeeper Worker needs server-side access to read/write the Realtime Databa
 2. Create or select a service account and give it the permissions required to read/write this project's Realtime Database and list/delete Firebase Authentication users.
 3. Generate a private key JSON file.
 4. Keep that JSON file on your computer only. **Never upload it to GitHub or put it in `neural-config.js`.**
-5. In Cloudflare, copy the service-account `client_email` and `private_key` values into the Gatekeeper Worker secrets listed below. The private key may be entered with real newlines or escaped `\n` newlines.
+5. In Cloudflare, copy the service-account `client_email` and `private_key` values into the Gatekeeper Worker secrets listed below. The private key may be entered with real newlines or escaped `\\n` newlines.
 
 The Firebase Web app `apiKey` in `neural-config.js` is public client configuration, not a server-admin key. The service-account private key is secret.
 
@@ -130,20 +133,23 @@ Create a **second, separate Worker**. Do not reuse the AI Worker's Cloudflare pr
 
 1. In Cloudflare, open **Workers & Pages → Create application → Connect to Git** again.
 2. Select the same GitHub repository and the `main` branch.
-3. Set the **Worker name** to exactly `neural-gatekeeper`.
+3. Set the **Worker name** to exactly `gatekeeper` (it must match `name = "gatekeeper"` in `backend/cloudflare/gatekeeper-worker/wrangler.toml`).
 4. Set **Root directory** to `backend/cloudflare/gatekeeper-worker`.
 5. Leave the build command empty. Use `npx wrangler deploy` as the deploy command.
 6. Save and deploy.
 
-The Gatekeeper Worker's `wrangler.toml` already includes these public Firebase project settings in its `[vars]` section:
+The Gatekeeper Worker's `wrangler.toml` contains the public Firebase server settings in its `[vars]` section. If you use a different Firebase project, edit **both** values to match that project:
 
 ```toml
 [vars]
-FIREBASE_DATABASE_URL = "https://ubg1-363a4-default-rtdb.asia-southeast1.firebasedatabase.app/"
-FIREBASE_PROJECT_ID = "ubg1-363a4"
+FIREBASE_DATABASE_URL = "https://YOUR-DATABASE-NAME.REGION.firebasedatabase.app/"
+FIREBASE_PROJECT_ID = "YOUR-FIREBASE-PROJECT-ID"
 ```
 
-For a different Firebase project, edit those two values in `backend/cloudflare/gatekeeper-worker/wrangler.toml`. These are not secret credentials. Keep the service-account private key and other private values out of `[vars]`.
+- `FIREBASE_DATABASE_URL`: your Realtime Database URL. Copy it from Firebase Console → Realtime Database. Use the exact URL shown there, including `https://` and the trailing slash.
+- `FIREBASE_PROJECT_ID`: your Firebase Project ID from Project settings → General. Do not use the display name or the Web API key.
+- These are configuration values, **not secrets**. Keep the service-account private key and other credentials out of `[vars]`.
+- The database URL and project ID must refer to the same Firebase project configured in `backend/neural-config.js`.
 
 7. In this Worker's **Settings → Variables and Secrets**, add these as **Secrets**:
 
@@ -161,7 +167,7 @@ For a different Firebase project, edit those two values in `backend/cloudflare/g
    - Binding name: `PASSWORD_RATE_LIMITER`
    - Limit: `5`
    - Period: `60` seconds
-   - The `wrangler.toml` already uses namespace ID `70261`; it must be a unique positive integer string in your Cloudflare account.
+   - The `wrangler.toml` already has a namespace ID. It must be a unique positive integer string in your Cloudflare account. If you change it in Cloudflare, update `namespace_id` in the Wrangler file to the same value.
 
 9. Under **Settings → Triggers → Cron Triggers**, confirm the `0 13,14 * * 5` trigger is present. It performs the weekly guest cleanup at Friday midnight Melbourne time.
 
@@ -195,10 +201,12 @@ For a new deployment, most frontend-specific changes belong in **`backend/neural
 | `wispUrl` | Scramjet Wisp WebSocket URL on Render |
 | `scramjetPrefix` | Scramjet route prefix on the frontend |
 | `turnstileSiteKey` | Public Turnstile site key |
-| `firebase` | Firebase Web app configuration |
+| `firebase` | Firebase Web app configuration, including `apiKey`, `authDomain`, `databaseURL`, and `projectId` |
 | `emailActionUrl` | Where Firebase email verification/password-reset links return the user |
 | `aiName` | Name shown for the API assistant |
 | `aiModel` | Model label sent by the frontend (the Worker enforces its own model) |
+
+When switching Firebase projects, update the Firebase Web app values in `backend/neural-config.js` **and** update `FIREBASE_DATABASE_URL` and `FIREBASE_PROJECT_ID` in `backend/cloudflare/gatekeeper-worker/wrangler.toml`. All of them must point to the same Firebase project. Also make sure the Gatekeeper's Cloudflare service-account secrets belong to that project.
 
 For the Firebase email link, change `emailActionUrl` to your own site URL, then make sure that hostname is listed in Firebase Authentication's **Authorized domains**.
 
