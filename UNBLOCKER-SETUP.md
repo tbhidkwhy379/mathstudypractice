@@ -18,10 +18,10 @@ The build copies the pinned browser assets into `public/scram/`, `public/baremux
 - Scramjet URL prefix: `/scramjet/`
 - Root service worker: `/scramjet-sw.js` (scope `/`)
 - Wisp WebSocket endpoint: `wss://proxy-scramjet-8xz5.onrender.com/wisp/`
-- Primary transport: Libcurl through BareMux
-- Fallback transport: Epoxy through BareMux
+- Primary transport: Epoxy through BareMux
+- Fallback transport: Libcurl through BareMux
 
-The page initializes Scramjet with an explicit `/scramjet/` prefix. After the controller saves its configuration to IndexedDB, it performs a worker handshake; the service worker reloads the stored configuration and confirms the prefix and WASM path before any website is opened.
+The page prefers Epoxy's TLS implementation through BareMux, with Libcurl as a setup fallback. The page initializes Scramjet with an explicit `/scramjet/` prefix. After the controller saves its configuration to IndexedDB, it performs a worker handshake; the service worker reloads the stored configuration and confirms the prefix and WASM path before any website is opened.
 
 GitHub Pages is static: it serves the Scramjet runtime and app files. The Wisp WebSocket service is hosted separately on Render. Static hosting cannot itself accept Wisp WebSocket connections.
 
