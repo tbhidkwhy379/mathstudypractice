@@ -1,0 +1,23 @@
+{
+  "name": "scramjet-wisp-backend",
+  "version": "2.0.0",
+  "description": "Backend-only Wisp WebSocket server for a separately hosted Scramjet frontend",
+  "type": "module",
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "proxy"
+  ],
+  "author": "Mercury Workshop",
+  "license": "GNU AFFERO",
+  "dependencies": {
+    "@mercuryworkshop/wisp-js": "^0.4.1"
+  },
+  "devDependencies": {},
+  "packageManager": "pnpm@10.18.3"
+}
