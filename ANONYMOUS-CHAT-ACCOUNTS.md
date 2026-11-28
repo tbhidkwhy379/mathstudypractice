@@ -1,36 +1,32 @@
 # Anonymous Chat Accounts
 
-Neural Chat supports temporary Firebase anonymous users. Guests can use Chat only; Web Unblocker still requires a non-anonymous account with a verified email.
+Neural Chat keeps Firebase anonymous accounts available for Chat. Guest accounts can never use Web Unblocker; Web Unblocker requires a normal account whose email has been freshly verified by Firebase.
 
-A guest can keep the same Firebase UID, display name, and chat identity by choosing **Create an account** while still signed in as that guest. The app links the email/password credential to the guest account, sends a verification email, and keeps Chat locked until Firebase confirms the email is verified. Signing in to a different account requires that account's password and a fresh Firebase auth-state check; the app does not accept a UID or profile name as proof of identity.
+A guest can keep the same Firebase UID, display name, and Chat identity by choosing **Create an account** while signed in as that guest. The app links the email/password credential to the anonymous account. Once linked, the Firebase account is no longer anonymous and is not eligible for Friday cleanup.
 
-## Friday cleanup in Cloudflare Worker
+## Add cleanup to the Gatekeeper Worker
 
-The scheduled handler in `worker.js` deletes Firebase accounts that are still anonymous every Friday at **12:00 AM Australia/Melbourne time**. It only selects Firebase Auth records with no linked providers, email, or phone number. Accounts that have been linked to email/password or another provider are preserved.
+The correct target is the Gatekeeper Worker that contains the developer-token, Firebase dashboard, user-delete, and Hyperbeam actions. It is **not** the small `worker.js` in this website repository (that file only checks the website passcode).
 
-The worker deletes the guest's profile, friend list, incoming friend requests, and cloud AI-chat record under `classroomspot-chat`. It does not delete shared global chat messages.
+Use the companion patch file `gatekeeper-anonymous-cleanup-additions.js`:
 
-### One-time setup
-
-1. In Firebase Console, open **Authentication → Sign-in method** and enable **Anonymous**.
-2. In Google Cloud IAM, create or select a service account for project `ubg1-363a4`. Grant it permission to list and delete Firebase Authentication users (`firebaseauth.users.get` and `firebaseauth.users.delete`) and write to the Realtime Database. Download a JSON private key for this service account.
-3. In Cloudflare, open the Worker that runs this repository's `worker.js`. Under **Settings → Variables and Secrets**, add a secret named `FIREBASE_SERVICE_ACCOUNT_JSON` and paste the complete service-account JSON as the value. Do not put the key in GitHub or browser code. Keep your existing `PASSPHRASE` / `SECRET_CODE` variables as they are.
-4. Deploy the updated `worker.js` to that same Worker.
-5. Configure the Cron Trigger with this schedule:
+1. Paste its helper functions into the Gatekeeper Worker before the existing `export default`.
+2. Add the `scheduled(controller, env, ctx)` method shown at the bottom of the patch inside the existing `export default` object, alongside `fetch`. Do not add a second default export.
+3. Configure the following Cron Trigger in the Cloudflare dashboard for that same Gatekeeper Worker:
 
    ```text
-   0 13,14 * * 5
+   0 13,14 * * THU
    ```
 
-   - For a Worker managed in the Cloudflare dashboard, go to **Settings → Triggers → Cron Triggers** and add it there.
-   - For a Worker managed with Wrangler, add this to its existing `wrangler.toml`:
+   Cloudflare Cron Triggers use UTC and support named weekdays. The handler checks the scheduled time in Australia/Melbourne and only runs at local Friday midnight. The two UTC times cover both daylight-saving (AEDT) and standard-time (AEST) weeks. <https://developers.cloudflare.com/workers/configuration/cron-triggers/>
 
-     ```toml
-     [triggers]
-     crons = ["0 13,14 * * 5"]
-     ```
+4. The patch reuses the Gatekeeper Worker's existing secrets: `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, and `FIREBASE_DATABASE_URL`. `FIREBASE_PROJECT_ID` is optional when it can be derived from the database URL.
+5. The service account needs `firebaseauth.users.get` to list accounts and `firebaseauth.users.delete` to batch-delete accounts. <https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/projects.accounts/batchGet> <https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/projects.accounts/batchDelete>
 
-   Cloudflare schedules Cron Triggers in UTC. The Worker checks the scheduled timestamp in the Melbourne timezone, so only the trigger that corresponds to local Friday midnight performs the cleanup. This handles both daylight-saving and standard time.
-6. Check the Worker logs after the first Friday run for `Friday guest cleanup finished.` and its deletion counts.
+The cleanup only targets Auth users with no linked provider, email, or phone **and** a Chat profile marked `isAnonymous: true`. It deletes the Auth account first; it only removes associated Chat data for accounts the Auth API reports as deleted. It removes the guest profile, friends, friend requests, DMs, AI-chat data, and global messages authored by that guest. Regular email/password and other linked-provider accounts are preserved.
 
-The scheduled cleanup is not active until the Worker code, secret, and Cron Trigger are all deployed/configured. The first run occurs at the next Friday midnight after the trigger has propagated.
+## Guest access
+
+The main app writes `isAnonymous: true` to the Chat profile for guests. When a guest links an email/password account, the next authenticated Chat start updates that marker to `false`. The Auth provider check is an additional safeguard.
+
+Guests can continue using Chat until the Friday cleanup. They cannot enter Web Unblocker, and the Gatekeeper Worker does not add any guest-facing Web Unblocker action.
