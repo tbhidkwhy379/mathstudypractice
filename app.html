@@ -2629,6 +2629,55 @@ function buildApiAiHistory(chat){
     return{role:'user',content:content.length===1?content[0].text:content};
   });
 }
+const AI_CHAT_TOKEN_KEY='neural_ai_chat_clearance';
+let aiChatTurnstileWidgetId=null,aiChatClearancePromise=null;
+async function getAiChatClearance(){
+  const cached=sessionStorage.getItem(AI_CHAT_TOKEN_KEY)||'';
+  const cachedExpiry=Number(sessionStorage.getItem(AI_CHAT_TOKEN_KEY+'_expires')||0);
+  if(cached&&cachedExpiry>Date.now()+30000)return cached;
+  if(aiChatClearancePromise)return aiChatClearancePromise;
+  aiChatClearancePromise=(async()=>{
+    if(!DEV_GATEKEEPER_URL)throw new Error('AI chat security is not configured. Check the Gatekeeper URL in neural-config.js.');
+    const turnstile=await waitForDeveloperTurnstile();
+    if(!TURNSTILE_SITE_KEY)throw new Error('Cloudflare Turnstile site key is missing from neural-config.js.');
+    if(aiChatTurnstileWidgetId===null){
+      const mount=document.createElement('div');
+      mount.id='ai-chat-turnstile-widget';
+      mount.style.cssText='position:fixed;left:-10000px;top:0;width:1px;height:1px;overflow:hidden';
+      document.body.appendChild(mount);
+      aiChatTurnstileWidgetId=turnstile.render(mount,{
+        sitekey:TURNSTILE_SITE_KEY,
+        size:'invisible',
+        action:'ai_chat_check',
+        callback:token=>{if(typeof window.__aiChatTurnstileCallback==='function')window.__aiChatTurnstileCallback(token);},
+        'error-callback':()=>{if(typeof window.__aiChatTurnstileCallback==='function')window.__aiChatTurnstileCallback('');},
+        'expired-callback':()=>{if(typeof window.__aiChatTurnstileCallback==='function')window.__aiChatTurnstileCallback('');},
+        'timeout-callback':()=>{if(typeof window.__aiChatTurnstileCallback==='function')window.__aiChatTurnstileCallback('');}
+      });
+    }
+    const turnstileToken=await new Promise((resolve,reject)=>{
+      let settled=false,timeoutId=null;
+      const finish=(fn,value)=>{if(settled)return;settled=true;if(timeoutId!==null)clearTimeout(timeoutId);window.__aiChatTurnstileCallback=null;fn(value);};
+      window.__aiChatTurnstileCallback=token=>token?finish(resolve,token):finish(reject,new Error('Cloudflare AI chat verification failed. Please try again.'));
+      try{turnstile.reset(aiChatTurnstileWidgetId);turnstile.execute(aiChatTurnstileWidgetId);}
+      catch(error){finish(reject,error);}
+      timeoutId=setTimeout(()=>finish(reject,new Error('Cloudflare AI chat verification timed out. Please try again.')),25000);
+    });
+    const response=await fetch(DEV_GATEKEEPER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'ai-chat-check',turnstileToken}),
+      cache:'no-store'
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||result.success!==true||!result.token)throw new Error(result.error||'AI chat verification was not approved.');
+    sessionStorage.setItem(AI_CHAT_TOKEN_KEY,result.token);
+    sessionStorage.setItem(AI_CHAT_TOKEN_KEY+'_expires',String(Date.now()+(Number(result.expiresIn)||1800)*1000));
+    return result.token;
+  })();
+  try{return await aiChatClearancePromise;}
+  finally{aiChatClearancePromise=null;}
+}
 async function sendAiMessage(raw){
   const message=(raw||'').trim();
   if((!message&&!aiPendingFiles.length)||aiRequestInProgress)return;
@@ -2642,6 +2691,8 @@ async function sendAiMessage(raw){
   updateAiUnloadButton();
   let temp=null;
   try{
+    setAiUsage('Checking AI chat security…');
+    const aiChatToken=await getAiChatClearance();
     if(aiProviderMode==='local'){await loadLocalAiModel();if(!localAiAreaIsActive()||localAiAreaRevision!==localAiAreaRevisionAtStart)throw new Error('Local AI stopped because you left the AI chat area. Re-enter the AI chat to continue.');}
     if(!aiCurrentChatId)await createAiChat();
     const chatId=aiCurrentChatId;
@@ -2675,7 +2726,8 @@ async function sendAiMessage(raw){
     if(isApi){
       const requestBody=JSON.stringify({model:AI_API_MODEL,messages:history,stream:true});
       if(requestBody.length>230000)throw new Error('This message and its attachments exceed the API upload limit. Try fewer or smaller files.');
-      const response=await fetch(AI_API_URL,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:requestBody});
+      const securedRequestBody=JSON.stringify({...JSON.parse(requestBody),aiChatToken});
+      const response=await fetch(AI_API_URL,{method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},body:securedRequestBody});
       if(!response.ok){let detail='HTTP '+response.status;try{const p=await response.json();if(p&&p.error)detail=p.error.message||p.error;}catch(e){}throw new Error(String(detail));}
       apiProviderLabel=response.headers.get('x-ai-provider')||'AI provider';
       const streamed=await readAiApiStream(response,(piece,full)=>{
