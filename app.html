@@ -1269,7 +1269,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
     <div id="chatAuthFormPanel">
       <h2 id="chatAuthTitle">Welcome back</h2>
       <p id="chatAuthDescription">Sign in to use global chat, friends, DMs and AI chat. The rest of the website stays available without an account.</p>
-      <p id="chatAuthAnonymousNote" class="chat-auth-anon-note">Guest accounts are permanently deleted every Friday (Melbourne time). Create a regular account to keep yours.</p>
+      <p id="chatAuthAnonymousNote" class="chat-auth-anon-note">Guest accounts are temporary and deleted every Friday (Melbourne time). Create a regular account to keep yours.</p>
       <label id="chatAuthNameWrap" hidden>Display name
         <input id="chatAuthName" type="text" maxlength="24" placeholder="Your chat name" autocomplete="nickname">
       </label>
@@ -1832,7 +1832,7 @@ function setChatAuthMode(mode){
   chatAuthSwitch.textContent=signup?'Sign in':'Create an account';
   setChatAuthMessage('');
 }
-window.neuralChatSetAuthMode=setChatAuthMode;
+window.neuralChatSetAuthMode=function(mode){setChatAuthMode(mode||chatAuthMode);};
 window.neuralChatResume=function(){
   const current=firebase&&firebase.auth&&firebase.auth().currentUser;
   if(current&&current.isAnonymous)handleChatAuthState(current).catch(error=>{
@@ -3339,6 +3339,7 @@ if(name==="unblocker"&&(!window.neuralChatAuthUser||!window.neuralChatAuthUser.e
   showChatAuth();
   if(window.neuralChatAuthUser&&window.neuralChatAuthUser.isAnonymous&&typeof window.neuralChatSetAuthMode==="function")window.neuralChatSetAuthMode('signup');
 }
+if(name==="chat"&&typeof window.neuralChatSetAuthMode==="function")window.neuralChatSetAuthMode();
 if(name==="chat"&&window.neuralChatAuthUser&&window.neuralChatAuthUser.isAnonymous&&typeof window.neuralChatResume==="function")window.neuralChatResume();
 if(typeof window.setAiChatPageVisible==="function")window.setAiChatPageVisible(name==="chat");
 document.querySelectorAll(".dock a[data-page]").forEach(function(a){
