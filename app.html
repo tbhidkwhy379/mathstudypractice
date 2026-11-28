@@ -2738,7 +2738,7 @@ mainEl.addEventListener('click',async e=>{
     if(!messageId||!confirm('Permanently delete this message from the global chat?'))return;
     remove.disabled=true;
     try{
-      const response=await fetch('https://gatekeeper.sapktaayush.workers.dev/',{
+      const response=await fetch(window.NEURAL_CONFIG?.gatekeeperUrl||'',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({action:'developer-delete-message',token:token,messageId:messageId})
@@ -2990,7 +2990,7 @@ window.initBrowserView=function(){
 
   if(!form||!launch||!screen||!tabList)return;
 
-  const worker='https://gatekeeper.sapktaayush.workers.dev/';
+  const worker=window.NEURAL_CONFIG?.gatekeeperUrl||'';
   let hb=null;
   let sdkPromise=null;
   let activeTabId=null;
