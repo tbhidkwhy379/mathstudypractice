@@ -957,33 +957,52 @@ button { line-height: 1.25; }
   #view-chat.friends-mode .person-row{transition:none}
 }
 
-/* Neural UBG Unblocker — Scramjet browser frame */
-#view-unblocker{min-height:100vh;padding:clamp(16px,3vw,34px);padding-bottom:120px;color:var(--text)}
-#view-unblocker.active{display:flex;flex-direction:column;gap:18px}
-.uv-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.uv-heading h1{margin:0 0 5px;font-size:clamp(26px,4vw,36px);letter-spacing:-.045em}
-.uv-heading p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
-.uv-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:rgba(16,16,20,.72);color:#9fb3ff;font-size:11px;font-weight:800;letter-spacing:.07em}
-.uv-card{width:min(100%,850px);margin:clamp(20px,7vh,70px) auto 0;padding:clamp(20px,4vw,34px);border:1px solid rgba(145,166,255,.2);border-radius:22px;background:radial-gradient(ellipse at 80% 0,rgba(108,140,255,.12),transparent 42%),linear-gradient(145deg,rgba(20,24,36,.96),rgba(11,13,20,.96));box-shadow:0 24px 75px rgba(0,0,0,.28)}
-.uv-card h2{margin:0 0 8px;font-size:clamp(21px,3vw,27px);letter-spacing:-.035em}
-.uv-card>p{margin:0 0 22px;color:#9da7bb;font-size:13px;line-height:1.6}
-.uv-address-form{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-.uv-address{display:flex;align-items:center;gap:10px;min-width:200px;flex:1;height:48px;padding:0 14px;border:1px solid #343b50;border-radius:13px;background:rgba(5,7,12,.78);color:#9ca9c1}
-.uv-address:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,140,255,.13)}
-.uv-address input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#f3f5fb;font:inherit;font-size:14px}
-.uv-address input::placeholder{color:#68738a}
-.uv-launch{min-height:48px;padding:0 20px;border:0;border-radius:13px;background:var(--accent);color:#080b13;font:inherit;font-size:13px;font-weight:850;cursor:pointer}
-.uv-launch:disabled{opacity:.6;cursor:wait}
-.uv-quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
-.uv-quick button{min-height:35px;padding:0 12px;border:1px solid #30364a;border-radius:10px;background:rgba(255,255,255,.035);color:#cad2e2;font:inherit;font-size:12px;cursor:pointer}
-.uv-quick button:hover{border-color:#667fc7;background:rgba(108,140,255,.09)}
-.uv-state{display:flex;align-items:center;gap:9px;min-height:24px;margin-top:18px;color:#98a5bb;font-size:11px}
+/* Neural Browser — full in-page Scramjet browser chrome */
+#view-unblocker{min-height:100vh;padding:clamp(12px,2vw,24px);padding-bottom:110px;color:var(--text)}
+#view-unblocker.active{display:flex;flex-direction:column;gap:12px}
+.uv-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.uv-heading h1{margin:0 0 4px;font-size:clamp(23px,3vw,31px);letter-spacing:-.045em}
+.uv-heading p{margin:0;color:var(--muted);font-size:12px}
+.uv-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid var(--border);border-radius:999px;background:rgba(16,16,20,.72);color:#9fb3ff;font-size:10px;font-weight:800;letter-spacing:.07em}
 .uv-state-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#778197}
 .uv-state-dot.ready{background:#37d79b;box-shadow:0 0 0 4px rgba(55,215,155,.1)}
 .uv-state-dot.error{background:#ff7373;box-shadow:0 0 0 4px rgba(255,115,115,.1)}
-.uv-footnote{width:min(100%,850px);margin:0 auto;color:#778196;font-size:11px;line-height:1.6}
-.dock a[data-page="unblocker"] i{font-size:20px}
-@media(max-width:600px){#view-unblocker{padding:12px 10px 110px}.uv-card{margin-top:20px;padding:20px 16px}.uv-address-form{align-items:stretch}.uv-address{flex-basis:100%}.uv-launch{width:100%}}
+.uv-footnote{width:min(100%,1200px);margin:0 auto;color:#778196;font-size:10px;line-height:1.5}
+.sj-browser-stage{width:100%;max-width:1500px;min-height:600px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;border:1px solid #2b3040;border-radius:15px;background:#11131a;box-shadow:0 22px 65px rgba(0,0,0,.32)}
+.sj-tabbar{height:42px;display:flex;align-items:flex-end;gap:7px;padding:6px 9px 0;background:#191c25;border-bottom:1px solid #2b3040}
+.sj-tab{height:35px;min-width:150px;max-width:280px;display:flex;align-items:center;gap:9px;padding:0 10px;border:1px solid #34394a;border-bottom-color:#11131a;border-radius:9px 9px 0 0;background:#11131a;color:#e9ecf5;font-size:11px}
+.sj-tab>i{color:#91a6ff}.sj-tab span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sj-tab button{border:0;background:transparent;color:#8e96a8;font-size:19px;cursor:pointer}
+.sj-tab-add{width:27px;height:27px;margin-bottom:3px;border:0;border-radius:7px;background:#292e3b;color:#dce1ef;cursor:pointer}
+.sj-tab-brand{margin:0 7px 10px auto;color:#8e96a8;font-size:9px;font-weight:800;letter-spacing:.15em}
+.sj-browser-controls{display:flex;align-items:center;gap:7px;padding:9px;background:#11131a;border-bottom:1px solid #2b3040}
+.sj-browser-controls>button{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border:1px solid #34394a;border-radius:9px;background:#1b1f2a;color:#d4d9e7;cursor:pointer}
+.sj-browser-controls>button:hover{border-color:#667fc7;background:#252b3a}
+.sj-address-form{height:36px;min-width:0;flex:1;display:flex;align-items:center;gap:9px;padding:0 5px 0 12px;border:1px solid #363c4e;border-radius:10px;background:#080a10;color:#8c96aa}
+.sj-address-form:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,140,255,.12)}
+.sj-address-form input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:#f1f2f7;font:inherit;font-size:12px}
+.sj-address-form input::placeholder{color:#727b8e}
+.sj-go{height:27px;padding:0 13px;border:0;border-radius:7px;background:var(--accent);color:#080910;font-size:11px;font-weight:850;cursor:pointer}
+.sj-bookmarks{display:flex;gap:6px;align-items:center;padding:7px 10px;background:#151821;border-bottom:1px solid #292e3b;flex-wrap:wrap}
+.sj-bookmarks button,.sj-start-links button{display:flex;align-items:center;gap:7px;padding:6px 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:#c5cada;font-size:11px;cursor:pointer}
+.sj-bookmarks button:hover,.sj-start-links button:hover{background:#242a38;border-color:#353d51}
+.sj-browser-status{display:flex;align-items:center;gap:8px;min-height:27px;padding:4px 12px;background:#191c25;color:#929bad;font-size:10px}
+.sj-frame-shell{position:relative;width:100%;height:min(72vh,850px);min-height:480px;flex:1;overflow:hidden;background:#fff}
+#sj-frame-mount{position:absolute;inset:0;height:100%;background:#fff}
+#sj-frame-mount iframe{display:block;width:100%;height:100%;border:0;background:#fff}
+.sj-start-page{position:absolute;inset:0;z-index:2;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 35%,rgba(108,140,255,.15),transparent 48%),#0c0f17;color:#f3f5fb}
+.sj-start-page[hidden]{display:none}
+.sj-start-content{width:min(520px,100%);text-align:center}
+.sj-start-logo{width:62px;height:62px;margin:0 auto 18px;display:grid;place-items:center;border:1px solid rgba(145,166,255,.28);border-radius:20px;background:rgba(108,140,255,.12);color:#a9baff;font-size:27px}
+.sj-start-content h2{margin:0;font-size:clamp(25px,5vw,36px);letter-spacing:-.04em}
+.sj-start-content p{margin:8px 0 22px;color:#929bad;font-size:13px}
+#sj-start-form{display:flex;gap:8px;padding:6px;border:1px solid #353c50;border-radius:13px;background:#10141f}
+#sj-start-form input{min-width:0;flex:1;padding:8px 10px;border:0;outline:0;background:transparent;color:#fff;font:inherit}
+#sj-start-form button{width:38px;border:0;border-radius:9px;background:var(--accent);color:#080910;cursor:pointer}
+.sj-start-links{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-top:16px}
+.sj-browser-stage:fullscreen,.sj-browser-stage.sj-fullscreen-fallback{position:fixed;inset:0;z-index:10020;width:100vw;height:100vh;height:100dvh;max-width:none;min-height:0;margin:0;padding:8px;border-radius:0;gap:0;background:#08090c}
+.sj-browser-stage:fullscreen .sj-frame-shell,.sj-browser-stage.sj-fullscreen-fallback .sj-frame-shell{height:auto;min-height:0;flex:1}
+@media(max-width:650px){#view-unblocker{padding:10px 7px 100px}.sj-browser-stage{min-height:540px;border-radius:10px}.sj-browser-controls{gap:4px;padding:6px}.sj-browser-controls>button{width:30px;height:32px;flex-basis:30px}.sj-address-form{height:34px;padding-left:8px}.sj-go{padding:0 9px}.sj-frame-shell{height:66vh;min-height:390px}.sj-tab{min-width:110px}.sj-bookmarks{gap:2px;padding:5px}.sj-bookmarks button{padding:5px 7px;font-size:10px}}
 
 /* Hyperbeam full browser */
 #view-browser{min-height:100vh;padding:clamp(12px,2.2vw,28px);padding-bottom:112px;color:var(--text)}
@@ -1258,38 +1277,37 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
 </section>
 <section class="page-view" id="view-unblocker">
   <div class="uv-heading">
-    <div>
-      <h1><i class="fas fa-shield-halved" aria-hidden="true"></i> Web Unblocker</h1>
-      <p>Scramjet · Wisp transport · Browse inside Neural UBG.</p>
-    </div>
-    <div class="uv-badge"><i class="fas fa-bolt"></i> SCRAMJET + LIBCURL</div>
+    <div><h1><i class="fas fa-globe" aria-hidden="true"></i> Neural Browser</h1><p>A browser inside Neural UBG, powered by Scramjet.</p></div>
+    <div class="uv-badge"><i class="fas fa-circle-nodes"></i> SCRAMJET · WISP</div>
   </div>
-  <div class="uv-card">
-    <h2>Browse with Neural UBG</h2>
-    <p>You're using your existing Neural UBG chat account. TikTok is prefilled, or enter another website or search term.</p>
-    <form class="uv-address-form" id="uv-launch-form">
-      <label class="uv-address" for="uv-address-input"><i class="fas fa-globe"></i><input id="uv-address-input" type="text" inputmode="url" autocomplete="url" spellcheck="false" value="https://www.tiktok.com/" placeholder="Enter a website or search"></label>
-      <button class="uv-launch" id="uv-launch-button" type="submit">Open website <i class="fas fa-arrow-up-right-from-square"></i></button>
-    </form>
-    <div class="uv-quick">
-      <button type="button" data-proxy-quick="https://www.tiktok.com/"><i class="fab fa-tiktok"></i> Open TikTok</button>
-      <button type="button" data-proxy-quick="https://www.google.com/"><i class="fab fa-google"></i> Google</button>
-    </div>
-    <div class="uv-state" role="status" aria-live="polite"><span class="uv-state-dot" id="uv-state-dot"></span><span id="uv-state-text">Checking your chat account and preparing the proxy…</span></div>
-  </div>
-  <div class="sj-browser-stage" id="sj-browser-stage" hidden>
+  <div class="sj-browser-stage" id="sj-browser-stage">
+    <div class="sj-tabbar"><div class="sj-tab"><i class="fas fa-globe"></i><span id="sj-tab-title">New tab</span><button type="button" id="sj-tab-close" title="Close tab" aria-label="Close tab">×</button></div><button type="button" class="sj-tab-add" id="sj-new-tab" title="New tab" aria-label="New tab"><i class="fas fa-plus"></i></button><span class="sj-tab-brand">NEURAL</span></div>
     <div class="sj-browser-controls" id="sj-browser-controls">
-      <button type="button" id="sj-back" aria-label="Go back"><i class="fas fa-arrow-left"></i> Back</button>
-      <button type="button" id="sj-forward" aria-label="Go forward"><i class="fas fa-arrow-right"></i> Forward</button>
-      <button type="button" id="sj-reload" aria-label="Reload website"><i class="fas fa-rotate-right"></i> Reload</button>
-      <button type="button" id="sj-mute" aria-label="Mute website audio" aria-pressed="false"><i class="fas fa-volume-up"></i> Mute</button>
-      <button type="button" id="sj-fullscreen" aria-label="Enter fullscreen" aria-pressed="false"><i class="fas fa-expand"></i> Fullscreen</button>
+      <button type="button" id="sj-back" aria-label="Go back" title="Back"><i class="fas fa-arrow-left"></i></button>
+      <button type="button" id="sj-forward" aria-label="Go forward" title="Forward"><i class="fas fa-arrow-right"></i></button>
+      <button type="button" id="sj-home" aria-label="Home" title="Home"><i class="fas fa-house"></i></button>
+      <button type="button" id="sj-reload" aria-label="Reload website" title="Reload"><i class="fas fa-rotate-right"></i></button>
+      <form class="sj-address-form" id="uv-launch-form">
+        <i class="fas fa-lock" aria-hidden="true"></i>
+        <input id="uv-address-input" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="Search Google or enter a website address" aria-label="Search or enter a website">
+        <button class="sj-go" id="uv-launch-button" type="submit">Go</button>
+      </form>
+      <button type="button" id="sj-mute" aria-label="Mute website audio" aria-pressed="false" title="Mute"><i class="fas fa-volume-up"></i></button>
+      <button type="button" id="sj-fullscreen" aria-label="Enter fullscreen" aria-pressed="false" title="Fullscreen"><i class="fas fa-expand"></i></button>
     </div>
+    <div class="sj-bookmarks" aria-label="Quick links">
+      <button type="button" data-proxy-quick="https://www.google.com/"><i class="fab fa-google"></i> Google</button>
+      <button type="button" data-proxy-quick="https://www.youtube.com/"><i class="fab fa-youtube"></i> YouTube</button>
+      <button type="button" data-proxy-quick="https://www.tiktok.com/"><i class="fab fa-tiktok"></i> TikTok</button>
+      <button type="button" data-proxy-quick="https://www.wikipedia.org/"><i class="fab fa-wikipedia-w"></i> Wikipedia</button>
+    </div>
+    <div class="sj-browser-status" role="status" aria-live="polite"><span class="uv-state-dot" id="uv-state-dot"></span><span id="uv-state-text">Starting your browser…</span></div>
     <div class="sj-frame-shell" id="sj-frame-shell">
+      <div class="sj-start-page" id="sj-start-page"><div class="sj-start-content"><div class="sj-start-logo"><i class="fas fa-globe"></i></div><h2>Browse the web</h2><p>Search or enter a website address above to get started.</p><form id="sj-start-form"><input id="sj-start-input" type="text" placeholder="Search the web…" autocomplete="off"><button type="submit"><i class="fas fa-arrow-right"></i></button></form><div class="sj-start-links"><button type="button" data-proxy-quick="https://www.google.com/"><i class="fab fa-google"></i> Google</button><button type="button" data-proxy-quick="https://www.youtube.com/"><i class="fab fa-youtube"></i> YouTube</button><button type="button" data-proxy-quick="https://www.tiktok.com/"><i class="fab fa-tiktok"></i> TikTok</button></div></div></div>
       <div id="sj-frame-mount"></div>
     </div>
   </div>
-  <p class="uv-footnote">Cloud Computer remains a separate Hyperbeam feature. Scramjet uses the external Wisp transport service and displays the proxied site inside this page.</p>
+  <p class="uv-footnote">Websites are displayed inside this page through your Scramjet + Wisp connection. Some sites may block embedding or require sign-in again.</p>
 </section>
 <section class="page-view" id="view-chat">
 <div id="chatAuthGate" role="dialog" aria-modal="true" aria-labelledby="chatAuthTitle">
@@ -3769,7 +3787,10 @@ showPage(p);});});
       if(!event||!event.url||!_0x3e91("uv-address-input"))return;
       try{const parsed=new URL(event.url);if(parsed.protocol==="http:"||parsed.protocol==="https:")_0x3e91("uv-address-input").value=parsed.href;}catch(error){}
     });
-    _0xa14c.frame.addEventListener("load",()=>_0x4f2b("Website loaded.","ready"));
+    _0xa14c.frame.addEventListener("load",()=>{
+      _0x4f2b("Website loaded.","ready");
+      try{const title=_0xa14c.frame.contentDocument&&_0xa14c.frame.contentDocument.title;if(title&&_0x3e91("sj-tab-title"))_0x3e91("sj-tab-title").textContent=title.slice(0,48);}catch(error){}
+    });
     return _0xa14c;
   }
   async function _0x9c31(raw){
@@ -3785,6 +3806,10 @@ showPage(p);});});
       const destination=_0x1f67(raw),frame=_0x2e4b();
       const stage=_0x3e91("sj-browser-stage");
       if(stage)stage.hidden=false;
+      const startPage=_0x3e91("sj-start-page");
+      if(startPage)startPage.hidden=true;
+      const tabTitle=_0x3e91("sj-tab-title");
+      if(tabTitle){try{tabTitle.textContent=new URL(destination).hostname;}catch(e){tabTitle.textContent="Loading…";}}
       _0x4f2b("Opening "+destination+" with Scramjet…","ready");
       frame.go(destination);
     }catch(error){_0x4f2b(error.message||"Could not open the website with Scramjet.","error");}
@@ -3804,6 +3829,12 @@ showPage(p);});});
   const form=_0x3e91("uv-launch-form");
   if(form)form.addEventListener("submit",event=>{event.preventDefault();_0x9c31(_0x3e91("uv-address-input").value);});
   document.querySelectorAll("[data-proxy-quick]").forEach(button=>button.addEventListener("click",()=>_0x9c31(button.getAttribute("data-proxy-quick"))));
+  const startForm=_0x3e91("sj-start-form"),startInput=_0x3e91("sj-start-input");
+  if(startForm)startForm.addEventListener("submit",event=>{event.preventDefault();if(startInput)_0x9c31(startInput.value);});
+  const homeButton=_0x3e91("sj-home"),newTabButton=_0x3e91("sj-new-tab"),closeTabButton=_0x3e91("sj-tab-close");
+  if(homeButton)homeButton.addEventListener("click",()=>{const startPage=_0x3e91("sj-start-page");if(startPage)startPage.hidden=false;if(_0x3e91("uv-address-input"))_0x3e91("uv-address-input").value="";if(_0x3e91("sj-tab-title"))_0x3e91("sj-tab-title").textContent="New tab";});
+  if(newTabButton)newTabButton.addEventListener("click",()=>{if(_0x3e91("uv-address-input"))_0x3e91("uv-address-input").value="";if(_0x3e91("sj-tab-title"))_0x3e91("sj-tab-title").textContent="New tab";if(_0x3e91("sj-start-page"))_0x3e91("sj-start-page").hidden=false;});
+  if(closeTabButton)closeTabButton.addEventListener("click",()=>{if(_0x3e91("sj-home"))_0x3e91("sj-home").click();});
   const backButton=_0x3e91("sj-back"),forwardButton=_0x3e91("sj-forward"),reloadButton=_0x3e91("sj-reload");
   const fullscreenButton=_0x3e91("sj-fullscreen"),browserStage=_0x3e91("sj-browser-stage");
   const muteButton=_0x3e91("sj-mute");
