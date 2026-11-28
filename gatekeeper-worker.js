@@ -1441,6 +1441,20 @@ export default {
         );
         if (rateLimitResponse) return rateLimitResponse;
 
+        const captcha = await verifyTurnstile(
+          env,
+          body.turnstileToken,
+          request.headers.get("CF-Connecting-IP")
+        );
+
+        if (
+          !captcha.success ||
+          captcha.hostname !== "neural.qzz.io" ||
+          captcha.action !== "website_access"
+        ) {
+          return errorResponse("Cloudflare verification failed. Please try again.", 403);
+        }
+
         if (!env.PASSPHRASE) {
           return errorResponse(
             "Website access passcode is not configured.",
