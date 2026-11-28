@@ -1866,7 +1866,7 @@ function getChatAuthError(error){
     'auth/too-many-requests':'Too many attempts. Please try again later.',
     'auth/network-request-failed':'Network error. Check your connection and try again.',
     'auth/operation-not-allowed':'This sign-in method is not enabled in Firebase yet. Enable the required provider in Firebase Console.',
-    'auth/admin-restricted-operation':'Anonymous sign-in is not enabled in Firebase yet. Enable the Anonymous provider in Firebase Console.'
+    'auth/admin-restricted-operation':'Anonymous sign-in is not enabled in Firebase yet. Enable the Anonymous provider in Firebase Console.',
     'auth/credential-already-in-use':'That email already belongs to another account. Sign in to that account instead.'
   };
   return messages[code]||((error&&error.message)||'Authentication failed. Please try again.');
@@ -1883,7 +1883,9 @@ function stopChatForAuth(){
   if(nameModal)nameModal.classList.add('hidden');
 }
 async function startChatForUser(user){
-  if(!user||!user.uid||(!user.isAnonymous&&!user.emailVerified))return;
+  if(!user||!user.uid||(!user.isAnonymous&&user.emailVerified!==true))return;
+  const activeUser=firebase.auth().currentUser;
+  if(!activeUser||activeUser.uid!==user.uid)return;
   if(chatStartedUid===user.uid&&liveRef)return;
   stopChatForAuth();
   chatStartedUid=user.uid;
@@ -1938,11 +1940,17 @@ async function startChatForUser(user){
   });
 }
 async function handleChatAuthState(user){
+  const auth=firebase.auth();
   if(!user){
     stopChatForAuth();
     showChatAuth();
     return;
   }
+  // Do not keep the previous account's listeners or identity while Firebase
+  // is switching to another UID.
+  if(!auth.currentUser||auth.currentUser.uid!==user.uid)return;
+  if(chatStartedUid&&chatStartedUid!==user.uid)stopChatForAuth();
+
   if(user.isAnonymous){
     const inUnblocker=document.getElementById('view-unblocker')?.classList.contains('active');
     if(inUnblocker){
@@ -1957,30 +1965,39 @@ async function handleChatAuthState(user){
     chatVerifyPanel.hidden=true;
     try{
       await user.getIdToken(true);
-      await startChatForUser(user);
+      if(auth.currentUser&&auth.currentUser.uid===user.uid)await startChatForUser(user);
     }catch(e){
-      setStatus('Guest chat could not connect: '+(e&&e.message||'check Firebase rules'));
+      stopChatForAuth();
+      showChatAuth();
+      setChatAuthMessage('Guest chat could not connect: '+(e&&e.message||'check Firebase rules'));
       console.error('[chat anonymous]',e);
     }
     return;
   }
-  try{await user.reload();}catch(e){}
-  const current=firebase.auth().currentUser;
-  if(!current||current.uid!==user.uid)return;
-  if(!current.emailVerified){
-    stopChatForAuth();
-    showChatVerification(current);
-    return;
-  }
-  chatAuthGate.hidden=true;
-  chatAuthFormPanel.hidden=true;
-  chatVerifyPanel.hidden=true;
+
+  // Refresh both the profile and ID-token claims before granting chat access.
+  // A cached emailVerified value alone is not enough to unlock a session.
   try{
-    await current.getIdToken(true);
-    await startChatForUser(current);
+    await user.reload();
+    const current=auth.currentUser;
+    if(!current||current.uid!==user.uid)return;
+    const tokenResult=await current.getIdTokenResult(true);
+    if(current.emailVerified!==true||tokenResult.claims.email_verified!==true){
+      stopChatForAuth();
+      showChatVerification(current);
+      return;
+    }
+    if(auth.currentUser&&auth.currentUser.uid===current.uid){
+      chatAuthGate.hidden=true;
+      chatAuthFormPanel.hidden=true;
+      chatVerifyPanel.hidden=true;
+      await startChatForUser(current);
+    }
   }catch(e){
-    setStatus('Firebase connection failed: '+(e&&e.message||'check setup'));
-    console.error('[chat firebase]',e);
+    stopChatForAuth();
+    showChatAuth();
+    setChatAuthMessage('Could not confirm this account with Firebase. Check your connection and try again.');
+    console.error('[chat verified account]',e);
   }
 }
 function bindChatAuthUi(){
