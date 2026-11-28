@@ -35,11 +35,11 @@ jobs:
         run: |
           mkdir -p _site/scram _site/baremux _site/libcurl _site/epoxy
           cp -a *.html *.js *.css *.svg *.webp *.json *.png *.ico CNAME _site/ 2>/dev/null || true
-          cp -a public _site/public
-          cp -a public/scram/. _site/scram/
-          cp -a public/baremux/. _site/baremux/
-          cp -a public/libcurl/. _site/libcurl/
-          cp -a public/epoxy/. _site/epoxy/
+          cp -aL public _site/public
+          cp -aL public/scram/. _site/scram/
+          cp -aL public/baremux/. _site/baremux/
+          cp -aL public/libcurl/. _site/libcurl/
+          cp -aL public/epoxy/. _site/epoxy/
           cp scramjet-sw.js _site/scramjet-sw.js
           cp _redirects _site/_redirects
           # GitHub Pages uses this app shell as its deep-route fallback.
@@ -68,6 +68,13 @@ jobs:
           test -f _site/epoxy/index.mjs
           test -f _site/libcurl/index.module.js
           test -f _site/epoxy/index.module.js
+          test -s _site/scram/scramjet.all.js
+          test -s _site/scram/scramjet.wasm.wasm
+          test -s _site/epoxy/index.module.js
+          test -s _site/libcurl/index.module.js
+          test ! -L _site/scram/scramjet.all.js
+          test ! -L _site/epoxy/index.module.js
+          test ! -L _site/libcurl/index.module.js
           test ! -e _site/uv
           touch _site/.nojekyll
 
