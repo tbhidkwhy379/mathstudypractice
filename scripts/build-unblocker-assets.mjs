@@ -43,6 +43,11 @@ requireFiles(baremuxTarget, ["index.js", "worker.js"], "BareMux");
 requireFiles(libcurlTarget, ["index.mjs"], "Libcurl transport");
 requireFiles(epoxyTarget, ["index.mjs"], "Epoxy transport");
 
+// Serve ESM source using the common .js extension as well. Some custom-domain
+// proxies/CDNs mishandle .mjs MIME types even though GitHub Pages supports them.
+cpSync(path.join(libcurlTarget, "index.mjs"), path.join(libcurlTarget, "index.module.js"));
+cpSync(path.join(epoxyTarget, "index.mjs"), path.join(epoxyTarget, "index.module.js"));
+
 const manifest = {
   generatedAt: new Date().toISOString(),
   packages: {

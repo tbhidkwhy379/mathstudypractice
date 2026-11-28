@@ -59,6 +59,8 @@ jobs:
           test -f _site/public/baremux/worker.js
           test -f _site/public/libcurl/index.mjs
           test -f _site/public/epoxy/index.mjs
+          test -f _site/public/libcurl/index.module.js
+          test -f _site/public/epoxy/index.module.js
           test -f _site/scram/scramjet.all.js
           test -f _site/scram/scramjet.wasm.wasm
           test -f _site/scram/scramjet.sync.js
@@ -66,6 +68,8 @@ jobs:
           test -f _site/baremux/worker.js
           test -f _site/libcurl/index.mjs
           test -f _site/epoxy/index.mjs
+          test -f _site/libcurl/index.module.js
+          test -f _site/epoxy/index.module.js
           test ! -e _site/uv
           touch _site/.nojekyll
 

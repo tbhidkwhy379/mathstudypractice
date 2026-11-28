@@ -3463,6 +3463,26 @@ showPage(p);});});
     );
     return registration;
   }
+  async function setTransportWithFallback(name,args){
+    const candidates=[
+      "/"+name+"/index.module.js?v=e644c103",
+      "/public/"+name+"/index.module.js?v=e644c103",
+      "/"+name+"/index.mjs?v=e644c103",
+      "/public/"+name+"/index.mjs?v=e644c103"
+    ];
+    const failures=[];
+    for(const path of candidates){
+      try{
+        await bareMuxConnection.setTransport(path,args);
+        return path;
+      }catch(error){
+        failures.push(path+": "+(error&&error.message||String(error)));
+        console.warn("[Neural Scramjet] Transport module failed at "+path,error);
+      }
+    }
+    throw new Error("Could not load "+name+" transport from any deployed asset path. "+failures.join(" | "));
+  }
+
   async function initializeScramjet(){
     if(stackPromise)return stackPromise;
     stackPromise=(async()=>{
@@ -3476,12 +3496,12 @@ showPage(p);});});
       bareMuxConnection=new window.BareMux.BareMuxConnection("/baremux/worker.js");
       setState("Connecting to the Wisp transport…");
       try{
-        await bareMuxConnection.setTransport("/libcurl/index.mjs",[{wisp:WISP_URL}]);
-        setState("Libcurl transport selected. Loading Scramjet…");
+        const selected=await setTransportWithFallback("libcurl",[{wisp:WISP_URL}]);
+        setState("Libcurl transport selected ("+selected+"). Loading Scramjet…");
       }catch(libcurlError){
         console.warn("[Neural Scramjet] Libcurl setup failed; trying Epoxy fallback.",libcurlError);
-        await bareMuxConnection.setTransport("/epoxy/index.mjs",[{wisp:WISP_URL}]);
-        setState("Epoxy fallback selected. Loading Scramjet…");
+        const selected=await setTransportWithFallback("epoxy",[{wisp:WISP_URL}]);
+        setState("Epoxy fallback selected ("+selected+"). Loading Scramjet…");
       }
       await loadProxyScript("/scramjet.config.js");
       await loadProxyScript("/scram/scramjet.all.js");

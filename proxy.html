@@ -494,7 +494,7 @@ const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
 let transportReady = false;
 async function setupTransport() {
     try {
-        await connection.setTransport('/libcurl/index.mjs', [{ wisp: WISP_URL }]);
+        await connection.setTransport('/libcurl/index.module.js?v=e644c103', [{ wisp: WISP_URL }]);
         transportReady = true;
         log('Scramjet v1 transport configured for Render Wisp.');
     } catch (err) {
