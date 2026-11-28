@@ -8,7 +8,6 @@
 
 # Private provider variants and keys must stay outside GitHub
 **/*private*
-**/*coarena*
 **/private/
 
 # Firebase service-account exports and secret material
