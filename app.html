@@ -3850,9 +3850,11 @@ showPage(p);});});
       }
       const scramjetBundle=await _0x92d1(["/scram/scramjet.all.js?v=scramjet-root-2","/public/scram/scramjet.all.js?v=scramjet-public-2"]);
       if(typeof window.$scramjetLoadController!=="function")throw new Error("Scramjet did not initialise. Loaded "+scramjetBundle+" but its controller API is missing.");
-      await _0x1e5a();
+      // Repair IndexedDB before starting/activating Scramjet's service worker.
+      // The worker can keep a $scramjet database connection open and block schema upgrades.
       _0x4f2b("Checking Scramjet browser storage…");
       await _0x6c1f();
+      await _0x1e5a();
       const {ScramjetController}=window.$scramjetLoadController();
       if(typeof ScramjetController!=="function")throw new Error("The ScramjetController API is missing from the loaded Scramjet bundle.");
       _0x8f21=new ScramjetController({
