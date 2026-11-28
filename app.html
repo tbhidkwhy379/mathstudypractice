@@ -1282,6 +1282,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
       <button type="button" id="sj-back" aria-label="Go back"><i class="fas fa-arrow-left"></i> Back</button>
       <button type="button" id="sj-forward" aria-label="Go forward"><i class="fas fa-arrow-right"></i> Forward</button>
       <button type="button" id="sj-reload" aria-label="Reload website"><i class="fas fa-rotate-right"></i> Reload</button>
+      <button type="button" id="sj-mute" aria-label="Mute website audio" aria-pressed="false"><i class="fas fa-volume-up"></i> Mute</button>
       <button type="button" id="sj-fullscreen" aria-label="Enter fullscreen" aria-pressed="false"><i class="fas fa-expand"></i> Fullscreen</button>
     </div>
     <div class="sj-frame-shell" id="sj-frame-shell">
@@ -1479,45 +1480,65 @@ const DEV_GATEKEEPER_URL='https://gatekeeper.sapktaayush.workers.dev/';
 const DEV_TOKEN_KEY='cs_dev_mode_token';
 const TURNSTILE_SITE_KEY='0x4AAAAAAGWlP_bSshAjBaAh';
 let turnstileWidgetId=null,turnstileLoadPromise=null;
-async function getDeveloperTurnstileToken(){
-  if(!window.turnstile){
-    if(!turnstileLoadPromise){
-      turnstileLoadPromise=new Promise((resolve,reject)=>{
-        const script=document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
-        if(!script){reject(new Error('Cloudflare Turnstile script is missing.'));return;}
-        script.addEventListener('load',resolve,{once:true});
-        script.addEventListener('error',()=>reject(new Error('Cloudflare Turnstile could not load.')),{once:true});
-        setTimeout(()=>reject(new Error('Cloudflare Turnstile timed out.')),12000);
-      });
-    }
-    await turnstileLoadPromise;
-  }
+async function waitForDeveloperTurnstile(){
+  if(window.turnstile)return window.turnstile;
+  const script=document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
+  if(!script)throw new Error('Cloudflare Turnstile script is missing.');
+  await new Promise((resolve,reject)=>{
+    let settled=false,pollId=null,timeoutId=null;
+    const finish=(fn,value)=>{
+      if(settled)return;
+      settled=true;
+      if(pollId!==null)clearInterval(pollId);
+      if(timeoutId!==null)clearTimeout(timeoutId);
+      script.removeEventListener('load',check);
+      script.removeEventListener('error',onError);
+      fn(value);
+    };
+    const check=()=>{if(window.turnstile)finish(resolve,window.turnstile);};
+    const onError=()=>finish(reject,new Error('Cloudflare Turnstile could not load.'));
+    script.addEventListener('load',check);
+    script.addEventListener('error',onError);
+    pollId=setInterval(check,50);
+    timeoutId=setTimeout(()=>finish(reject,new Error('Cloudflare Turnstile timed out while loading.')),15000);
+    check();
+  });
   if(!window.turnstile)throw new Error('Cloudflare Turnstile is unavailable.');
+  return window.turnstile;
+}
+async function getDeveloperTurnstileToken(){
+  const turnstile=await waitForDeveloperTurnstile();
   if(turnstileWidgetId===null){
     const mount=document.createElement('div');
     mount.id='developer-turnstile-widget';
     mount.style.cssText='position:fixed;left:-10000px;top:0;width:1px;height:1px;overflow:hidden';
     document.body.appendChild(mount);
-    turnstileWidgetId=window.turnstile.render(mount,{
+    turnstileWidgetId=turnstile.render(mount,{
       sitekey:TURNSTILE_SITE_KEY,
       size:'invisible',
       action:'developer_auth',
       callback:(token)=>{if(typeof window.__developerTurnstileCallback==='function')window.__developerTurnstileCallback(token);},
-      'error-callback':()=>{if(typeof window.__developerTurnstileCallback==='function')window.__developerTurnstileCallback('');}
+      'error-callback':()=>{if(typeof window.__developerTurnstileCallback==='function')window.__developerTurnstileCallback('');},
+      'expired-callback':()=>{if(typeof window.__developerTurnstileCallback==='function')window.__developerTurnstileCallback('');},
+      'timeout-callback':()=>{if(typeof window.__developerTurnstileCallback==='function')window.__developerTurnstileCallback('');}
     });
   }
   return await new Promise((resolve,reject)=>{
-    let settled=false;
-    const finish=(fn,value)=>{if(settled)return;settled=true;window.__developerTurnstileCallback=null;fn(value);};
+    let settled=false,timeoutId=null;
+    const finish=(fn,value)=>{
+      if(settled)return;
+      settled=true;
+      if(timeoutId!==null)clearTimeout(timeoutId);
+      window.__developerTurnstileCallback=null;
+      fn(value);
+    };
     window.__developerTurnstileCallback=(token)=>{
       if(token)finish(resolve,token);
-      else finish(reject,new Error('Cloudflare verification failed. Please try again.'));
+      else finish(reject,new Error('Cloudflare verification failed or expired. Please try again.'));
     };
-    try{
-      window.turnstile.reset(turnstileWidgetId);
-      window.turnstile.execute(turnstileWidgetId);
-    }catch(error){finish(reject,error);}
-    setTimeout(()=>finish(reject,new Error('Cloudflare verification timed out. Please try again.')),20000);
+    try{turnstile.reset(turnstileWidgetId);turnstile.execute(turnstileWidgetId);}
+    catch(error){finish(reject,error);}
+    timeoutId=setTimeout(()=>finish(reject,new Error('Cloudflare verification timed out. Please try again.')),25000);
   });
 }
 async function requestDeveloperGate(action,passcodeOrToken,turnstileToken){
@@ -3468,28 +3489,28 @@ showPage(p);});});
   const WISP_URL="wss://proxy-scramjet-8xz5.onrender.com/wisp/";
   const SCRAMJET_PREFIX="/scramjet/";
   const DEFAULT_URL="https://www.tiktok.com/";
-  let stackPromise=null,bareMuxConnection=null,scramjetController=null,scramjetFrame=null;
-  const byId=id=>document.getElementById(id);
-  const stateText=byId("uv-state-text"),stateDot=byId("uv-state-dot"),launchButton=byId("uv-launch-button");
-  function setState(message,kind){
-    if(stateText)stateText.textContent=message;
-    if(stateDot)stateDot.className="uv-state-dot"+(kind==="ready"?" ready":kind==="error"?" error":"");
+  let _0x51a2=null,_0x7b30=null,_0x8f21=null,_0xa14c=null;
+  const _0x3e91=id=>document.getElementById(id);
+  const _0x2c80=_0x3e91("uv-state-text"),_0x9d12=_0x3e91("uv-state-dot"),_0x6a45=_0x3e91("uv-launch-button");
+  function _0x4f2b(message,kind){
+    if(_0x2c80)_0x2c80.textContent=message;
+    if(_0x9d12)_0x9d12.className="uv-state-dot"+(kind==="ready"?" ready":kind==="error"?" error":"");
   }
-  function workerPath(worker){
+  function _0x8d03(worker){
     if(!worker)return "";
     try{return new URL(worker.scriptURL).pathname;}catch(e){return "";}
   }
-  function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
-  async function waitForCondition(test,message,timeoutMs){
+  function _0x0b71(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+  async function _0x4a6e(test,message,timeoutMs){
     const deadline=Date.now()+timeoutMs;
-    while(Date.now()<deadline){if(test())return;await wait(100);}
+    while(Date.now()<deadline){if(test())return;await _0x0b71(100);}
     throw new Error(message);
   }
 
   // Scramjet v1 opens "$scramjet" at IndexedDB version 1 and assumes that
   // its stores exist. Repair incomplete databases left by older/broken starts
   // before Scramjet opens its own connection and calls transaction("config").
-  async function ensureScramjetDatabaseStores(){
+  async function _0x6c1f(){
     if(!window.indexedDB)throw new Error("This browser does not support IndexedDB.");
     const databaseName="$scramjet";
     const requiredStores=["config","cookies","redirectTrackers","referrerPolicies","publicSuffixList"];
@@ -3546,7 +3567,7 @@ showPage(p);});});
       throw new Error("Scramjet IndexedDB is missing required stores: "+stillMissing.join(", "));
     }
   }
-  function loadProxyScript(src){
+  function _0x92d0(src){
     return new Promise((resolve,reject)=>{
       const absolute=new URL(src,location.href).href;
       const existing=Array.from(document.scripts).find(script=>script.src===absolute);
@@ -3562,7 +3583,7 @@ showPage(p);});});
       document.head.appendChild(script);
     });
   }
-  async function installScramjetWorker(){
+  async function _0x1e5a(){
     const registrations=await navigator.serviceWorker.getRegistrations();
     for(const registration of registrations){
       try{
@@ -3571,19 +3592,19 @@ showPage(p);});});
       }catch(error){console.warn("[Neural Scramjet] Could not remove an old UV registration:",error);}
     }
     const registration=await navigator.serviceWorker.register("/scramjet-sw.js",{scope:"/",updateViaCache:"none"});
-    await waitForCondition(
-      ()=>Boolean(registration.active&&registration.active.state==="activated"&&workerPath(registration.active)==="/scramjet-sw.js"),
+    await _0x4a6e(
+      ()=>Boolean(registration.active&&registration.active.state==="activated"&&_0x8d03(registration.active)==="/scramjet-sw.js"),
       "Scramjet's service worker did not activate. Close old Neural UBG tabs and reopen app.html.",15000
     );
-    await waitForCondition(
-      ()=>workerPath(navigator.serviceWorker.controller)==="/scramjet-sw.js",
+    await _0x4a6e(
+      ()=>_0x8d03(navigator.serviceWorker.controller)==="/scramjet-sw.js",
       "Scramjet is installed, but an old service worker still controls this tab. Close every Neural UBG tab and reopen app.html.",12000
     );
     return registration;
   }
-  async function waitForScramjetWorkerConfig(){
+  async function _0x7c42(){
     const controller=navigator.serviceWorker.controller;
-    if(workerPath(controller)!=="/scramjet-sw.js"){
+    if(_0x8d03(controller)!=="/scramjet-sw.js"){
       throw new Error("Scramjet is not controlling this tab. Close every Neural UBG tab and reopen app.html.");
     }
     if(typeof MessageChannel!=="function")throw new Error("This browser does not support MessageChannel.");
@@ -3619,7 +3640,7 @@ showPage(p);});});
       }
     });
   }
-  async function setTransportWithFallback(name,args){
+  async function _0x3d8e(name,args){
     const candidates=[
       "/"+name+"/index.module.js?v=ec6420cb",
       "/public/"+name+"/index.module.js?v=ec6420cb",
@@ -3629,7 +3650,7 @@ showPage(p);});});
     const failures=[];
     for(const path of candidates){
       try{
-        await bareMuxConnection.setTransport(path,args);
+        await _0x7b30.setTransport(path,args);
         return path;
       }catch(error){
         failures.push(path+": "+(error&&error.message||String(error)));
@@ -3639,36 +3660,36 @@ showPage(p);});});
     throw new Error("Could not load "+name+" transport from any deployed asset path. "+failures.join(" | "));
   }
 
-  async function initializeScramjet(){
-    if(stackPromise)return stackPromise;
-    stackPromise=(async()=>{
+  async function _0x8a20(){
+    if(_0x51a2)return _0x51a2;
+    _0x51a2=(async()=>{
       const user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
       if(!user||user.isAnonymous||user.emailVerified!==true)throw new Error("Web Unblocker requires a regular account with a verified email. Guest accounts are Chat-only.");
       if(!("serviceWorker" in navigator))throw new Error("This browser does not support service workers.");
       if(!("SharedWorker" in window))throw new Error("This browser does not support SharedWorker, which BareMux requires.");
-      setState("Loading BareMux transport…");
-      await loadProxyScript("/baremux/index.js");
+      _0x4f2b("Loading BareMux transport…");
+      await _0x92d0("/baremux/index.js");
       if(!window.BareMux||typeof window.BareMux.BareMuxConnection!=="function")throw new Error("BareMux did not load. Check /baremux/index.js.");
-      bareMuxConnection=new window.BareMux.BareMuxConnection("/baremux/worker.js");
-      setState("Connecting to the Wisp transport…");
+      _0x7b30=new window.BareMux.BareMuxConnection("/baremux/worker.js");
+      _0x4f2b("Connecting to the Wisp transport…");
       try{
         // Epoxy uses its own TLS implementation, avoiding Libcurl-specific TLS
         // handshake failures while keeping the same Wisp connection.
-        const selected=await setTransportWithFallback("epoxy",[{wisp:WISP_URL}]);
-        setState("Epoxy transport selected ("+selected+"). Loading Scramjet…");
+        const selected=await _0x3d8e("epoxy",[{wisp:WISP_URL}]);
+        _0x4f2b("Epoxy transport selected ("+selected+"). Loading Scramjet…");
       }catch(epoxyError){
         console.warn("[Neural Scramjet] Epoxy setup failed; trying Libcurl fallback.",epoxyError);
-        const selected=await setTransportWithFallback("libcurl",[{wisp:WISP_URL}]);
-        setState("Libcurl fallback selected ("+selected+"). Loading Scramjet…");
+        const selected=await _0x3d8e("libcurl",[{wisp:WISP_URL}]);
+        _0x4f2b("Libcurl fallback selected ("+selected+"). Loading Scramjet…");
       }
-      await loadProxyScript("/scram/scramjet.all.js");
+      await _0x92d0("/scram/scramjet.all.js");
       if(typeof window.$scramjetLoadController!=="function")throw new Error("Scramjet did not initialise. Check /scram/scramjet.all.js.");
-      await installScramjetWorker();
-      setState("Checking Scramjet browser storage…");
-      await ensureScramjetDatabaseStores();
+      await _0x1e5a();
+      _0x4f2b("Checking Scramjet browser storage…");
+      await _0x6c1f();
       const {ScramjetController}=window.$scramjetLoadController();
       if(typeof ScramjetController!=="function")throw new Error("The ScramjetController API is missing from the loaded Scramjet bundle.");
-      scramjetController=new ScramjetController({
+      _0x8f21=new ScramjetController({
         prefix:SCRAMJET_PREFIX,
         files:{
           wasm:"/scram/scramjet.wasm.wasm",
@@ -3676,15 +3697,15 @@ showPage(p);});});
           sync:"/scram/scramjet.sync.js"
         }
       });
-      await scramjetController.init();
-      await waitForScramjetWorkerConfig();
-      if(typeof scramjetController.createFrame!=="function")throw new Error("Scramjet initialised without its createFrame API.");
-      setState("Scramjet and its service worker are ready. Enter a site or choose TikTok or Google below.","ready");
+      await _0x8f21.init();
+      await _0x7c42();
+      if(typeof _0x8f21.createFrame!=="function")throw new Error("Scramjet initialised without its createFrame API.");
+      _0x4f2b("Scramjet and its service worker are ready. Enter a site or choose TikTok or Google below.","ready");
       return true;
-    })().catch(error=>{stackPromise=null;setState(error.message||"Could not initialise Scramjet.","error");throw error;});
-    return stackPromise;
+    })().catch(error=>{_0x51a2=null;_0x4f2b(error.message||"Could not initialise Scramjet.","error");throw error;});
+    return _0x51a2;
   }
-  function resolveAddress(raw){
+  function _0x1f67(raw){
     const value=String(raw||"").trim();
     if(!value)throw new Error("Enter a website or search term.");
     if(/\s/.test(value)||!value.includes("."))return "https://www.google.com/search?q="+encodeURIComponent(value);
@@ -3693,40 +3714,41 @@ showPage(p);});});
     if(!["http:","https:"].includes(url.protocol)||url.username||url.password)throw new Error("Only normal HTTP and HTTPS website addresses can be opened.");
     return url.href;
   }
-  function ensureScramjetFrame(){
-    if(scramjetFrame)return scramjetFrame;
-    const mount=byId("sj-frame-mount");
+  function _0x2e4b(){
+    if(_0xa14c)return _0xa14c;
+    const mount=_0x3e91("sj-frame-mount");
     if(!mount)throw new Error("The Scramjet browser frame container is missing.");
-    scramjetFrame=scramjetController.createFrame();
-    scramjetFrame.frame.className="sj-frame";
-    scramjetFrame.frame.setAttribute("title","Neural UBG Scramjet browser");
-    scramjetFrame.frame.setAttribute("loading","eager");
-    scramjetFrame.frame.setAttribute("allow","clipboard-read; clipboard-write; fullscreen; autoplay");
-    mount.replaceChildren(scramjetFrame.frame);
-    scramjetFrame.addEventListener("urlchange",event=>{
-      if(!event||!event.url||!byId("uv-address-input"))return;
-      try{const parsed=new URL(event.url);if(parsed.protocol==="http:"||parsed.protocol==="https:")byId("uv-address-input").value=parsed.href;}catch(error){}
+    _0xa14c=_0x8f21.createFrame();
+    _0xa14c.frame.className="sj-frame";
+    _0xa14c.frame.setAttribute("title","Neural UBG Scramjet browser");
+    _0xa14c.frame.setAttribute("loading","eager");
+    _0xa14c.frame.setAttribute("allow","clipboard-read; clipboard-write; fullscreen; autoplay");
+    _0xa14c.frame.addEventListener("load",()=>_0x2d73(scramjetMuted));
+    mount.replaceChildren(_0xa14c.frame);
+    _0xa14c.addEventListener("urlchange",event=>{
+      if(!event||!event.url||!_0x3e91("uv-address-input"))return;
+      try{const parsed=new URL(event.url);if(parsed.protocol==="http:"||parsed.protocol==="https:")_0x3e91("uv-address-input").value=parsed.href;}catch(error){}
     });
-    scramjetFrame.frame.addEventListener("load",()=>setState("Website loaded.","ready"));
-    return scramjetFrame;
+    _0xa14c.frame.addEventListener("load",()=>_0x4f2b("Website loaded.","ready"));
+    return _0xa14c;
   }
-  async function launchProxy(raw){
+  async function _0x9c31(raw){
     const user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
     if(!user||user.isAnonymous||!user.emailVerified){
-      setState("Sign in with your verified email before using the Web Unblocker.","error");
+      _0x4f2b("Sign in with your verified email before using the Web Unblocker.","error");
       if(typeof showPage==="function")showPage("chat");
       return;
     }
-    if(launchButton)launchButton.disabled=true;
+    if(_0x6a45)_0x6a45.disabled=true;
     try{
-      await initializeScramjet();
-      const destination=resolveAddress(raw),frame=ensureScramjetFrame();
-      const stage=byId("sj-browser-stage");
+      await _0x8a20();
+      const destination=_0x1f67(raw),frame=_0x2e4b();
+      const stage=_0x3e91("sj-browser-stage");
       if(stage)stage.hidden=false;
-      setState("Opening "+destination+" with Scramjet…","ready");
+      _0x4f2b("Opening "+destination+" with Scramjet…","ready");
       frame.go(destination);
-    }catch(error){setState(error.message||"Could not open the website with Scramjet.","error");}
-    finally{if(launchButton)launchButton.disabled=false;}
+    }catch(error){_0x4f2b(error.message||"Could not open the website with Scramjet.","error");}
+    finally{if(_0x6a45)_0x6a45.disabled=false;}
   }
   window.openNeuralUnblocker=async function(){
     let user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
@@ -3737,29 +3759,61 @@ showPage(p);});});
       return;
     }
     showPage("unblocker");
-    try{await initializeScramjet();}catch(error){console.warn("[Neural Scramjet]",error);}
+    try{await _0x8a20();}catch(error){console.warn("[Neural Scramjet]",error);}
   };
-  const form=byId("uv-launch-form");
-  if(form)form.addEventListener("submit",event=>{event.preventDefault();launchProxy(byId("uv-address-input").value);});
-  document.querySelectorAll("[data-proxy-quick]").forEach(button=>button.addEventListener("click",()=>launchProxy(button.getAttribute("data-proxy-quick"))));
-  const backButton=byId("sj-back"),forwardButton=byId("sj-forward"),reloadButton=byId("sj-reload");
-  const fullscreenButton=byId("sj-fullscreen"),browserStage=byId("sj-browser-stage");
-  if(backButton)backButton.addEventListener("click",()=>{if(scramjetFrame)scramjetFrame.back();});
-  if(forwardButton)forwardButton.addEventListener("click",()=>{if(scramjetFrame)scramjetFrame.forward();});
-  if(reloadButton)reloadButton.addEventListener("click",()=>{if(scramjetFrame)scramjetFrame.reload();});
+  const form=_0x3e91("uv-launch-form");
+  if(form)form.addEventListener("submit",event=>{event.preventDefault();_0x9c31(_0x3e91("uv-address-input").value);});
+  document.querySelectorAll("[data-proxy-quick]").forEach(button=>button.addEventListener("click",()=>_0x9c31(button.getAttribute("data-proxy-quick"))));
+  const backButton=_0x3e91("sj-back"),forwardButton=_0x3e91("sj-forward"),reloadButton=_0x3e91("sj-reload");
+  const fullscreenButton=_0x3e91("sj-fullscreen"),browserStage=_0x3e91("sj-browser-stage");
+  const muteButton=_0x3e91("sj-mute");
+  let scramjetMuted=false,scramjetMediaObserver=null;
+  function _0x8c12(){
+    if(!muteButton)return;
+    muteButton.innerHTML=scramjetMuted?'<i class="fas fa-volume-mute"></i> Unmute':'<i class="fas fa-volume-up"></i> Mute';
+    muteButton.setAttribute("aria-pressed",String(scramjetMuted));
+    muteButton.setAttribute("aria-label",scramjetMuted?"Unmute website audio":"Mute website audio");
+  }
+  function _0x2d73(muted){
+    scramjetMuted=muted===true;
+    try{
+      const frame=_0xa14c&&_0xa14c.frame;
+      const doc=frame&&(frame.contentDocument||(frame.contentWindow&&frame.contentWindow.document));
+      if(doc){
+        const applyMedia=root=>{
+          if(root&&root.matches&&root.matches("audio,video"))root.muted=scramjetMuted;
+          if(root&&root.querySelectorAll)root.querySelectorAll("audio,video").forEach(media=>{media.muted=scramjetMuted;});
+        };
+        applyMedia(doc);
+        if(scramjetMediaObserver)scramjetMediaObserver.disconnect();
+        if(doc.documentElement&&typeof MutationObserver==="function"){
+          scramjetMediaObserver=new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(applyMedia)));
+          scramjetMediaObserver.observe(doc.documentElement,{childList:true,subtree:true});
+        }
+      }
+    }catch(error){
+      console.warn("[Neural Scramjet] Could not access proxied media elements for mute:",error);
+      _0x4f2b("Mute control could not access this site's media. The website may use isolated audio.","error");
+    }
+    _0x8c12();
+  }
+  if(muteButton)muteButton.addEventListener("click",()=>_0x2d73(!scramjetMuted));
+  if(backButton)backButton.addEventListener("click",()=>{if(_0xa14c)_0xa14c.back();});
+  if(forwardButton)forwardButton.addEventListener("click",()=>{if(_0xa14c)_0xa14c.forward();});
+  if(reloadButton)reloadButton.addEventListener("click",()=>{if(_0xa14c)_0xa14c.reload();});
 
-  function updateFullscreenButton(){
+  function _0x6d84(){
     if(!fullscreenButton||!browserStage)return;
     const active=document.fullscreenElement===browserStage||browserStage.classList.contains("sj-fullscreen-fallback");
     fullscreenButton.innerHTML=active?'<i class="fas fa-compress"></i> Exit fullscreen':'<i class="fas fa-expand"></i> Fullscreen';
     fullscreenButton.setAttribute("aria-pressed",String(active));
     fullscreenButton.setAttribute("aria-label",active?"Exit fullscreen":"Enter fullscreen");
   }
-  async function toggleBrowserFullscreen(){
+  async function _0x4b09(){
     if(!browserStage)return;
     if(browserStage.classList.contains("sj-fullscreen-fallback")){
       browserStage.classList.remove("sj-fullscreen-fallback");
-      updateFullscreenButton();
+      _0x6d84();
       return;
     }
     if(document.fullscreenElement===browserStage){
@@ -3773,17 +3827,17 @@ showPage(p);});});
       console.warn("[Neural Scramjet] Using CSS fullscreen fallback:",error);
       browserStage.classList.add("sj-fullscreen-fallback");
     }
-    updateFullscreenButton();
+    _0x6d84();
   }
-  if(fullscreenButton)fullscreenButton.addEventListener("click",toggleBrowserFullscreen);
-  document.addEventListener("fullscreenchange",updateFullscreenButton);
+  if(fullscreenButton)fullscreenButton.addEventListener("click",_0x4b09);
+  document.addEventListener("fullscreenchange",_0x6d84);
   document.addEventListener("keydown",event=>{
     if(event.key==="Escape"&&browserStage&&browserStage.classList.contains("sj-fullscreen-fallback")){
       browserStage.classList.remove("sj-fullscreen-fallback");
-      updateFullscreenButton();
+      _0x6d84();
     }
   });
-  window.NeuralUnblocker={initialize:initializeScramjet,launch:launchProxy,defaultUrl:DEFAULT_URL,wisp:WISP_URL,fullscreen:toggleBrowserFullscreen};
+  window.NeuralUnblocker={initialize:_0x8a20,launch:_0x9c31,defaultUrl:DEFAULT_URL,wisp:WISP_URL,fullscreen:_0x4b09};
 })();
 </script>
 
