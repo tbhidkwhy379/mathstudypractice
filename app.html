@@ -1976,31 +1976,41 @@ async function handleChatAuthState(user){
     return;
   }
 
-  // Refresh both the profile and ID-token claims before granting chat access.
-  // A cached emailVerified value alone is not enough to unlock a session.
+  // Verify Firebase Authentication separately from Realtime Database startup.
+  // A database WebSocket failure must never be reported as an invalid account.
+  let current;
+  let tokenResult;
   try{
     await user.reload();
-    const current=auth.currentUser;
+    current=auth.currentUser;
     if(!current||current.uid!==user.uid)return;
-    const tokenResult=await current.getIdTokenResult(true);
+    tokenResult=await current.getIdTokenResult(true);
     if(!auth.currentUser||auth.currentUser.uid!==current.uid)return;
-    if(current.emailVerified!==true||tokenResult.claims.email_verified!==true){
-      stopChatForAuth();
-      showChatVerification(current);
-      return;
-    }
-    if(auth.currentUser&&auth.currentUser.uid===current.uid){
-      chatAuthGate.hidden=true;
-      chatAuthFormPanel.hidden=true;
-      chatVerifyPanel.hidden=true;
-      await startChatForUser(current);
-    }
   }catch(e){
     if(!auth.currentUser||auth.currentUser.uid!==user.uid)return;
     stopChatForAuth();
     showChatAuth();
-    setChatAuthMessage('Could not confirm this account with Firebase. Check your connection and try again.');
+    setChatAuthMessage('Firebase sign-in succeeded, but account verification could not refresh. Check your connection and try again.');
     console.error('[chat verified account]',e);
+    return;
+  }
+
+  if(current.emailVerified!==true||tokenResult.claims.email_verified!==true){
+    stopChatForAuth();
+    showChatVerification(current);
+    return;
+  }
+
+  chatAuthGate.hidden=true;
+  chatAuthFormPanel.hidden=true;
+  chatVerifyPanel.hidden=true;
+  try{
+    await startChatForUser(current);
+  }catch(e){
+    if(!auth.currentUser||auth.currentUser.uid!==current.uid)return;
+    stopChatForAuth();
+    setStatus('Signed in, but chat database connection failed: '+(e&&e.message||'check Firebase Realtime Database rules and connection'));
+    console.error('[chat database startup]',e);
   }
 }
 function bindChatAuthUi(){
@@ -3532,11 +3542,11 @@ showPage(p);});});
       setState("Connecting to the Wisp transport…");
       bareMuxConnection=new window.BareMux.BareMuxConnection("/baremux/worker.js");
       try{
-        await bareMuxConnection.setTransport("/libcurl/index.mjs",[{wisp:WISP_URL}]);
+        await bareMuxConnection.setTransport("/public/libcurl/index.mjs",[{wisp:WISP_URL}]);
         setState("Libcurl transport selected. Registering the proxy service worker…");
       }catch(libcurlError){
         console.warn("[Neural Unblocker] Libcurl setup failed; trying Epoxy fallback.",libcurlError);
-        await bareMuxConnection.setTransport("/epoxy/index.mjs",[{wisp:WISP_URL}]);
+        await bareMuxConnection.setTransport("/public/epoxy/index.mjs",[{wisp:WISP_URL}]);
         setState("Epoxy fallback selected. Registering the proxy service worker…");
       }
 
