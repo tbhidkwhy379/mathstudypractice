@@ -3624,23 +3624,58 @@ showPage(p);});});
   // can pass /uv/ navigations through to the more-specific UV registration.
   async function refreshLegacyScramjetWorker(){
     const registrations=await navigator.serviceWorker.getRegistrations();
-    const isScramjetWorker=worker=>{
-      if(!worker)return false;
-      try{return new URL(worker.scriptURL).pathname==="/scramjet-sw.js";}
-      catch(e){return false;}
+    const workerPath=worker=>{
+      if(!worker)return "";
+      try{return new URL(worker.scriptURL).pathname;}
+      catch(e){return "";}
     };
+    const isRootWorker=worker=>
+      workerPath(worker)==="/scramjet-sw.js" ||
+      workerPath(worker)==="/uv.sw.js";
 
     const rootRegistration=registrations.find(reg=>{
       try{
         const scope=new URL(reg.scope);
         return scope.origin===location.origin &&
           scope.pathname==="/" &&
-          [reg.active,reg.waiting,reg.installing].some(isScramjetWorker);
+          [reg.active,reg.waiting,reg.installing].some(isRootWorker);
       }catch(e){return false;}
     });
 
     if(!rootRegistration)return;
 
+    const oldUvWorker=[rootRegistration.active,rootRegistration.waiting,rootRegistration.installing]
+      .some(worker=>workerPath(worker)==="/uv.sw.js");
+
+    // An older deployment registered the Ultraviolet worker at "/" using
+    // /uv.sw.js. That broad scope wins over the new /uv/ registration, so
+    // remove that registration instead of merely asking it to update.
+    if(oldUvWorker){
+      const removed=await rootRegistration.unregister();
+      if(!removed){
+        throw new Error("Could not remove the outdated root /uv.sw.js service worker registration.");
+      }
+
+      const controller=navigator.serviceWorker.controller;
+      if(workerPath(controller)==="/uv.sw.js"){
+        const resetKey="neural-remove-root-uv-worker";
+        let alreadyRetried=false;
+        try{alreadyRetried=sessionStorage.getItem(resetKey)==="1";}catch(e){}
+        if(alreadyRetried){
+          throw new Error("The old /uv.sw.js worker is still controlling this tab after its registration was removed. Close every Neural tab for this site, then reopen app.html.");
+        }
+        try{sessionStorage.setItem(resetKey,"1");}catch(e){}
+        setState("Removing the outdated root proxy worker and reopening the app…");
+        window.location.replace("/app.html?worker-reset=uv-root");
+        await new Promise(()=>{});
+      }
+
+      try{sessionStorage.removeItem("neural-remove-root-uv-worker");}catch(e){}
+      return;
+    }
+
+    // The current Scramjet root worker deliberately passes /uv/ requests
+    // through so the more-specific Ultraviolet registration can own them.
     const previousActive=rootRegistration.active;
     const previousController=navigator.serviceWorker.controller;
 
