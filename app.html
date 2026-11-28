@@ -3587,19 +3587,59 @@ showPage(p);});});
     const registrations=await navigator.serviceWorker.getRegistrations();
     for(const registration of registrations){
       try{
-        const scopePath=new URL(registration.scope).pathname;
-        if(scopePath==="/uv/"||scopePath.startsWith("/uv/"))await registration.unregister();
-      }catch(error){console.warn("[Neural Scramjet] Could not remove an old UV registration:",error);}
+        const scopeUrl=new URL(registration.scope);
+        const scopePath=scopeUrl.pathname;
+        const activePath=_0x8d03(registration.active);
+        // Remove legacy UV workers and any stale same-origin root worker.
+        // Leave unrelated scoped service workers untouched.
+        if(scopeUrl.origin===location.origin&&(
+          scopePath==="/uv/"||scopePath.startsWith("/uv/")||
+          (scopePath==="/"&&activePath&&activePath!=="/scramjet-sw.js")
+        )){
+          await registration.unregister();
+        }
+      }catch(error){console.warn("[Neural Scramjet] Could not remove a stale service worker registration:",error);}
     }
+
     const registration=await navigator.serviceWorker.register("/scramjet-sw.js",{scope:"/",updateViaCache:"none"});
+    try{await registration.update();}catch(error){console.warn("[Neural Scramjet] Worker update check failed; using installed worker:",error);}
+    if(registration.waiting)registration.waiting.postMessage({$neuralScramjetSkipWaiting:true});
+
     await _0x4a6e(
       ()=>Boolean(registration.active&&registration.active.state==="activated"&&_0x8d03(registration.active)==="/scramjet-sw.js"),
-      "Scramjet's service worker did not activate. Close old Neural UBG tabs and reopen app.html.",15000
+      "Scramjet's updated service worker did not activate. Reload app.html and try again.",20000
     );
-    await _0x4a6e(
-      ()=>_0x8d03(navigator.serviceWorker.controller)==="/scramjet-sw.js",
-      "Scramjet is installed, but an old service worker still controls this tab. Close every Neural UBG tab and reopen app.html.",12000
-    );
+
+    if(_0x8d03(navigator.serviceWorker.controller)!=="/scramjet-sw.js"){
+      await new Promise(resolve=>{
+        let _0xctrlTimer=null;
+        const _0xctrlChanged=()=>{
+          if(_0x8d03(navigator.serviceWorker.controller)==="/scramjet-sw.js"){
+            clearTimeout(_0xctrlTimer);
+            navigator.serviceWorker.removeEventListener("controllerchange",_0xctrlChanged);
+            resolve();
+          }
+        };
+        navigator.serviceWorker.addEventListener("controllerchange",_0xctrlChanged);
+        _0xctrlTimer=setTimeout(()=>{
+          navigator.serviceWorker.removeEventListener("controllerchange",_0xctrlChanged);
+          resolve();
+        },5000);
+        _0xctrlChanged();
+      });
+    }
+
+    if(_0x8d03(navigator.serviceWorker.controller)!=="/scramjet-sw.js"){
+      const _0xreloadKey="neural-scramjet-worker-reload";
+      if(sessionStorage.getItem(_0xreloadKey)!=="1"){
+        sessionStorage.setItem(_0xreloadKey,"1");
+        location.reload();
+        await new Promise(()=>{});
+      }
+      sessionStorage.removeItem(_0xreloadKey);
+      throw new Error("Scramjet's service worker update did not take control after an automatic reload. Please reload app.html once more.");
+    }
+    sessionStorage.removeItem("neural-scramjet-worker-reload");
     return registration;
   }
   async function _0x7c42(){
