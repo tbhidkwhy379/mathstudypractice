@@ -1,0 +1,17 @@
+# Cloudflare local secrets
+**/.dev.vars
+**/.dev.vars.*
+!**/.dev.vars.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Private provider variants and keys must stay outside GitHub
+**/*private*
+**/*coarena*
+**/private/
+
+# Firebase service-account exports and secret material
+**/*service-account*.json
+**/*private-key*.json
+**/secrets*.json
