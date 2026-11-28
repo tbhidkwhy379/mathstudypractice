@@ -3825,9 +3825,9 @@ showPage(p);});});
       if(!("serviceWorker" in navigator))throw new Error("This browser does not support service workers.");
       if(!("SharedWorker" in window))throw new Error("This browser does not support SharedWorker, which BareMux requires.");
       _0x4f2b("Loading BareMux transport…");
-      await _0x92d0("/baremux/index.js");
+      await _0x92d0("/public/baremux/index.js");
       if(!window.BareMux||typeof window.BareMux.BareMuxConnection!=="function")throw new Error("BareMux did not load. Check /baremux/index.js.");
-      _0x7b30=new window.BareMux.BareMuxConnection("/baremux/worker.js");
+      _0x7b30=new window.BareMux.BareMuxConnection("/public/baremux/worker.js");
       _0x4f2b("Connecting to the Wisp transport…");
       try{
         // Epoxy uses its own TLS implementation, avoiding Libcurl-specific TLS
