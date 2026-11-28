@@ -4,6 +4,7 @@
  *
  * Secrets (Cloudflare > Worker > Settings > Variables and Secrets):
  *   GROQ_API_KEY
+ *   DEV_TOKEN_SECRET (same value as the Gatekeeper Worker's DEV_TOKEN_SECRET)
  *
  * All editable, non-secret options are in the CONFIG block below.
  * Do not add API keys to this file.
@@ -22,6 +23,44 @@ const CONFIG = Object.freeze({
 });
 
 const encoder = new TextEncoder();
+function base64UrlDecodeBytes(value) {
+  let base64 = String(value).replace(/-/g, "+").replace(/_/g, "/");
+  base64 += "=".repeat((4 - base64.length % 4) % 4);
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function verifyAiChatToken(env, token) {
+  if (typeof token !== "string" || !token) return false;
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+  const secret = String(env.DEV_TOKEN_SECRET || "");
+  if (!secret) throw new Error("DEV_TOKEN_SECRET is not configured on the AI Worker.");
+  try {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+    const validSignature = await crypto.subtle.verify(
+      "HMAC", key, base64UrlDecodeBytes(parts[1]), encoder.encode(parts[0])
+    );
+    if (!validSignature) return false;
+    const payload = JSON.parse(new TextDecoder().decode(base64UrlDecodeBytes(parts[0])));
+    const now = Math.floor(Date.now() / 1000);
+    return payload.type === "ai-chat-clearance" &&
+      Number.isFinite(payload.expiresAt) && payload.expiresAt > now &&
+      Number.isFinite(payload.issuedAt) && payload.issuedAt <= now + 60;
+  } catch (error) {
+    if (error && error.message && error.message.includes("DEV_TOKEN_SECRET")) throw error;
+    return false;
+  }
+}
+
 
 function corsHeaders() {
   return {
@@ -343,6 +382,16 @@ export default {
       if (!input || typeof input !== "object" || Array.isArray(input)) {
         return jsonResponse({ error: "Invalid request body." }, 400);
       }
+      let aiChatCleared = false;
+      try {
+        aiChatCleared = await verifyAiChatToken(env, input.aiChatToken);
+      } catch (error) {
+        return jsonResponse({ error: error.message || "AI chat verification is not configured." }, 503);
+      }
+      if (!aiChatCleared) {
+        return jsonResponse({ error: "Complete the Neural AI security check before chatting." }, 403);
+      }
+
       if (!Array.isArray(input.messages) || input.messages.length === 0) {
         return jsonResponse({ error: "Expected a non-empty messages array." }, 400);
       }
