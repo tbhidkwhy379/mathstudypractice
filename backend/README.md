@@ -27,7 +27,7 @@ backend/
     └── README.md
 ```
 
-There are **two Cloudflare Workers** because the existing frontend uses two endpoints:
+There are **two separate Cloudflare Workers** because the existing frontend uses two endpoints. Connect the same GitHub repository to each Worker as its own Cloudflare project. Set the AI Worker root directory to `backend/cloudflare/ai-worker` and the Gatekeeper Worker root directory to `backend/cloudflare/gatekeeper-worker`. Each folder has its own Wrangler file and Worker name.
 
 - **AI Worker**: receives chat messages and calls Groq.
 - **Gatekeeper Worker**: checks website and Developer Mode passcodes, verifies Turnstile, creates Hyperbeam sessions, and handles the protected Firebase dashboard and weekly guest cleanup.
@@ -88,21 +88,27 @@ Change the origin, API URL, model, or token limits there. Put the actual API key
 
 ---
 
-## 3. Create a Cloudflare account and deploy the AI Worker
+## 3. Connect the AI Worker to GitHub (Worker 1 of 2)
 
-1. Open [Cloudflare Dashboard](https://dash.cloudflare.com/) and sign in.
-2. Go to **Workers & Pages → Create → Worker**.
-3. Name it something like `neural-ai`.
-4. Open its code editor and replace the starter code with the complete contents of `backend/cloudflare/ai-worker/worker.js`.
-5. Save and deploy.
-6. Open the Worker **Settings → Variables and Secrets**.
-7. Add a variable of type **Secret**:
+These are **two separate Cloudflare Workers**, not one Worker with two routes. Both can connect to the same GitHub repository, but each Worker must use its own root directory and its own `wrangler.toml`.
+
+For the AI Worker:
+
+1. In Cloudflare, open **Workers & Pages → Create application → Connect to Git**.
+2. Select this GitHub repository and the `main` branch.
+3. Set the **Worker name** to exactly `neural-ai` (it must match the `name` field in its Wrangler file).
+4. Set **Root directory** to `backend/cloudflare/ai-worker`.
+5. Leave the build command empty. Use `npx wrangler deploy` as the deploy command.
+6. Save and deploy. Cloudflare should detect `wrangler.toml` and deploy `worker.js`.
+7. Open this Worker → **Settings → Variables and Secrets** and add a **Secret**:
    - Name: `GROQ_API_KEY`
    - Value: your Groq API key
-8. Deploy the updated Worker.
+8. Redeploy after adding the secret.
 9. Copy the Worker URL (it usually ends in `.workers.dev`).
 
 Open `backend/neural-config.js` and set `aiApiUrl` to that URL, including the trailing slash.
+
+The AI Worker's `wrangler.toml` also declares the `AI_RATE_LIMITER` binding. Use a unique `namespace_id` for this Worker if you change it.
 
 ---
 
@@ -118,12 +124,28 @@ The Gatekeeper checks the hostname and the action names `website_access` and `de
 
 ---
 
-## 5. Deploy the Gatekeeper Worker
+## 5. Connect the Gatekeeper Worker to GitHub (Worker 2 of 2)
 
-1. Create a second Worker from **Workers & Pages → Create → Worker**.
-2. Name it something like `neural-gatekeeper`.
-3. Paste the complete contents of `backend/cloudflare/gatekeeper-worker/worker.js` into its editor and deploy.
-4. In **Settings → Variables and Secrets**, add these as **Secrets**:
+Create a **second, separate Worker**. Do not reuse the AI Worker's Cloudflare project.
+
+1. In Cloudflare, open **Workers & Pages → Create application → Connect to Git** again.
+2. Select the same GitHub repository and the `main` branch.
+3. Set the **Worker name** to exactly `neural-gatekeeper`.
+4. Set **Root directory** to `backend/cloudflare/gatekeeper-worker`.
+5. Leave the build command empty. Use `npx wrangler deploy` as the deploy command.
+6. Save and deploy.
+
+The Gatekeeper Worker's `wrangler.toml` already includes these public Firebase project settings in its `[vars]` section:
+
+```toml
+[vars]
+FIREBASE_DATABASE_URL = "https://ubg1-363a4-default-rtdb.asia-southeast1.firebasedatabase.app/"
+FIREBASE_PROJECT_ID = "ubg1-363a4"
+```
+
+For a different Firebase project, edit those two values in `backend/cloudflare/gatekeeper-worker/wrangler.toml`. These are not secret credentials. Keep the service-account private key and other private values out of `[vars]`.
+
+7. In this Worker's **Settings → Variables and Secrets**, add these as **Secrets**:
 
 | Secret name | What to enter |
 |---|---|
@@ -131,25 +153,21 @@ The Gatekeeper checks the hostname and the action names `website_access` and `de
 | `DEV_PASSPHRASE` | The separate Developer Mode passphrase |
 | `DEV_TOKEN_SECRET` | A long random secret used to sign Developer Mode session tokens |
 | `TURNSTILE_SECRET_KEY` | The Turnstile secret key from step 4 |
-| `FIREBASE_DATABASE_URL` | Your Realtime Database root URL |
-| `FIREBASE_PROJECT_ID` | Your Firebase project ID |
 | `FIREBASE_CLIENT_EMAIL` | The service account's client email |
 | `FIREBASE_PRIVATE_KEY` | The service account's private key |
 | `HYPERBEAM_API_KEY` | Your Hyperbeam API key |
 
-5. Under **Settings → Bindings**, add a **Rate Limiting** binding:
+8. Under **Settings → Bindings**, add a **Rate Limiting** binding if Cloudflare did not create it from Wrangler:
    - Binding name: `PASSWORD_RATE_LIMITER`
    - Limit: `5`
    - Period: `60` seconds
-   - Use a unique numeric namespace ID for your Cloudflare account.
-6. Under **Settings → Triggers → Cron Triggers**, add:
-   - `0 13,14 * * 5`
+   - The `wrangler.toml` already uses namespace ID `70261`; it must be a unique positive integer string in your Cloudflare account.
 
-The two UTC times cover Melbourne's standard-time and daylight-time offsets. The Worker checks the actual local time and only performs guest cleanup at Friday midnight in the configured timezone. Cron schedules run in UTC; if you change `MELBOURNE_TIME_ZONE` in the Worker config, update the UTC trigger times as well.
+9. Under **Settings → Triggers → Cron Triggers**, confirm the `0 13,14 * * 5` trigger is present. It performs the weekly guest cleanup at Friday midnight Melbourne time.
 
-7. Copy the Gatekeeper Worker URL and set `gatekeeperUrl` in `backend/neural-config.js`, including its trailing slash.
+10. Copy this Worker's URL and set `gatekeeperUrl` in `backend/neural-config.js`, including the trailing slash.
 
-The Gatekeeper's editable options are in its top `CONFIG` block. Change `ALLOWED_ORIGIN` and `TURNSTILE_HOSTNAME` when deploying to a different domain. The secret values remain in Cloudflare, not in that block.
+The Gatekeeper's other editable server options are in its top `CONFIG` block. Change `ALLOWED_ORIGIN` and `TURNSTILE_HOSTNAME` when deploying to another domain.
 
 ---
 
