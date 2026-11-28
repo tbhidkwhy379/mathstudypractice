@@ -577,6 +577,40 @@ async function getDeveloperTokenKey(env) {
   );
 }
 
+
+async function createWebsiteBotToken(env) {
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    type: "website-bot-clearance",
+    issuedAt: now,
+    expiresAt: now + 30 * 60
+  };
+  const encodedPayload = base64UrlEncodeText(JSON.stringify(payload));
+  const key = await getDeveloperTokenKey(env);
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(encodedPayload));
+  return encodedPayload + "." + base64UrlEncodeBytes(new Uint8Array(signature));
+}
+
+async function verifyWebsiteBotToken(env, token) {
+  if (typeof token !== "string" || !token) return false;
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+  try {
+    const key = await getDeveloperTokenKey(env);
+    const validSignature = await crypto.subtle.verify(
+      "HMAC", key, base64UrlDecodeBytes(parts[1]), encoder.encode(parts[0])
+    );
+    if (!validSignature) return false;
+    const payload = JSON.parse(decoder.decode(base64UrlDecodeBytes(parts[0])));
+    const now = Math.floor(Date.now() / 1000);
+    return payload.type === "website-bot-clearance" &&
+      Number.isFinite(payload.expiresAt) && payload.expiresAt > now &&
+      Number.isFinite(payload.issuedAt) && payload.issuedAt <= now + 60;
+  } catch {
+    return false;
+  }
+}
+
 async function createDeveloperToken(env) {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
@@ -805,9 +839,9 @@ export default {
     const action = typeof body.action === "string" ? body.action : "";
 
     try {
-      if (!action) {
+      if (action === "website-bot-check") {
         const rateLimitResponse = await enforcePasswordRateLimit(
-          env, request, "website-passcode"
+          env, request, "website-bot-check"
         );
         if (rateLimitResponse) return rateLimitResponse;
 
@@ -817,9 +851,24 @@ export default {
         if (
           !captcha.success ||
           captcha.hostname !== CONFIG.TURNSTILE_HOSTNAME ||
-          captcha.action !== "website_access"
+          captcha.action !== "website_bot_check"
         ) {
-          return errorResponse("Cloudflare verification failed. Please try again.", 403);
+          return errorResponse("Cloudflare bot verification failed. Please try again.", 403);
+        }
+
+        const token = await createWebsiteBotToken(env);
+        return jsonResponse({ success: true, token, expiresIn: 30 * 60 });
+      }
+
+      if (!action) {
+        const rateLimitResponse = await enforcePasswordRateLimit(
+          env, request, "website-passcode"
+        );
+        if (rateLimitResponse) return rateLimitResponse;
+
+        const botCleared = await verifyWebsiteBotToken(env, body.botToken);
+        if (!botCleared) {
+          return errorResponse("Complete the bot check before entering the access code.", 403);
         }
 
         if (!env.PASSPHRASE) {
