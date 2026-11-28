@@ -212,6 +212,7 @@ h1.mega{font-size:clamp(40px,8vw,64px);font-weight:700;margin:0;letter-spacing:-
 #view-chat .chat-auth-card button:disabled,#view-unblocker .chat-auth-card button:disabled{opacity:.6;cursor:wait}
 #view-chat .chat-auth-text-button,#view-unblocker .chat-auth-text-button{display:block;margin:12px auto 0;padding:5px;border:0;background:none;color:#aebfff;font:inherit;font-size:12px;cursor:pointer}
 #view-chat .chat-auth-secondary,#view-unblocker .chat-auth-secondary{display:block;width:100%;min-height:42px;margin-top:9px;border:1px solid rgba(160,177,207,.25);border-radius:10px;background:rgba(255,255,255,.04);color:#e4eaf4;font:inherit;cursor:pointer}
+#view-chat .chat-auth-anon-note{margin:8px 0 10px!important;color:#d8c79a!important;font-size:11px!important;line-height:1.5!important}
 #view-chat .chat-auth-switch,#view-unblocker .chat-auth-switch{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid rgba(160,177,207,.13);color:#9eaabd;font-size:12px}
 #view-chat .chat-auth-switch button{border:0;background:none;color:#b8c9ff;font:inherit;font-weight:750;cursor:pointer}
 #view-chat #chatAuthMessage,#view-chat #chatVerifyMessage{min-height:18px;margin:12px 0 0;color:#f4c7a5;font-size:12px}
@@ -1268,6 +1269,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
     <div id="chatAuthFormPanel">
       <h2 id="chatAuthTitle">Welcome back</h2>
       <p id="chatAuthDescription">Sign in to use global chat, friends, DMs and AI chat. The rest of the website stays available without an account.</p>
+      <p id="chatAuthAnonymousNote" class="chat-auth-anon-note">Guest accounts are permanently deleted every Friday (Melbourne time). Create a regular account to keep yours.</p>
       <label id="chatAuthNameWrap" hidden>Display name
         <input id="chatAuthName" type="text" maxlength="24" placeholder="Your chat name" autocomplete="nickname">
       </label>
@@ -1281,6 +1283,7 @@ Episode <input id="mvEpisode" type="number" min="1" value="1">
         <input id="chatAuthConfirm" type="password" placeholder="Enter your password again" autocomplete="new-password">
       </label>
       <button id="chatAuthSubmit" type="button">Sign in</button>
+      <button id="chatAuthAnonymous" class="chat-auth-secondary" type="button">Continue as guest</button>
       <button id="chatAuthReset" class="chat-auth-text-button" type="button">Forgot password?</button>
       <p id="chatAuthMessage" role="status" aria-live="polite"></p>
       <div class="chat-auth-switch"><span id="chatAuthSwitchPrompt">New to chat?</span><button id="chatAuthSwitch" type="button">Create an account</button></div>
@@ -1714,6 +1717,8 @@ const chatAuthPassword=document.getElementById('chatAuthPassword');
 const chatAuthConfirmWrap=document.getElementById('chatAuthConfirmWrap');
 const chatAuthConfirm=document.getElementById('chatAuthConfirm');
 const chatAuthSubmit=document.getElementById('chatAuthSubmit');
+const chatAuthAnonymous=document.getElementById('chatAuthAnonymous');
+const chatAuthAnonymousNote=document.getElementById('chatAuthAnonymousNote');
 const chatAuthReset=document.getElementById('chatAuthReset');
 const chatAuthSwitch=document.getElementById('chatAuthSwitch');
 const chatAuthSwitchPrompt=document.getElementById('chatAuthSwitchPrompt');
@@ -1816,6 +1821,8 @@ function setChatAuthMode(mode){
   chatAuthDescription.textContent=signup
     ?(inUnblocker?'Create your Neural UBG account to unlock Web Unblocker and Chat.':'Create an account to use global chat, friends, DMs and AI chat. The rest of the website stays available without signing in.')
     :(inUnblocker?'Sign in with your Neural UBG Chat account to use Web Unblocker.':'Sign in to use global chat, friends, DMs and AI chat. The rest of the website stays available without an account.');
+  chatAuthAnonymous.hidden=inUnblocker;
+  chatAuthAnonymousNote.hidden=inUnblocker;
   chatAuthNameWrap.hidden=!signup;
   chatAuthConfirmWrap.hidden=!signup;
   chatAuthPassword.autocomplete=signup?'new-password':'current-password';
@@ -1825,6 +1832,14 @@ function setChatAuthMode(mode){
   chatAuthSwitch.textContent=signup?'Sign in':'Create an account';
   setChatAuthMessage('');
 }
+window.neuralChatSetAuthMode=setChatAuthMode;
+window.neuralChatResume=function(){
+  const current=firebase&&firebase.auth&&firebase.auth().currentUser;
+  if(current&&current.isAnonymous)handleChatAuthState(current).catch(error=>{
+    showChatAuth();
+    setChatAuthMessage(getChatAuthError(error));
+  });
+};
 function showChatAuth(){
   chatAuthGate.hidden=false;
   chatAuthFormPanel.hidden=false;
@@ -1851,6 +1866,7 @@ function getChatAuthError(error){
     'auth/too-many-requests':'Too many attempts. Please try again later.',
     'auth/network-request-failed':'Network error. Check your connection and try again.',
     'auth/operation-not-allowed':'Email/password sign-in is not enabled in Firebase yet.',
+    'auth/admin-restricted-operation':'Anonymous sign-in is not enabled in Firebase yet. Enable the Anonymous provider in Firebase Console.'
     'auth/credential-already-in-use':'That email already belongs to another account. Sign in to that account instead.'
   };
   return messages[code]||((error&&error.message)||'Authentication failed. Please try again.');
@@ -1867,7 +1883,7 @@ function stopChatForAuth(){
   if(nameModal)nameModal.classList.add('hidden');
 }
 async function startChatForUser(user){
-  if(!user||!user.uid||!user.emailVerified)return;
+  if(!user||!user.uid||(!user.isAnonymous&&!user.emailVerified))return;
   if(chatStartedUid===user.uid&&liveRef)return;
   stopChatForAuth();
   chatStartedUid=user.uid;
@@ -1889,7 +1905,7 @@ async function startChatForUser(user){
     nameInput.value='';
     setTimeout(()=>nameInput.focus(),50);
   }
-  await usersRef.child(myId).update({uid:myId,name:myName||user.displayName||'New user',updatedAt:Date.now()});
+  await usersRef.child(myId).update({uid:myId,name:myName||user.displayName||'New user',isAnonymous:!!user.isAnonymous,updatedAt:Date.now()});
   if(!firebase.auth().currentUser||firebase.auth().currentUser.uid!==user.uid)return;
   liveRef=firebase.database().ref(socialRoot+'/messages');
   installSocialListeners();
@@ -1922,13 +1938,29 @@ async function startChatForUser(user){
   });
 }
 async function handleChatAuthState(user){
-  if(!user||user.isAnonymous){
+  if(!user){
     stopChatForAuth();
     showChatAuth();
-    if(user&&user.isAnonymous){
+    return;
+  }
+  if(user.isAnonymous){
+    const inUnblocker=document.getElementById('view-unblocker')?.classList.contains('active');
+    if(inUnblocker){
+      stopChatForAuth();
+      showChatAuth();
       setChatAuthMode('signup');
-      setChatAuthMessage('Your old guest session can be kept when you create an account. Use Create an account to link it.',false);
-      try{chatAuthName.value=localStorage.getItem('cs_chat_name')||'';}catch(e){}
+      setChatAuthMessage('Guest accounts can use Chat only. Create a regular account to unlock Web Unblocker.',false);
+      return;
+    }
+    chatAuthGate.hidden=true;
+    chatAuthFormPanel.hidden=true;
+    chatVerifyPanel.hidden=true;
+    try{
+      await user.getIdToken(true);
+      await startChatForUser(user);
+    }catch(e){
+      setStatus('Guest chat could not connect: '+(e&&e.message||'check Firebase rules'));
+      console.error('[chat anonymous]',e);
     }
     return;
   }
@@ -1954,6 +1986,20 @@ async function handleChatAuthState(user){
 function bindChatAuthUi(){
   if(chatAuthUiBound)return;
   chatAuthUiBound=true;
+  chatAuthAnonymous.addEventListener('click',async()=>{
+    if(chatAuthBusy)return;
+    chatAuthBusy=true;
+    chatAuthAnonymous.disabled=true;
+    setChatAuthMessage('Creating a temporary guest account…',false);
+    try{
+      await firebase.auth().signInAnonymously();
+    }catch(error){
+      setChatAuthMessage(getChatAuthError(error));
+    }finally{
+      chatAuthBusy=false;
+      chatAuthAnonymous.disabled=false;
+    }
+  });
   chatAuthSwitch.addEventListener('click',()=>{
     setChatAuthMode(chatAuthMode==='login'?'signup':'login');
   });
@@ -2082,7 +2128,7 @@ const grow=()=>{textEl.style.height='auto';textEl.style.height=Math.min(textEl.s
 textEl.addEventListener('input',grow);
 textEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=textEl.value;if((v||'').trim()||pendingImage){sendMessage(v);textEl.value='';grow();}}});
 sendBtn.addEventListener('click',()=>{const v=textEl.value;if((v||'').trim()||pendingImage){sendMessage(v);textEl.value='';grow();}});
-function showWhoami(){const currentUser=firebase.auth().currentUser;whoamiEl.innerHTML='Signed in as <strong>'+esc(myName)+'</strong><br><span class="user-id-label">'+esc(currentUser&&currentUser.email||'')+' · User ID: <code>'+esc(myId||'Connecting…')+'</code></span><br><button id="copyUserId">Copy ID</button> <button id="switchName">Change name</button> <button id="chatLogout">Sign out</button>';
+function showWhoami(){const currentUser=firebase.auth().currentUser;const accountLabel=currentUser&&currentUser.isAnonymous?'Anonymous guest':(currentUser&&currentUser.email||'');whoamiEl.innerHTML='Signed in as <strong>'+esc(myName)+'</strong><br><span class="user-id-label">'+esc(accountLabel)+' · User ID: <code>'+esc(myId||'Connecting…')+'</code></span><br><button id="copyUserId">Copy ID</button> <button id="switchName">Change name</button> <button id="chatLogout">Sign out</button>';
 const copyIdBtn=document.getElementById('copyUserId');copyIdBtn.addEventListener('click',()=>{if(myId&&navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(myId).then(()=>setStatus('User ID copied.')).catch(()=>setStatus('Your User ID is '+myId));else setStatus('Your User ID is '+(myId||'not ready'));});
 document.getElementById('switchName').addEventListener('click',()=>{nameInput.value=myName;nameModal.classList.remove('hidden');setTimeout(()=>nameInput.focus(),50);});
 document.getElementById('chatLogout').addEventListener('click',async()=>{try{await firebase.auth().signOut();setStatus('Signed out of chat.');}catch(error){setStatus('Could not sign out: '+(error.message||'try again'));}});}
@@ -3291,7 +3337,9 @@ Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active
 pageViews[name].classList.add("active");
 if(name==="unblocker"&&(!window.neuralChatAuthUser||!window.neuralChatAuthUser.emailVerified)){
   showChatAuth();
+  if(window.neuralChatAuthUser&&window.neuralChatAuthUser.isAnonymous&&typeof window.neuralChatSetAuthMode==="function")window.neuralChatSetAuthMode('signup');
 }
+if(name==="chat"&&window.neuralChatAuthUser&&window.neuralChatAuthUser.isAnonymous&&typeof window.neuralChatResume==="function")window.neuralChatResume();
 if(typeof window.setAiChatPageVisible==="function")window.setAiChatPageVisible(name==="chat");
 document.querySelectorAll(".dock a[data-page]").forEach(function(a){
 var p=a.getAttribute("data-page");if(p==="music")return; /* music dock state tracks the floating window, not the page */
