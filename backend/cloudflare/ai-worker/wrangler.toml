@@ -5,6 +5,9 @@ compatibility_date = "2026-11-28"
 # Preserve variables configured in the Cloudflare dashboard during Git deployments.
 keep_vars = true
 
+# Required secret for signed AI-chat clearance: set DEV_TOKEN_SECRET to the exact same value used by the Gatekeeper Worker.
+# Configure it with: wrangler secret put DEV_TOKEN_SECRET
+
 # Basic per-IP protection for the public AI endpoint. This is approximate per
 # Cloudflare location; adjust the threshold to suit your expected traffic.
 [[ratelimits]]
