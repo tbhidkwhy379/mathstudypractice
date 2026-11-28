@@ -4,8 +4,55 @@ const { ScramjetServiceWorker } = $scramjetLoadWorker();
 const scramjet = new ScramjetServiceWorker();
 const SCRAMJET_PREFIX = "/scramjet/";
 
+// Wait for the app to confirm that the controller saved its config. Force a
+// fresh IndexedDB read so this worker also runs Scramjet's setConfig() and
+// WASM initialization before the first proxied navigation.
+self.addEventListener("message", event => {
+  if (!event.data || event.data.$neuralScramjetConfigPing !== true) return;
+
+  const task = (async () => {
+    try {
+      scramjet.config = undefined;
+      await scramjet.loadConfig();
+
+      const ready = Boolean(
+        scramjet.config &&
+        scramjet.config.prefix === SCRAMJET_PREFIX &&
+        scramjet.config.files &&
+        scramjet.config.files.wasm
+      );
+
+      event.ports?.[0]?.postMessage({
+        ready,
+        prefix: scramjet.config?.prefix || null,
+        error: ready ? null : "The Scramjet config record is missing from IndexedDB."
+      });
+    } catch (error) {
+      event.ports?.[0]?.postMessage({
+        ready: false,
+        error: error && error.message ? error.message : String(error)
+      });
+    }
+  })();
+
+  if (typeof event.waitUntil === "function") event.waitUntil(task);
+});
+
 async function handleScramjetRequest(event) {
   await scramjet.loadConfig();
+
+  // Avoid the old opaque "Cannot read properties of undefined (reading 'prefix')" failure.
+  if (
+    !scramjet.config ||
+    scramjet.config.prefix !== SCRAMJET_PREFIX ||
+    !scramjet.config.files ||
+    !scramjet.config.files.wasm
+  ) {
+    throw new Error(
+      "Scramjet worker configuration is missing or invalid. Reopen app.html and let Scramjet initialize before browsing."
+    );
+  }
+
   if (scramjet.route(event)) return scramjet.fetch(event);
   return fetch(event.request);
 }

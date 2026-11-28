@@ -41,7 +41,6 @@ jobs:
           cp -a public/libcurl/. _site/libcurl/
           cp -a public/epoxy/. _site/epoxy/
           cp scramjet-sw.js _site/scramjet-sw.js
-          cp scramjet.config.js _site/scramjet.config.js
           cp _redirects _site/_redirects
           # GitHub Pages uses this app shell as its deep-route fallback.
           cp app.html _site/404.html
@@ -50,7 +49,6 @@ jobs:
           test -f _site/app.html
           test -f _site/404.html
           test -f _site/scramjet-sw.js
-          test -f _site/scramjet.config.js
           test -f _site/public/unblocker-assets.json
           test -f _site/public/scram/scramjet.all.js
           test -f _site/public/scram/scramjet.wasm.wasm

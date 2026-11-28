@@ -17,10 +17,11 @@ The build copies the pinned browser assets into `public/scram/`, `public/baremux
 
 - Scramjet URL prefix: `/scramjet/`
 - Root service worker: `/scramjet-sw.js` (scope `/`)
-- Scramjet configuration: `/scramjet.config.js`
 - Wisp WebSocket endpoint: `wss://proxy-scramjet-8xz5.onrender.com/wisp/`
 - Primary transport: Libcurl through BareMux
 - Fallback transport: Epoxy through BareMux
+
+The page initializes Scramjet with an explicit `/scramjet/` prefix. After the controller saves its configuration to IndexedDB, it performs a worker handshake; the service worker reloads the stored configuration and confirms the prefix and WASM path before any website is opened.
 
 GitHub Pages is static: it serves the Scramjet runtime and app files. The Wisp WebSocket service is hosted separately on Render. Static hosting cannot itself accept Wisp WebSocket connections.
 
@@ -35,6 +36,6 @@ The supplied browser code uses the Scramjet v1 controller API (`$scramjetLoadCon
 - `@mercuryworkshop/libcurl-transport@1.5.2`
 - `@mercuryworkshop/epoxy-transport@2.1.28`
 
-The current Scramjet 2.x package generation splits the controller into separate packages and uses a different interface. It must not be substituted without migrating the app code and transport stack as well.
+Do not mix these BareMux-era transport versions with the newer Scramjet 2.x / proxy-transports packages.
 
-The Scramjet frame stays inside the Neural UBG page. This keeps the parent page and its BareMux/Wisp transport session alive while a proxied site is open.
+The Scramjet browser appears inside Neural UBG by default. Use its Fullscreen button to expand the browser and toolbar to the full display; press Escape or use Exit fullscreen to return.
