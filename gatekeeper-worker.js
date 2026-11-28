@@ -41,6 +41,7 @@ function errorResponse(message, status = 400) {
 
 function base64UrlEncodeBytes(bytes) {
   let binary = "";
+
   for (const byte of bytes) {
     binary += String.fromCharCode(byte);
   }
@@ -56,7 +57,10 @@ function base64UrlEncodeText(value) {
 }
 
 function base64UrlDecodeBytes(value) {
-  let base64 = String(value).replace(/-/g, "+").replace(/_/g, "/");
+  let base64 = String(value)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
   base64 += "=".repeat((4 - base64.length % 4) % 4);
 
   const binary = atob(base64);
@@ -715,6 +719,473 @@ async function deleteNeuralUser(env, rawUid) {
 }
 
 /* =========================================================
+   WEEKLY ANONYMOUS CHAT ACCOUNT CLEANUP
+========================================================= */
+
+async function firebaseAuthAdminRequest(
+  env,
+  accessToken,
+  endpoint,
+  method = "GET",
+  body
+) {
+  const response = await fetch(endpoint, {
+    method,
+    headers: {
+      Authorization: "Bearer " + accessToken,
+      "Content-Type": "application/json"
+    },
+    ...(body !== undefined
+      ? { body: JSON.stringify(body) }
+      : {})
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const detail =
+      data.error?.message ||
+      data.error?.status ||
+      response.statusText;
+
+    throw new Error(
+      "Firebase Auth request failed (" +
+      response.status + "): " + detail
+    );
+  }
+
+  return data;
+}
+
+/* LIST FIREBASE AUTH USERS */
+
+async function listFirebaseAuthUsersPage(
+  env,
+  accessToken,
+  pageToken
+) {
+  const projectId = getFirebaseProjectId(env);
+
+  const url = new URL(
+    "https://identitytoolkit.googleapis.com/v1/projects/" +
+    encodeURIComponent(projectId) +
+    "/accounts:batchGet"
+  );
+
+  url.searchParams.set("maxResults", "1000");
+
+  if (pageToken) {
+    url.searchParams.set("pageToken", pageToken);
+  }
+
+  return firebaseAuthAdminRequest(
+    env,
+    accessToken,
+    url.toString()
+  );
+}
+
+/* BATCH DELETE FIREBASE AUTH USERS */
+
+async function batchDeleteFirebaseAuthUsers(
+  env,
+  accessToken,
+  uids
+) {
+  if (!Array.isArray(uids) || uids.length === 0) {
+    return [];
+  }
+
+  const projectId = getFirebaseProjectId(env);
+
+  const endpoint =
+    "https://identitytoolkit.googleapis.com/v1/projects/" +
+    encodeURIComponent(projectId) +
+    "/accounts:batchDelete";
+
+  const data = await firebaseAuthAdminRequest(
+    env,
+    accessToken,
+    endpoint,
+    "POST",
+    {
+      localIds: uids,
+      force: true
+    }
+  );
+
+  const failedIndexes = new Set(
+    (Array.isArray(data.errors) ? data.errors : [])
+      .map(error => Number(error.index))
+      .filter(index =>
+        Number.isInteger(index) &&
+        index >= 0 &&
+        index < uids.length
+      )
+  );
+
+  return uids.filter((uid, index) =>
+    !failedIndexes.has(index)
+  );
+}
+
+/* REMOVE DELETED GUEST CHAT DATA */
+
+async function removeDeletedAnonymousChatData(
+  env,
+  accessToken,
+  uid
+) {
+  if (!safeFirebaseKey(uid)) {
+    throw new Error("Invalid anonymous user ID.");
+  }
+
+  const [
+    messages,
+    friends,
+    friendRequests,
+    directMessages,
+    aiChats
+  ] = await Promise.all([
+    firebaseRequest(
+      env,
+      accessToken,
+      ["classroomspot-chat", "messages"]
+    ),
+    firebaseRequest(
+      env,
+      accessToken,
+      ["classroomspot-chat", "friends"]
+    ),
+    firebaseRequest(
+      env,
+      accessToken,
+      ["classroomspot-chat", "friendRequests"]
+    ),
+    firebaseRequest(
+      env,
+      accessToken,
+      ["classroomspot-chat", "directMessages"]
+    ),
+    firebaseRequest(
+      env,
+      accessToken,
+      ["classroomspot-chat", "aiChats"]
+    )
+  ]);
+
+  const deletions = new Map();
+
+  function addDeletion(...parts) {
+    if (!parts.every(safeFirebaseKey)) {
+      return;
+    }
+
+    deletions.set(parts.join("/"), null);
+  }
+
+  let removedGlobalMessages = 0;
+  let removedFriendLinks = 0;
+  let removedFriendRequests = 0;
+  let removedDMConversations = 0;
+
+  for (const [messageId, message] of Object.entries(messages || {})) {
+    if (
+      message &&
+      message.uid === uid &&
+      safeFirebaseKey(messageId)
+    ) {
+      addDeletion("messages", messageId);
+      removedGlobalMessages++;
+    }
+  }
+
+  addDeletion("friends", uid);
+
+  for (const [otherUid, list] of Object.entries(friends || {})) {
+    if (
+      otherUid !== uid &&
+      safeFirebaseKey(otherUid) &&
+      list &&
+      Object.prototype.hasOwnProperty.call(list, uid)
+    ) {
+      addDeletion("friends", otherUid, uid);
+      removedFriendLinks++;
+    }
+  }
+
+  addDeletion("friendRequests", uid);
+
+  for (const [otherUid, requests] of Object.entries(friendRequests || {})) {
+    if (
+      otherUid !== uid &&
+      safeFirebaseKey(otherUid) &&
+      requests &&
+      Object.prototype.hasOwnProperty.call(requests, uid)
+    ) {
+      addDeletion("friendRequests", otherUid, uid);
+      removedFriendRequests++;
+    }
+  }
+
+  for (const [firstUid, conversations] of Object.entries(directMessages || {})) {
+    if (!safeFirebaseKey(firstUid) || !conversations) {
+      continue;
+    }
+
+    if (firstUid === uid) {
+      for (const otherUid of Object.keys(conversations)) {
+        if (safeFirebaseKey(otherUid)) {
+          removedDMConversations++;
+        }
+      }
+
+      addDeletion("directMessages", uid);
+      continue;
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(conversations, uid) &&
+      safeFirebaseKey(uid)
+    ) {
+      addDeletion("directMessages", firstUid, uid);
+      removedDMConversations++;
+    }
+  }
+
+  const legacyChats =
+    aiChats && aiChats[uid] && typeof aiChats[uid] === "object"
+      ? aiChats[uid]
+      : {};
+
+  const removedLegacyAiChats = Object.keys(legacyChats).length;
+
+  addDeletion("aiChats", uid);
+  addDeletion("users", uid);
+
+  const entries = Array.from(deletions.entries());
+  const batchSize = 200;
+
+  for (let i = 0; i < entries.length; i += batchSize) {
+    const batch = Object.fromEntries(
+      entries.slice(i, i + batchSize)
+    );
+
+    await firebaseRequest(
+      env,
+      accessToken,
+      ["classroomspot-chat"],
+      "PATCH",
+      batch
+    );
+  }
+
+  return {
+    uid,
+    removed: {
+      globalMessages: removedGlobalMessages,
+      friendLinks: removedFriendLinks,
+      friendRequests: removedFriendRequests,
+      dmConversations: removedDMConversations,
+      legacyAiChats: removedLegacyAiChats,
+      databasePaths: entries.length
+    }
+  };
+}
+
+/* RUN THE WEEKLY CLEANUP */
+
+async function purgeAnonymousChatAccounts(env) {
+  console.log("Starting weekly anonymous Chat account cleanup.");
+  const accessToken = await getFirebaseAccessToken(env);
+
+  const profiles = await firebaseRequest(
+    env,
+    accessToken,
+    ["classroomspot-chat", "users"]
+  );
+
+  /*
+   * Only profiles explicitly marked isAnonymous: true
+   * are considered for automatic deletion.
+   */
+  const anonymousProfileIds = new Set(
+    Object.entries(profiles || {})
+      .filter(([uid, profile]) =>
+        safeFirebaseKey(uid) &&
+        profile &&
+        profile.isAnonymous === true
+      )
+      .map(([uid]) => uid)
+  );
+
+  if (anonymousProfileIds.size === 0) {
+    console.log("No marked anonymous Chat profiles found.");
+
+    return {
+      checked: 0,
+      eligible: 0,
+      deleted: 0,
+      databaseCleaned: 0
+    };
+  }
+
+  const eligibleUids = [];
+  let pageToken = null;
+  let checked = 0;
+
+  do {
+    const page = await listFirebaseAuthUsersPage(
+      env,
+      accessToken,
+      pageToken
+    );
+
+    const authUsers = Array.isArray(page.users)
+      ? page.users
+      : [];
+
+    for (const user of authUsers) {
+      const uid = String(user.localId || "");
+
+      if (!anonymousProfileIds.has(uid)) {
+        continue;
+      }
+
+      checked++;
+
+      const providers = Array.isArray(user.providerUserInfo)
+        ? user.providerUserInfo
+        : [];
+
+      const hasEmail =
+        typeof user.email === "string" &&
+        user.email.trim().length > 0;
+
+      const hasPhone =
+        typeof user.phoneNumber === "string" &&
+        user.phoneNumber.trim().length > 0;
+
+      const hasLinkedProvider = providers.length > 0;
+
+      if (
+        safeFirebaseKey(uid) &&
+        !hasEmail &&
+        !hasPhone &&
+        !hasLinkedProvider
+      ) {
+        eligibleUids.push(uid);
+      }
+    }
+
+    pageToken = page.nextPageToken || null;
+  } while (pageToken);
+
+  console.log(
+    "Anonymous Chat profiles checked: " + checked +
+    "; eligible for deletion: " + eligibleUids.length
+  );
+
+  let deletedCount = 0;
+  let databaseCleanedCount = 0;
+  const failed = [];
+
+  for (let i = 0; i < eligibleUids.length; i += 1000) {
+    const batch = eligibleUids.slice(i, i + 1000);
+
+    let successfullyDeleted;
+
+    try {
+      successfullyDeleted = await batchDeleteFirebaseAuthUsers(
+        env,
+        accessToken,
+        batch
+      );
+    } catch (error) {
+      console.error(
+        "Anonymous Auth deletion batch failed:",
+        error.message
+      );
+
+      failed.push({
+        batchStart: i,
+        error: error.message
+      });
+
+      continue;
+    }
+
+    deletedCount += successfullyDeleted.length;
+
+    for (const uid of successfullyDeleted) {
+      try {
+        await removeDeletedAnonymousChatData(
+          env,
+          accessToken,
+          uid
+        );
+
+        databaseCleanedCount++;
+      } catch (error) {
+        console.error(
+          "Could not clean Chat data for deleted guest " +
+          uid + ":",
+          error.message
+        );
+
+        failed.push({
+          uid,
+          error: error.message
+        });
+      }
+    }
+  }
+
+  const summary = {
+    checked,
+    eligible: eligibleUids.length,
+    deleted: deletedCount,
+    databaseCleaned: databaseCleanedCount,
+    failed
+  };
+
+  console.log(
+    "Weekly anonymous Chat cleanup finished:",
+    JSON.stringify(summary)
+  );
+
+  return summary;
+}
+
+/* MELBOURNE TIME CHECK */
+
+function isMelbourneFridayMidnight(timestamp) {
+  const date = new Date(timestamp);
+
+  if (!Number.isFinite(date.getTime())) {
+    return false;
+  }
+
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Melbourne",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(
+    parts.map(part => [part.type, part.value])
+  );
+
+  return (
+    values.weekday === "Fri" &&
+    values.hour === "00" &&
+    values.minute === "00"
+  );
+}
+
+/* =========================================================
    HYPERBEAM PRODUCTION SESSIONS
    Available environments: Browser and Android
 ========================================================= */
@@ -794,7 +1265,6 @@ async function createHyperbeamSession(env, options = {}) {
     );
   }
 
-  // Hyperbeam PRODUCTION API
   const response = await fetch(
     "https://engine.hyperbeam.com/v0" + endpoint,
     {
@@ -879,15 +1349,13 @@ async function verifyTurnstile(env, token, remoteIp) {
 
 /* =========================================================
    PASSWORD ENDPOINT RATE LIMITING
-   Configure a Cloudflare Rate Limiting binding named
-   PASSWORD_RATE_LIMITER (10 requests per 60 seconds).
+   Configure PASSWORD_RATE_LIMITER in wrangler.toml.
 ========================================================= */
 
 async function enforcePasswordRateLimit(env, request, scope) {
   const limiter = env.PASSWORD_RATE_LIMITER;
 
-  // Fail closed: password endpoints must not run without the
-  // configured Cloudflare rate-limiting binding.
+  // Fail closed if the binding is missing or not configured.
   if (!limiter || typeof limiter.limit !== "function") {
     return errorResponse(
       "Password rate limiting is not configured on this Worker.",
@@ -1093,5 +1561,31 @@ export default {
         500
       );
     }
+  },
+
+  /* =======================================================
+     CLOUDFLARE WEEKLY SCHEDULED CLEANUP
+  ======================================================= */
+
+  async scheduled(controller, env, ctx) {
+    const runCleanup = async () => {
+      if (!isMelbourneFridayMidnight(controller.scheduledTime)) {
+        console.log(
+          "Anonymous cleanup skipped: not Melbourne Friday midnight."
+        );
+        return;
+      }
+
+      await purgeAnonymousChatAccounts(env);
+    };
+
+    ctx.waitUntil(
+      runCleanup().catch(error => {
+        console.error(
+          "Weekly anonymous Chat cleanup failed:",
+          error
+        );
+      })
+    );
   }
 };
