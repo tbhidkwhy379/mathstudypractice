@@ -1500,11 +1500,15 @@ async function getDeveloperTurnstileToken(){
   }
   return await new Promise((resolve,reject)=>{
     let settled=false;
-    const finish=(fn,value)=>{if(settled)return;settled=true;fn(value);};
-    window.turnstile.execute(turnstileWidgetId);
-    const previous=window.__developerTurnstileCallback;
-    window.__developerTurnstileCallback=(token)=>finish(resolve,token);
-    // The widget callback is installed at render time below; this timeout handles failed challenges.
+    const finish=(fn,value)=>{if(settled)return;settled=true;window.__developerTurnstileCallback=null;fn(value);};
+    window.__developerTurnstileCallback=(token)=>{
+      if(token)finish(resolve,token);
+      else finish(reject,new Error('Cloudflare verification failed. Please try again.'));
+    };
+    try{
+      window.turnstile.reset(turnstileWidgetId);
+      window.turnstile.execute(turnstileWidgetId);
+    }catch(error){finish(reject,error);}
     setTimeout(()=>finish(reject,new Error('Cloudflare verification timed out. Please try again.')),20000);
   });
 }
