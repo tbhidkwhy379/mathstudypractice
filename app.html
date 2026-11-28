@@ -17,6 +17,7 @@ Aayush's PREMIUM UBG + MOVIES <!DOCTYPE html>
 <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js"></script>
 
@@ -1468,11 +1469,52 @@ const settingsBtn=document.getElementById('settingsBtn'),settingsPanel=document.
 const devModeToggle=document.getElementById('devModeToggle');
 const DEV_GATEKEEPER_URL='https://gatekeeper.sapktaayush.workers.dev/';
 const DEV_TOKEN_KEY='cs_dev_mode_token';
-async function requestDeveloperGate(action,passcodeOrToken){
-  const payload=action==='developer-auth'?{action,passcode:passcodeOrToken}:{action,token:passcodeOrToken};
+const TURNSTILE_SITE_KEY='0x4AAAAAAGWlP_bSshAjBaAh';
+let turnstileWidgetId=null,turnstileLoadPromise=null;
+async function getDeveloperTurnstileToken(){
+  if(!window.turnstile){
+    if(!turnstileLoadPromise){
+      turnstileLoadPromise=new Promise((resolve,reject)=>{
+        const script=document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
+        if(!script){reject(new Error('Cloudflare Turnstile script is missing.'));return;}
+        script.addEventListener('load',resolve,{once:true});
+        script.addEventListener('error',()=>reject(new Error('Cloudflare Turnstile could not load.')),{once:true});
+        setTimeout(()=>reject(new Error('Cloudflare Turnstile timed out.')),12000);
+      });
+    }
+    await turnstileLoadPromise;
+  }
+  if(!window.turnstile)throw new Error('Cloudflare Turnstile is unavailable.');
+  if(turnstileWidgetId===null){
+    const mount=document.createElement('div');
+    mount.id='developer-turnstile-widget';
+    mount.style.cssText='position:fixed;left:-10000px;top:0;width:1px;height:1px;overflow:hidden';
+    document.body.appendChild(mount);
+    turnstileWidgetId=window.turnstile.render(mount,{
+      sitekey:TURNSTILE_SITE_KEY,
+      size:'invisible',
+      action:'developer_auth',
+      callback:(token)=>{if(typeof window.__developerTurnstileCallback==='function')window.__developerTurnstileCallback(token);},
+      'error-callback':()=>{if(typeof window.__developerTurnstileCallback==='function')window.__developerTurnstileCallback('');}
+    });
+  }
+  return await new Promise((resolve,reject)=>{
+    let settled=false;
+    const finish=(fn,value)=>{if(settled)return;settled=true;fn(value);};
+    window.turnstile.execute(turnstileWidgetId);
+    const previous=window.__developerTurnstileCallback;
+    window.__developerTurnstileCallback=(token)=>finish(resolve,token);
+    // The widget callback is installed at render time below; this timeout handles failed challenges.
+    setTimeout(()=>finish(reject,new Error('Cloudflare verification timed out. Please try again.')),20000);
+  });
+}
+async function requestDeveloperGate(action,passcodeOrToken,turnstileToken){
+  const payload=action==='developer-auth'
+    ?{action,passcode:passcodeOrToken,turnstileToken}
+    :{action,token:passcodeOrToken};
   const response=await fetch(DEV_GATEKEEPER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const data=await response.json().catch(()=>({}));
-  if(!response.ok||!data.success)throw new Error('Developer access was not approved.');
+  if(!response.ok||!data.success)throw new Error(data.error||'Developer access was not approved.');
   return data;
 }
 function syncDevModeSetting(){if(devModeToggle)devModeToggle.checked=localAiAccessGranted;}
@@ -1652,7 +1694,9 @@ devModeToggle.addEventListener('change',async()=>{
     if(entered===null){devModeToggle.checked=false;return;}
     devModeToggle.disabled=true;
     try{
-      const result=await requestDeveloperGate('developer-auth',entered);
+      const captchaToken=await getDeveloperTurnstileToken();
+      if(!captchaToken)throw new Error('Cloudflare verification failed. Please try again.');
+      const result=await requestDeveloperGate('developer-auth',entered,captchaToken);
       if(!result.token)throw new Error('The gatekeeper did not return an access token.');
       const confirmation=window.prompt('Final confirmation: type ENABLE DEV MODE exactly to continue.');
       if(confirmation!=='ENABLE DEV MODE')throw new Error('Developer access confirmation was not completed.');
