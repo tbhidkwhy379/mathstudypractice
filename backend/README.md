@@ -18,8 +18,13 @@ backend/
 │       ├── worker.js
 │       ├── wrangler.toml
 │       └── .dev.vars.example
-└── firebase/
-    └── database.rules.json
+├── firebase/
+│   └── database.rules.json
+└── render-wisp/
+    ├── src/index.js
+    ├── package.json
+    ├── Dockerfile
+    └── README.md
 ```
 
 There are **two Cloudflare Workers** because the existing frontend uses two endpoints:
@@ -27,7 +32,7 @@ There are **two Cloudflare Workers** because the existing frontend uses two endp
 - **AI Worker**: receives chat messages and calls Groq.
 - **Gatekeeper Worker**: checks website and Developer Mode passcodes, verifies Turnstile, creates Hyperbeam sessions, and handles the protected Firebase dashboard and weekly guest cleanup.
 
-The two Workers can be deployed independently.
+The two Workers can be deployed independently. The Scramjet Wisp WebSocket backend is included as a separate Node/Render service under `render-wisp/`.
 
 ---
 
@@ -148,7 +153,20 @@ The Gatekeeper's editable options are in its top `CONFIG` block. Change `ALLOWED
 
 ---
 
-## 6. Change all public frontend settings in one place
+## 6. Deploy the Scramjet Wisp backend on Render
+
+This is a separate Node service, not a Cloudflare Worker. Its source is copied into `backend/render-wisp/` so the backend files are collected in one place.
+
+1. Open [Render Dashboard](https://dashboard.render.com/) and create a **New Web Service** from your GitHub repository.
+2. Set the **Root Directory** to `backend/render-wisp`.
+3. Choose the Docker runtime so Render uses the included `Dockerfile`. The service reads Render's `PORT` value automatically.
+4. Deploy it. The root URL intentionally returns a 404 message; that is normal.
+5. Check the health endpoint at `https://YOUR-RENDER-HOST/health`. It should return JSON with `"status":"ok"`.
+6. Set `wispUrl` in `backend/neural-config.js` to `wss://YOUR-RENDER-HOST/wisp/`.
+
+No API key is required for the Wisp service in this configuration. Keep its health check path as `/health` and its WebSocket path as `/wisp/`.
+
+## 7. Change all public frontend settings in one place
 
 For a new deployment, most frontend-specific changes belong in **`backend/neural-config.js`**:
 
@@ -156,6 +174,8 @@ For a new deployment, most frontend-specific changes belong in **`backend/neural
 |---|---|
 | `aiApiUrl` | AI Worker URL |
 | `gatekeeperUrl` | Passcode, Turnstile, Developer Mode and Hyperbeam Worker URL |
+| `wispUrl` | Scramjet Wisp WebSocket URL on Render |
+| `scramjetPrefix` | Scramjet route prefix on the frontend |
 | `turnstileSiteKey` | Public Turnstile site key |
 | `firebase` | Firebase Web app configuration |
 | `emailActionUrl` | Where Firebase email verification/password-reset links return the user |
@@ -171,7 +191,7 @@ The secret API keys are deliberately **not** in this file. They belong in Cloudf
 
 ---
 
-## 7. Optional local development
+## 8. Optional local development
 
 The `.dev.vars.example` files show the names expected by each Worker. Copy the relevant file to `.dev.vars` for local Wrangler development and fill in the values. The actual `.dev.vars` files are ignored by Git.
 
