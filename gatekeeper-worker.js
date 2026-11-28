@@ -878,6 +878,52 @@ async function verifyTurnstile(env, token, remoteIp) {
 }
 
 /* =========================================================
+   PASSWORD ENDPOINT RATE LIMITING
+   Configure a Cloudflare Rate Limiting binding named
+   PASSWORD_RATE_LIMITER (10 requests per 60 seconds).
+========================================================= */
+
+async function enforcePasswordRateLimit(env, request, scope) {
+  const limiter = env.PASSWORD_RATE_LIMITER;
+
+  // Fail closed: password endpoints must not run without the
+  // configured Cloudflare rate-limiting binding.
+  if (!limiter || typeof limiter.limit !== "function") {
+    return errorResponse(
+      "Password rate limiting is not configured on this Worker.",
+      503
+    );
+  }
+
+  const ip = request.headers.get("CF-Connecting-IP");
+
+  if (!ip) {
+    return errorResponse("Unable to verify request source.", 403);
+  }
+
+  const result = await limiter.limit({
+    key: scope + ":" + ip
+  });
+
+  if (!result || result.success !== true) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: "Too many attempts. Please wait a minute and try again."
+    }), {
+      status: 429,
+      headers: {
+        ...corsHeaders(),
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+        "Retry-After": "60"
+      }
+    });
+  }
+
+  return null;
+}
+
+/* =========================================================
    MAIN REQUEST HANDLER
 ========================================================= */
 
@@ -920,6 +966,13 @@ export default {
       /* WEBSITE ACCESS PASSCODE */
 
       if (!action) {
+        const rateLimitResponse = await enforcePasswordRateLimit(
+          env,
+          request,
+          "website-passcode"
+        );
+        if (rateLimitResponse) return rateLimitResponse;
+
         if (!env.PASSPHRASE) {
           return errorResponse(
             "Website access passcode is not configured.",
@@ -937,6 +990,13 @@ export default {
       /* DEVELOPER MODE LOGIN */
 
       if (action === "developer-auth") {
+        const rateLimitResponse = await enforcePasswordRateLimit(
+          env,
+          request,
+          "developer-auth"
+        );
+        if (rateLimitResponse) return rateLimitResponse;
+
         const captcha = await verifyTurnstile(
           env,
           body.turnstileToken,
