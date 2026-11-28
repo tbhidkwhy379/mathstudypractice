@@ -8,6 +8,8 @@ window.NEURAL_CONFIG = Object.freeze({
   // Cloudflare Worker URLs. Keep the trailing slash.
   aiApiUrl: "https://api.sapktaayush.workers.dev/",
   gatekeeperUrl: "https://gatekeeper.sapktaayush.workers.dev/",
+  wispUrl: "wss://proxy-scramjet-8xz5.onrender.com/wisp/",
+  scramjetPrefix: "/scramjet/",
 
   // Public Cloudflare Turnstile site key (not the secret key).
   turnstileSiteKey: "0x4AAAAAAGWlP_bSshAjBaAh",
