@@ -1,0 +1,18 @@
+name = "neural-gatekeeper"
+main = "worker.js"
+compatibility_date = "2026-11-28"
+
+# Cron triggers use UTC. Both UTC offsets are listed so the code can check
+# Melbourne Friday midnight correctly in both standard time and daylight time.
+[triggers]
+crons = ["0 13,14 * * 5"]
+
+# The Worker enforces separate limits for website and Developer Mode password attempts.
+# Change namespace_id to a unique positive integer for your Cloudflare account.
+[[ratelimits]]
+name = "PASSWORD_RATE_LIMITER"
+namespace_id = "70261"
+
+[ratelimits.simple]
+limit = 5
+period = 60
