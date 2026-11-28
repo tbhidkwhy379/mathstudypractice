@@ -1,0 +1,2 @@
+# Local-only example. Copy to .dev.vars and replace the placeholder.
+GROQ_API_KEY=replace_with_your_groq_api_key
