@@ -29,7 +29,7 @@ function constantTimeEqual(a, b) {
 function base64UrlEncode(bytes) {
   let binary = "";
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary).replace(/=/g, "").replace(/\\+/g, "-").replace(/\\//g, "_");
+  return btoa(binary).replaceAll("=", "").replaceAll("+", "-").replaceAll("/", "_");
 }
 
 function encodeJsonBase64Url(value) {
@@ -38,11 +38,12 @@ function encodeJsonBase64Url(value) {
 
 function pemToArrayBuffer(pem) {
   const body = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
-    .replace(/-----END PRIVATE KEY-----/g, "")
-    .replace(/\\s/g, "");
-  const binary = atob(body);
-  const bytes = new Uint8Array(binary.length);
+    .replaceAll("-----BEGIN PRIVATE KEY-----", "")
+    .replaceAll("-----END PRIVATE KEY-----", "")
+    .replaceAll("\n", "")
+    .replaceAll("\r", "")
+    .replaceAll(" ", "")
+    .replaceAll("\t", "");
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes.buffer;
 }
