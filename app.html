@@ -3354,7 +3354,7 @@ if(authGate){
 if(name==="chat"){var unreadDot=document.querySelector(".dock .chat-unread-dot");if(unreadDot)unreadDot.classList.remove("visible");}
 Object.keys(pageViews).forEach(function(k){pageViews[k].classList.remove("active");});
 pageViews[name].classList.add("active");
-if(name==="unblocker"&&(!window.neuralChatAuthUser||!window.neuralChatAuthUser.emailVerified)){
+if(name==="unblocker"&&(!window.neuralChatAuthUser||window.neuralChatAuthUser.isAnonymous||window.neuralChatAuthUser.emailVerified!==true)){
   showChatAuth();
   if(window.neuralChatAuthUser&&window.neuralChatAuthUser.isAnonymous&&typeof window.neuralChatSetAuthMode==="function")window.neuralChatSetAuthMode('signup');
 }
@@ -3510,8 +3510,8 @@ showPage(p);});});
     if(stackPromise)return stackPromise;
     stackPromise=(async()=>{
       const user=window.neuralChatAuth&&window.neuralChatAuth.currentUser;
-      if(!user||!user.emailVerified){
-        throw new Error("Sign in to Chat with your verified email before using Unblocker.");
+      if(!user||user.isAnonymous||user.emailVerified!==true){
+        throw new Error("Web Unblocker requires a regular account with a verified email. Guest accounts are Chat-only.");
       }
       if(!("serviceWorker" in navigator))throw new Error("This browser does not support service workers.");
       if(!("SharedWorker" in window))throw new Error("This browser does not support SharedWorker, which BareMux requires.");
@@ -3598,9 +3598,10 @@ showPage(p);});});
     if(!user&&window.neuralChatAuthReady){
       try{user=await window.neuralChatAuthReady;}catch(e){user=null;}
     }
-    if(!user||!user.emailVerified){
+    if(!user||user.isAnonymous||user.emailVerified!==true){
       showPage("unblocker");
       showChatAuth();
+      if(user&&user.isAnonymous&&typeof window.neuralChatSetAuthMode==="function")window.neuralChatSetAuthMode("signup");
       return;
     }
     showPage("unblocker");
