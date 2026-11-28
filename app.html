@@ -3428,6 +3428,67 @@ showPage(p);});});
     while(Date.now()<deadline){if(test())return;await wait(100);}
     throw new Error(message);
   }
+
+  // Scramjet v1 opens "$scramjet" at IndexedDB version 1 and assumes that
+  // its stores exist. Repair incomplete databases left by older/broken starts
+  // before Scramjet opens its own connection and calls transaction("config").
+  async function ensureScramjetDatabaseStores(){
+    if(!window.indexedDB)throw new Error("This browser does not support IndexedDB.");
+    const databaseName="$scramjet";
+    const requiredStores=["config","cookies","redirectTrackers","referrerPolicies","publicSuffixList"];
+
+    const openDatabase=()=>new Promise((resolve,reject)=>{
+      let request;
+      try{request=window.indexedDB.open(databaseName,1);}
+      catch(error){reject(error);return;}
+
+      request.onupgradeneeded=()=>{
+        const db=request.result;
+        requiredStores.forEach(name=>{
+          if(!db.objectStoreNames.contains(name))db.createObjectStore(name);
+        });
+      };
+      request.onsuccess=()=>resolve(request.result);
+      request.onerror=()=>reject(request.error||new Error("Could not open Scramjet's IndexedDB database."));
+      request.onblocked=()=>console.warn("[Neural Scramjet] IndexedDB open is blocked by another Neural tab.");
+    });
+
+    const deleteDatabase=()=>new Promise((resolve,reject)=>{
+      let request;
+      try{request=window.indexedDB.deleteDatabase(databaseName);}
+      catch(error){reject(error);return;}
+      request.onsuccess=()=>resolve();
+      request.onerror=()=>reject(request.error||new Error("Could not reset broken Scramjet storage."));
+      request.onblocked=()=>reject(new Error("Scramjet storage is still open in another tab. Close every Neural UBG tab, then reopen app.html."));
+    });
+
+    let db;
+    try{
+      db=await openDatabase();
+    }catch(error){
+      if(error&&error.name==="VersionError"){
+        await deleteDatabase();
+        db=await openDatabase();
+      }else{
+        throw error;
+      }
+    }
+
+    const missingStores=requiredStores.filter(name=>!db.objectStoreNames.contains(name));
+    if(missingStores.length){
+      console.warn("[Neural Scramjet] Repairing incomplete IndexedDB stores:",missingStores);
+      db.close();
+      db=null;
+      await deleteDatabase();
+      db=await openDatabase();
+    }
+
+    const stillMissing=requiredStores.filter(name=>!db.objectStoreNames.contains(name));
+    db.close();
+    if(stillMissing.length){
+      throw new Error("Scramjet IndexedDB is missing required stores: "+stillMissing.join(", "));
+    }
+  }
   function loadProxyScript(src){
     return new Promise((resolve,reject)=>{
       const absolute=new URL(src,location.href).href;
@@ -3507,6 +3568,8 @@ showPage(p);});});
       await loadProxyScript("/scram/scramjet.all.js");
       if(typeof window.$scramjetLoadController!=="function")throw new Error("Scramjet did not initialise. Check /scram/scramjet.all.js.");
       await installScramjetWorker();
+      setState("Checking Scramjet browser storage…");
+      await ensureScramjetDatabaseStores();
       const {ScramjetController}=window.$scramjetLoadController();
       if(typeof ScramjetController!=="function")throw new Error("The ScramjetController API is missing from the loaded Scramjet bundle.");
       scramjetController=new ScramjetController({files:{
