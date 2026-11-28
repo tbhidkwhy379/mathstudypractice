@@ -2,6 +2,10 @@ name = "neural-gatekeeper"
 main = "worker.js"
 compatibility_date = "2026-11-28"
 
+# Keep dashboard-configured non-secret variables when deploying from Git.
+# Secrets are preserved by Wrangler deployments independently.
+keep_vars = true
+
 # Public Firebase project settings used by the Gatekeeper's Admin API calls.
 # These are configuration values, NOT credentials. Keep private keys and
 # service-account credentials in Cloudflare Worker Secrets.
