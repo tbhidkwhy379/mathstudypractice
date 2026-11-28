@@ -837,6 +837,47 @@ async function createHyperbeamSession(env, options = {}) {
 }
 
 /* =========================================================
+   CLOUDFLARE TURNSTILE VERIFICATION
+========================================================= */
+
+async function verifyTurnstile(env, token, remoteIp) {
+  const secret = String(env.TURNSTILE_SECRET_KEY || "").trim();
+
+  if (!secret) {
+    throw new Error("TURNSTILE_SECRET_KEY is missing from this Worker.");
+  }
+
+  if (typeof token !== "string" || !token || token.length > 4096) {
+    return { success: false, reason: "missing-token" };
+  }
+
+  const form = new URLSearchParams({
+    secret,
+    response: token
+  });
+
+  if (remoteIp) form.set("remoteip", remoteIp);
+
+  const response = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form
+    }
+  );
+
+  const result = await response.json().catch(() => ({}));
+
+  return {
+    success: response.ok && result.success === true,
+    hostname: result.hostname || "",
+    action: result.action || "",
+    reason: result["error-codes"]?.join(", ") || "verification-failed"
+  };
+}
+
+/* =========================================================
    MAIN REQUEST HANDLER
 ========================================================= */
 
@@ -896,6 +937,20 @@ export default {
       /* DEVELOPER MODE LOGIN */
 
       if (action === "developer-auth") {
+        const captcha = await verifyTurnstile(
+          env,
+          body.turnstileToken,
+          request.headers.get("CF-Connecting-IP")
+        );
+
+        if (
+          !captcha.success ||
+          captcha.hostname !== "neural.qzz.io" ||
+          captcha.action !== "developer_auth"
+        ) {
+          return errorResponse("Cloudflare verification failed. Please try again.", 403);
+        }
+
         if (!env.DEV_PASSPHRASE) {
           return errorResponse(
             "Developer passphrase is not configured.",
