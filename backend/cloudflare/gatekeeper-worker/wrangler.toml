@@ -2,13 +2,20 @@ name = "neural-gatekeeper"
 main = "worker.js"
 compatibility_date = "2026-11-28"
 
+# Public Firebase project settings used by the Gatekeeper's Admin API calls.
+# These are configuration values, NOT credentials. Keep private keys and
+# service-account credentials in Cloudflare Worker Secrets.
+[vars]
+FIREBASE_DATABASE_URL = "https://ubg1-363a4-default-rtdb.asia-southeast1.firebasedatabase.app/"
+FIREBASE_PROJECT_ID = "ubg1-363a4"
+
 # Cron triggers use UTC. Both UTC offsets are listed so the code can check
 # Melbourne Friday midnight correctly in both standard time and daylight time.
 [triggers]
 crons = ["0 13,14 * * 5"]
 
 # The Worker enforces separate limits for website and Developer Mode password attempts.
-# Change namespace_id to a unique positive integer for your Cloudflare account.
+# Change namespace_id to a unique positive integer string for your Cloudflare account.
 [[ratelimits]]
 name = "PASSWORD_RATE_LIMITER"
 namespace_id = "70261"
