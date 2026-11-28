@@ -54,7 +54,7 @@ const manifest = {
     "@mercuryworkshop/scramjet": "1.1.0",
     "@mercuryworkshop/bare-mux": "2.1.9",
     "@mercuryworkshop/libcurl-transport": "1.5.2",
-    "@mercuryworkshop/epoxy-transport": "2.1.28"
+    "@mercuryworkshop/epoxy-transport": "2.1.29"
   },
   paths: ["/public/scram/", "/public/baremux/", "/public/libcurl/", "/public/epoxy/"]
 };
