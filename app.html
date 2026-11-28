@@ -1004,6 +1004,49 @@ button { line-height: 1.25; }
 .sj-browser-stage.sj-fullscreen-fallback{position:fixed;inset:0 0 104px;z-index:5;width:100vw;height:auto;max-width:none;min-height:0;margin:0;padding:0;border:0;border-radius:0;gap:0;background:#08090c}
 .sj-browser-stage.sj-fullscreen-fallback .sj-frame-shell{height:auto;min-height:0;flex:1}
 @media(max-width:650px){#view-unblocker.active{inset:0 0 104px}.sj-browser-controls{gap:4px;padding:6px}.sj-browser-controls>button{width:30px;height:32px;flex-basis:30px}.sj-address-form{height:34px;padding-left:8px}.sj-go{padding:0 9px}.sj-tab{min-width:110px}.sj-bookmarks{gap:2px;padding:5px}.sj-bookmarks button{padding:5px 7px;font-size:10px}}
+/* Browser spacing and responsive toolbar: keep controls readable at every width */
+.sj-tabbar{flex:0 0 42px;min-width:0;padding-inline:12px;gap:10px}
+.sj-browser-controls{flex:0 0 auto;min-width:0;gap:9px;padding:10px 12px}
+.sj-browser-controls>button{width:38px;height:38px;flex-basis:38px;flex-shrink:0}
+.sj-address-form{min-width:120px;height:40px;margin:0 2px}
+.sj-bookmarks{flex:0 0 auto;min-width:0;gap:8px;padding:8px 14px;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;scrollbar-width:thin}
+.sj-bookmarks button{flex:0 0 auto;min-height:32px;padding:6px 11px;white-space:nowrap}
+.sj-browser-status{flex:0 0 auto;min-height:30px;padding:5px 14px;overflow:hidden}
+.sj-browser-status span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sj-frame-shell{min-width:0}
+.sj-start-page{overflow:auto}
+.sj-start-content{padding:12px 0}
+.sj-start-links{gap:9px}
+.sj-start-links button{min-height:36px;padding:7px 12px}
+@media(max-width:760px){
+  #view-unblocker.active{inset:0 0 104px}
+  .sj-tabbar{height:40px;flex-basis:40px;padding:5px 8px 0}
+  .sj-tab{min-width:0;max-width:70vw;flex:0 1 230px;height:34px}
+  .sj-tab-brand{margin-bottom:9px}
+  .sj-browser-controls{display:flex;flex-wrap:wrap;gap:7px;padding:9px}
+  .sj-browser-controls>button{width:auto;height:38px;min-width:38px;flex:1 1 0}
+  .sj-address-form{order:2;flex:1 0 100%;width:100%;height:42px;margin:0}
+  .sj-go{height:32px;padding:0 14px}
+  .sj-bookmarks{gap:6px;padding:7px 9px}
+  .sj-bookmarks button{min-height:34px;padding:7px 10px}
+  .sj-browser-status{min-height:29px;padding-inline:10px}
+}
+@media(max-width:390px){
+  .sj-browser-controls{gap:5px;padding:7px}
+  .sj-browser-controls>button{min-width:34px;height:36px}
+  .sj-bookmarks button{font-size:10px;padding-inline:8px}
+  .sj-start-page{padding:18px}
+  .sj-start-content p{line-height:1.5}
+  .sj-start-links{gap:6px}
+}
+@media(max-height:520px) and (max-width:760px){
+  .sj-tabbar{height:34px;flex-basis:34px}
+  .sj-browser-controls{gap:5px;padding:5px}
+  .sj-browser-controls>button{height:32px}
+  .sj-address-form{height:36px}
+  .sj-bookmarks{padding-block:4px}
+  .sj-browser-status{min-height:24px}
+}
 
 /* Hyperbeam full browser */
 #view-browser{min-height:100vh;padding:clamp(12px,2.2vw,28px);padding-bottom:112px;color:var(--text)}
