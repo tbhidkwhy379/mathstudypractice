@@ -1982,6 +1982,7 @@ async function handleChatAuthState(user){
     const current=auth.currentUser;
     if(!current||current.uid!==user.uid)return;
     const tokenResult=await current.getIdTokenResult(true);
+    if(!auth.currentUser||auth.currentUser.uid!==current.uid)return;
     if(current.emailVerified!==true||tokenResult.claims.email_verified!==true){
       stopChatForAuth();
       showChatVerification(current);
@@ -1994,6 +1995,7 @@ async function handleChatAuthState(user){
       await startChatForUser(current);
     }
   }catch(e){
+    if(!auth.currentUser||auth.currentUser.uid!==user.uid)return;
     stopChatForAuth();
     showChatAuth();
     setChatAuthMessage('Could not confirm this account with Firebase. Check your connection and try again.');
