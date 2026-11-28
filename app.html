@@ -1479,7 +1479,7 @@ const devModeToggle=document.getElementById('devModeToggle');
 const DEV_GATEKEEPER_URL='https://gatekeeper.sapktaayush.workers.dev/';
 const DEV_TOKEN_KEY='cs_dev_mode_token';
 const TURNSTILE_SITE_KEY='0x4AAAAAAGWlP_bSshAjBaAh';
-let turnstileWidgetId=null,turnstileLoadPromise=null;
+let turnstileWidgetId=null;
 async function waitForDeveloperTurnstile(){
   if(window.turnstile)return window.turnstile;
   const script=document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
